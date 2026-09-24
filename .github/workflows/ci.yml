@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17.6
+        image: postgres:17.11
         env:
           POSTGRES_USER: accesslobby
           POSTGRES_PASSWORD: test-only-password

@@ -1,6 +1,6 @@
 services:
   iam-db:
-    image: postgres:17.6
+    image: postgres:17.11
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
@@ -11,7 +11,7 @@ services:
       interval: 5s
       retries: 15
   identity-db:
-    image: postgres:17.6
+    image: postgres:17.11
     environment:
       POSTGRES_DB: accesslobby
       POSTGRES_USER: accesslobby
@@ -23,7 +23,7 @@ services:
       interval: 5s
       retries: 15
   iam:
-    image: quay.io/keycloak/keycloak:26.7.0
+    image: quay.io/keycloak/keycloak:26.7.4
     command: ["start-dev", "--import-realm"]
     environment:
       KC_DB: postgres
