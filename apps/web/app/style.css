@@ -1,0 +1,5 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #101827; color: #f5f7fb; }
+main { width: min(100% - 2rem, 34rem); padding: 2rem; background: #19263a; border-radius: 1rem; }
+a { color: #a8d6ff; } .button { display: inline-block; padding: .75rem 1rem; border-radius: .5rem; color: #102035; background: #a8d6ff; text-decoration: none; }
+small { color: #bac7d8; } code { overflow-wrap: anywhere; }

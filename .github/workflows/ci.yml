@@ -1,0 +1,46 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_USER: accesslobby
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: accesslobby
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U accesslobby -d accesslobby"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://accesslobby:test-only-password@127.0.0.1:5432/accesslobby
+      TEST_DATABASE_URL: postgres://accesslobby:test-only-password@127.0.0.1:5432/accesslobby
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install pnpm
+        run: npm install -g pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @accesslobby/api migrate
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Check forbidden source material and secrets
+        run: |
+          if git ls-files | grep -Ei '(^|/)(project_sources|evidence|generated)/|\.env($|\.)|\.dump$|source.pack|conversation.archive'; then
+            echo 'Forbidden source material or environment file tracked'; exit 1
+          fi
+      - name: Container builds
+        run: |
+          docker build -f apps/api/Dockerfile -t accesslobby-api:ci .
+          docker build -f apps/web/Dockerfile -t accesslobby-web:ci .

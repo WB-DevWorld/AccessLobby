@@ -1,0 +1,43 @@
+services:
+  iam-db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${IAM_DB_PASSWORD:?set IAM_DB_PASSWORD}
+    volumes: [iam_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+      retries: 15
+  identity-db:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: accesslobby
+      POSTGRES_USER: accesslobby
+      POSTGRES_PASSWORD: ${IDENTITY_DB_PASSWORD:?set IDENTITY_DB_PASSWORD}
+    ports: ["127.0.0.1:5433:5432"]
+    volumes: [identity_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U accesslobby -d accesslobby"]
+      interval: 5s
+      retries: 15
+  iam:
+    image: quay.io/keycloak/keycloak:26.7.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://iam-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${IAM_DB_PASSWORD:?set IAM_DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${IAM_ADMIN_USERNAME:?set IAM_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${IAM_ADMIN_PASSWORD:?set IAM_ADMIN_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak/generated:/opt/keycloak/data/import:ro
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      iam-db: { condition: service_healthy }
+volumes:
+  iam_data:
+  identity_data:

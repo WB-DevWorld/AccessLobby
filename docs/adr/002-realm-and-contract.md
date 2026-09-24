@@ -1,0 +1,3 @@
+# ADR 002 — Provisional realm and integration
+
+MVP-PROVISIONAL: one `accesslobby-first-party` realm per isolated staging/production environment and a small v0.1 identity resolution contract. Historical one-realm and Almighty DigiVerse/World TransVerse multi-realm proposals conflict. A working issuer is needed now. No global federation or realm topology is decided. Issuer is configured, mapping key includes issuer, and consumers validate discovery, so additional trust domains can be introduced with explicit subject linking and consumer migration. Revisit before cross-ecosystem federation or external tenant onboarding.
