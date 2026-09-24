@@ -21,7 +21,10 @@
       "serviceAccountsEnabled": false,
       "redirectUris": ["__WEB_ORIGIN__/auth/callback"],
       "webOrigins": ["__WEB_ORIGIN__"],
-      "attributes": { "pkce.code.challenge.method": "S256" },
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "__WEB_ORIGIN__"
+      },
       "protocolMappers": [
         {
           "name": "accesslobby-api-audience",
