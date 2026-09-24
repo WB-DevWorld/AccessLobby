@@ -45,3 +45,33 @@ jobs:
         run: |
           docker build -f apps/api/Dockerfile -t accesslobby-api:ci .
           docker build -f apps/web/Dockerfile -t accesslobby-web:ci .
+  iam-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render local realm and start IAM
+        env:
+          WEB_BASE_URL: http://localhost:3000
+        run: |
+          python3 infra/scripts/render-realm.py
+          password=$(openssl rand -hex 32)
+          docker run -d --name accesslobby-ci-iam -p 127.0.0.1:8080:8080 \
+            -v "$PWD/infra/keycloak/generated:/opt/keycloak/data/import:ro" \
+            -e KC_BOOTSTRAP_ADMIN_USERNAME=ci-admin \
+            -e KC_BOOTSTRAP_ADMIN_PASSWORD="$password" \
+            quay.io/keycloak/keycloak:26.7.4 start-dev --import-realm
+      - name: Verify discovery and JWKS
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://localhost:8080/realms/accesslobby-first-party/.well-known/openid-configuration -o /tmp/discovery.json; then break; fi
+            sleep 2
+          done
+          python3 - <<'PY'
+          import json, urllib.request
+          doc = json.load(open('/tmp/discovery.json'))
+          assert doc['issuer'] == 'http://localhost:8080/realms/accesslobby-first-party'
+          keys = json.load(urllib.request.urlopen(doc['jwks_uri']))['keys']
+          assert keys and any(key['kty'] == 'RSA' for key in keys)
+          print('Exact issuer and signing keys verified')
+          PY
