@@ -14,7 +14,7 @@ export class PostgresIdentityStore implements IdentityStore {
       await db.query('BEGIN');
       // The advisory lock serializes first login for a particular (issuer, subject).
       // A unique constraint remains the final protection against duplicates.
-      await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [`${issuer}\u0000${subject}`]);
+      await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [JSON.stringify([issuer, subject])]);
       const existing = await db.query<Identity>(
         'SELECT p.id, p.status FROM iam_subject_links l JOIN persons p ON p.id = l.person_id WHERE l.issuer = $1 AND l.subject = $2',
         [issuer, subject]
