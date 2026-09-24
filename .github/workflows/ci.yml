@@ -37,7 +37,8 @@ jobs:
       - run: pnpm build
       - name: Check forbidden source material and secrets
         run: |
-          if git ls-files | grep -Ei '(^|/)(project_sources|evidence|generated)/|\.env($|\.)|\.dump$|source.pack|conversation.archive'; then
+          forbidden=$(git ls-files | grep -Ei '(^|/)(project_sources|evidence|generated)/|\.env($|\.)|\.dump$|source.pack|conversation.archive' | grep -Ev '(^|/)\.env\.example$' || true)
+          if [ -n "$forbidden" ]; then
             echo 'Forbidden source material or environment file tracked'; exit 1
           fi
       - name: Container builds
