@@ -1,0 +1,11 @@
+{
+  "name": "@accesslobby/reference-consumer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": { "jose": "6.2.12" }
+}

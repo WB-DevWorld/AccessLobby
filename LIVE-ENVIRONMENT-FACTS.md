@@ -16,5 +16,5 @@
 
 - Actual staging/production domains and trusted reverse proxy/host access.
 - Environment-specific secret provisioning and backup destination.
-- POII/DonLoft repo/environment location or connection if outside accessible GitHub scope.
+- POII/DonLoft repo/environment location only when their later adoption work begins; their absence does not block the independent AccessLobby product deployment.
 - Final production promotion approval after a reviewable Go/No-Go evidence set.

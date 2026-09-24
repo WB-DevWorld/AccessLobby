@@ -2,6 +2,8 @@
 
 AccessLobby is the independent identity product boundary for shared human sign-in. Keycloak provides IAM mechanics; AccessLobby owns a durable person ID and maps verified issuer/subject pairs to it. Applications validate OIDC and retain their own resource authorization.
 
+Any compatible application can consume the same [OIDC and identity contract](docs/integration-contract-v0.1.md). Follow [consumer onboarding](docs/consumer-onboarding.md) to register a client and verify it. POII and DonLoft are intended adopters when available; their repositories are not dependencies of AccessLobby.
+
 **Current state:** MVP-0 implementation in progress. No staging or production deployment is claimed. See [CURRENT-WORK.md](CURRENT-WORK.md) and [LIVE-ENVIRONMENT-FACTS.md](LIVE-ENVIRONMENT-FACTS.md).
 
 ## Local start
