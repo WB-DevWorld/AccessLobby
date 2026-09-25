@@ -1,26 +1,28 @@
 # Live environment facts — 2026-09-25 UTC
 
-## VERIFIED IN CONNECTED TOOLS
+## Verified in connected tools
 
-- `WB-DevWorld/AccessLobby` is public with draft PR #1 on `feat/mvp0-identity-spine`; the main branch has only the controlled bootstrap. PR #1 at `9e44ba7` passed CI run #10 before the Hetzner/Dokploy preparation changes. Their new CI run remains to be checked.
-- The connected GitHub inventory did not include a POII or DonLoft implementation. Those peers are later adopters and do not block an independently usable AccessLobby issuer and API.
-- The scratch workspace has no Docker daemon or SSH access to the owner's host. The owner's passphrase-protected SSH key is on their Windows machine; no credential was supplied to this workspace.
+- `WB-DevWorld/AccessLobby` is public. Draft PR #1 on `feat/mvp0-identity-spine` has head `da695c1097fcbf0b3f846b58dd7abdbb50244bf5`; CI run #20 completed successfully at that SHA. Main still has the controlled bootstrap. No qualified main-branch image digests exist yet.
+- The connected GitHub inventory did not include a POII or DonLoft implementation. They remain later adopters of the independent AccessLobby contract.
+- The agent has no SSH key or access to the owner's host. Host and OVHcloud observations below are based on owner terminal output or screenshots, not an agent session.
 
-## OWNER-REPORTED HOST OBSERVATIONS (AGENT NOT ON SERVER)
+## Owner-reported host and access
 
-- Hetzner CCX23, Ubuntu 24.04.4 x86_64, 4 vCPU, 15 GiB reported RAM, 75 GiB root filesystem (71 GiB available), synchronized UTC clock.
-- Only SSH was reported listening on checked ports. Docker/Dokploy are absent; Ubuntu UFW is inactive; the Hetzner Console reports no Cloud Firewalls. The server may expose SSH to the public internet pending a provider firewall.
-- `accesslobby.realjanelove.com` is offered for **development/staging**; its parent DNS zone is managed in Cloudflare. DNS records and TLS are not verified or configured.
-- OVHcloud Roubaix was offered as a backup location. Whether this is an S3-compatible Object Storage bucket, and its endpoint, bucket, policy and credentials, remain unverified. No backups or restores have been performed.
+- Hetzner CCX23, Ubuntu 24.04.5 x86_64 after reboot, running kernel 6.8.0-142-generic, 4 vCPU, approximately 15 GiB RAM and 75 GiB root filesystem; UTC synchronized.
+- The owner reported a Hetzner Cloud Firewall applied to one server, proved a new SSH connection, and obtained a failed public TCP connection to port 3000. Individual firewall rule sources/ports were not inspected by the agent. Ubuntu UFW had been inactive.
+- Docker 28.5.0, Compose v5.5.1 and Dokploy v0.30.7 were installed. The owner created a Dokploy admin account through an SSH tunnel at `http://localhost:13000`. A post-reboot snapshot taken five seconds after container start showed Dokploy health starting and PostgreSQL/Traefik running; later use of the panel demonstrates availability, but the service replica status was not rechecked in output.
+- Cloudflare DNS lookups against resolver 1.1.1.1 returned the owner's host IPv4 for `accesslobby.realjanelove.com`, `iam.accesslobby.realjanelove.com` and `api.accesslobby.realjanelove.com`. No application TLS, route or issuer is deployed.
+- Dokploy screenshots confirm an `AccessLobby / staging` project/environment and an `accesslobby-staging` Docker Compose service shell. Its Git tab showed the public repository, `main`, `./compose.dokploy.yaml` and Autodeploy off; persistence after Save was not verified. The removal of a project-shared `NODE_ENV=staging` variable is also unverified.
 
-## UNVERIFIED / OWNER INPUT FOR BOOTSTRAP
+## Owner-reported backup evidence
 
-- Hetzner firewall creation and an operator-approved access method for host provisioning. Preserve working SSH while changing inbound rules; keep Dokploy port 3000 private.
-- DNS records and exact HTTPS names for staging web, IAM issuer, API and generic consumer; a future **production** domain/issuer remains undecided.
-- GHCR pull permissions, Dokploy installation/runtime, staging secrets, database state, realm import, proxy rules, admin restriction, monitoring, off-host bucket, backup/restore and rollback.
-- GitHub main branch protection and registry publish permission after merge.
+- OVHcloud Object Storage bucket `devbackups` is in Roubaix (`rbx`) at `https://s3.rbx.io.cloud.ovh.net/`. The owner reported Dokploy's destination test succeeded.
+- OVHcloud screenshots show bucket versioning Enabled, default SSE-OMK encryption Enabled, and one `webserver-backup-2026-09-25T12-44-24-497…` object around 42.52 KB. The object demonstrates an uploaded backup; its contents and recoverability were not independently verified.
+- Dokploy Web Server → Backups screenshot shows an active `dokploy` control-plane backup to `ovh-rbx-devbackups`, cron `0 3 * * *` on a UTC server, prefix `/`, and `Keep Latest: 30`. Bucket public access policy, first scheduled run and isolated restore remain unverified. This backup covers Dokploy's database and `/etc/dokploy`, not AccessLobby's future Keycloak or identity databases.
 
-## RELEASE GATES
+## Remaining staging and release gates
 
-- Qualify the updated PR/CI, bootstrap the host securely, then test a separately deployed generic OIDC consumer. No staging or production deployment or live browser login is verified.
-- POII and DonLoft adoption resumes when those implementations are available. Production promotion remains an owner decision after reviewable Go/No-Go evidence.
+- Confirm bucket access policy; protect the main branch and qualify the final PR head; merge with owner release authorization and record exact GHCR image digests.
+- Verify the saved Dokploy Git/Compose settings. Prepare protected staging secrets, a persistent rendered realm, HTTPS routes and Keycloak admin route restriction before application deployment. Do not expose the Dokploy panel or database ports publicly.
+- After deployment, back up Keycloak and AccessLobby PostgreSQL independently, test an isolated restore, run real browser and generic consumer conformance flows, and record rollback evidence. No AccessLobby staging or production deployment or live browser login has occurred.
+- Production remains a distinct issuer/domain, environment and release decision. POII and DonLoft adoption resumes when their implementations are available.
