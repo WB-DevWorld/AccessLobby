@@ -37,6 +37,21 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - name: Validate Dokploy Compose configuration
+        env:
+          IAM_DB_PASSWORD: ci-iam-password
+          IDENTITY_DB_PASSWORD: ci-identity-password
+          IAM_ADMIN_USERNAME: ci-admin
+          IAM_ADMIN_PASSWORD: ci-admin-password
+          IAM_PUBLIC_ORIGIN: https://iam.example.test
+          OIDC_ISSUER: https://iam.example.test/realms/accesslobby-first-party
+          WEB_BASE_URL: https://web.example.test
+          ALLOWED_CLIENT_IDS: accesslobby-web
+          SESSION_SECRET: ci-only-placeholder
+          API_IMAGE: ghcr.io/example/api@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          WEB_IMAGE: ghcr.io/example/web@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          GIT_SHA: 0000000000000000000000000000000000000000
+        run: docker compose -f infra/compose.dokploy.yaml config --quiet
       - name: Check forbidden source material and secrets
         run: |
           forbidden=$(git ls-files | grep -Ei '(^|/)(project_sources|evidence|generated)/|\.env($|\.)|\.dump$|source.pack|conversation.archive' | grep -Ev '(^|/)\.env\.example$' || true)
