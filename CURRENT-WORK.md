@@ -3,7 +3,7 @@
 | Package | State | Evidence / next action |
 |---|---|---|
 | Source acceptance | COMPLETE | Source Pack DEC-001..008, Aug 7/Aug 30 evidence and native AccessLobby 1/2 checked; no material critical-path conflict. |
-| Repo/bootstrap | DRAFT PR | Main bootstrap `966347b`; PR #1 implementation head `da695c1` passed CI run #20. Documentation was subsequently updated from owner staging evidence and requires a fresh final-head CI check. Main branch protection remains unverified. Issues #2–#12 track follow-up. |
+| Repo/bootstrap | DRAFT PR | Main bootstrap `966347b`; PR #1 implementation head `da695c1` passed CI run #20. Updated documentation/head `09d33d9` passed CI run #25 (`verify`, `iam-smoke`); check the final head again at merge. Main branch protection remains unverified. Issues #2–#12 track follow-up. |
 | IAM/runtime | CODED, CI SMOKED | Keycloak 26.7.4 discovery/JWKS and exact generic-client callback were verified in ephemeral CI; no owned staging IAM runtime. |
 | Identity/API | CODED, CI TESTED | Migration 001, mapping concurrency integration and negative JWT checks; real staging IAM smoke pending. |
 | Web handoff | BUILT, UNVERIFIED | PKCE, state, nonce, sealed cookie and logout built; real browser smoke pending. |
