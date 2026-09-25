@@ -1,0 +1,3 @@
+# ADR 004 — Pilot peers
+
+SOURCE-CONFIRMED: AccessLobby is intended for many independent consumers; POII and DonLoft are examples that will consume identity while owning their domain rights. MVP-PROVISIONAL: prove the generic contract using a separately deployable reference consumer and a pilot cohort. Real peer adoption is a separate milestone when implementations are available. For existing users, use a feature-flagged auth adapter and explicit `(issuer, sub, person)` to local user mapping. Do not turn email matches into links. Preserve any current auth only as a documented transitional route; inspect the real application repository before editing. Revisit when identity migration and account-linking policy is approved.

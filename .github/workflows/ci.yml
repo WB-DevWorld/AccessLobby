@@ -1,0 +1,137 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_USER: accesslobby
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: accesslobby
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U accesslobby -d accesslobby"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://accesslobby:test-only-password@127.0.0.1:5432/accesslobby
+      TEST_DATABASE_URL: postgres://accesslobby:test-only-password@127.0.0.1:5432/accesslobby
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install pnpm
+        run: npm install -g pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: python3 -m unittest discover -s infra/scripts -p 'test_*.py'
+      - run: pnpm audit --prod --audit-level high
+      - run: pnpm --filter @accesslobby/api migrate
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Validate Dokploy Compose configuration
+        env:
+          IAM_DB_PASSWORD: ci-iam-password
+          IDENTITY_DB_PASSWORD: ci-identity-password
+          IAM_ADMIN_USERNAME: ci-admin
+          IAM_ADMIN_PASSWORD: ci-admin-password
+          IAM_PUBLIC_ORIGIN: https://iam.example.test
+          OIDC_ISSUER: https://iam.example.test/realms/accesslobby-first-party
+          WEB_BASE_URL: https://web.example.test
+          ALLOWED_CLIENT_IDS: accesslobby-web
+          SESSION_SECRET: ci-only-placeholder
+          API_IMAGE: ghcr.io/example/api@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          WEB_IMAGE: ghcr.io/example/web@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          GIT_SHA: 0000000000000000000000000000000000000000
+        run: |
+          docker compose -f compose.dokploy.yaml config --format json > /tmp/accesslobby-compose.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/accesslobby-compose.json') as source:
+              config = json.load(source)
+          assert set(config['networks']) == {'backend'}, 'No shared proxy network belongs in source Compose'
+          assert config['networks']['backend']['internal'] is True
+          for name, service in config['services'].items():
+              assert not service.get('ports'), f'{name} publishes a host port'
+              assert set(service.get('networks', {})) == {'backend'}, f'{name} joins another source network'
+          print('Source Compose has no shared network or published host ports')
+          PY
+      - name: Check forbidden source material and secrets
+        run: |
+          forbidden=$(git ls-files | grep -Ei '(^|/)(project_sources|evidence|generated)/|\.env($|\.)|\.dump$|source.pack|conversation.archive' | grep -Ev '(^|/)\.env\.example$' || true)
+          if [ -n "$forbidden" ]; then
+            echo 'Forbidden source material or environment file tracked'; exit 1
+          fi
+      - name: Container builds
+        run: |
+          docker build -f apps/api/Dockerfile -t accesslobby-api:ci .
+          docker build -f apps/web/Dockerfile -t accesslobby-web:ci .
+  iam-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render local realm and start IAM
+        env:
+          WEB_BASE_URL: http://localhost:3000
+        run: |
+          python3 infra/scripts/render-realm.py
+          python3 infra/scripts/render-client.py --client-id reference-consumer \
+            --redirect-uri http://localhost:4000/callback \
+            --logout-uri http://localhost:4000/ \
+            --output infra/keycloak/generated/reference-consumer.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          realm = Path('infra/keycloak/generated/accesslobby-first-party-realm.json')
+          client = Path('infra/keycloak/generated/reference-consumer.json')
+          data = json.loads(realm.read_text())
+          data['clients'].append(json.loads(client.read_text()))
+          realm.write_text(json.dumps(data))
+          client.unlink()  # Realm import directory contains only the realm export.
+          PY
+          password=$(openssl rand -hex 32)
+          docker run -d --name accesslobby-ci-iam -p 127.0.0.1:8080:8080 \
+            -v "$PWD/infra/keycloak/generated:/opt/keycloak/data/import:ro" \
+            -e KC_BOOTSTRAP_ADMIN_USERNAME=ci-admin \
+            -e KC_BOOTSTRAP_ADMIN_PASSWORD="$password" \
+            quay.io/keycloak/keycloak:26.7.4 start-dev --import-realm
+      - name: Verify discovery and JWKS
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://localhost:8080/realms/accesslobby-first-party/.well-known/openid-configuration -o /tmp/discovery.json; then break; fi
+            sleep 2
+          done
+          python3 - <<'PY'
+          import json, urllib.request
+          doc = json.load(open('/tmp/discovery.json'))
+          assert doc['issuer'] == 'http://localhost:8080/realms/accesslobby-first-party'
+          keys = json.load(urllib.request.urlopen(doc['jwks_uri']))['keys']
+          assert keys and any(key['kty'] == 'RSA' for key in keys)
+          print('Exact issuer and signing keys verified')
+          PY
+      - name: Check generic client and exact callback registration
+        run: |
+          issuer=http://localhost:8080/realms/accesslobby-first-party
+          good=$(curl -sS -o /tmp/good-login -w '%{http_code}' -G "$issuer/protocol/openid-connect/auth" \
+            --data-urlencode client_id=reference-consumer \
+            --data-urlencode redirect_uri=http://localhost:4000/callback \
+            --data-urlencode response_type=code --data-urlencode scope=openid \
+            --data-urlencode code_challenge_method=S256 \
+            --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)
+          bad=$(curl -sS -o /tmp/bad-login -w '%{http_code}' -G "$issuer/protocol/openid-connect/auth" \
+            --data-urlencode client_id=reference-consumer \
+            --data-urlencode redirect_uri=http://localhost:4000/unregistered \
+            --data-urlencode response_type=code --data-urlencode scope=openid \
+            --data-urlencode code_challenge_method=S256 \
+            --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)
+          test "$good" = 200
+          test "$bad" = 400

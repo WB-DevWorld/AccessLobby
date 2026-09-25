@@ -1,0 +1,5 @@
+---
+description: AccessLobby identity and peer boundaries
+alwaysApply: true
+---
+Read AGENTS.md and CURRENT-WORK.md. Preserve immutable AccessLobby person identity separate from Keycloak sub/email. Authenticate with OIDC. Peers own resource authorization. No raw source packs, secrets or cross-peer database coupling.

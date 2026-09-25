@@ -1,0 +1,8 @@
+# MVP security notes
+
+Validation: OIDC discovery issuer and JWKS origin, signed RS256 access tokens, exact issuer, API audience and allowed authorized party; browser code + PKCE, state, ID token signature/audience/nonce; exact callbacks and encrypted HttpOnly cookies. No password handling in Next or peer; no email linking; no unauthenticated identity lookup. Web sessions expire without refresh and logout cannot guarantee instant invalidation of all peer sessions.
+`WEB_BASE_URL` must be a plain HTTPS origin outside localhost; the web process fails closed if the configured public origin would produce an insecure session cookie.
+
+Production requires HTTPS, trusted proxy headers, admin isolation, secrets out of Git/logs, restricted database network, rate/brute-force controls, monitored auth failures and backup/restore proof. The local development realm is deliberately not a production security configuration. A security review must check cookie size and Keycloak token contents with a real pilot account before promotion.
+
+Dokploy ingress is a runtime security control. Enable Isolated Deployments and inspect Preview Compose: no application service may join the shared `dokploy-network` or publish a host port. Public IAM routing must allow only the first-party realm and its `/resources/` assets; reject `/admin/`, `/realms/master/`, root and management paths. Confirm Traefik overwrites external `Forwarded` and `X-Forwarded-*` headers before trusting Keycloak's `KC_PROXY_HEADERS=xforwarded`. A fixed Keycloak hostname protects the issuer URL but does not by itself prove the client address is trustworthy. Do not call the ingress review complete until these checks pass against the deployed route.

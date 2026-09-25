@@ -1,0 +1,74 @@
+# Operate behind a trusted HTTPS reverse proxy. Never expose database ports.
+# Stage and production use distinct env files, hosts, volumes, credentials and deployments.
+services:
+  iam-db:
+    image: postgres:17.11
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${IAM_DB_PASSWORD:?}
+    volumes: [iam_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      retries: 10
+  identity-db:
+    image: postgres:17.11
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: accesslobby
+      POSTGRES_USER: accesslobby
+      POSTGRES_PASSWORD: ${IDENTITY_DB_PASSWORD:?}
+    volumes: [identity_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U accesslobby -d accesslobby"]
+      interval: 10s
+      retries: 10
+  iam:
+    image: quay.io/keycloak/keycloak:26.7.4
+    restart: unless-stopped
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://iam-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${IAM_DB_PASSWORD:?}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${IAM_ADMIN_USERNAME:?}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${IAM_ADMIN_PASSWORD:?}
+      KC_HOSTNAME: ${IAM_PUBLIC_ORIGIN:?}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    volumes: ["./keycloak/generated:/opt/keycloak/data/import:ro"]
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      iam-db: { condition: service_healthy }
+  api:
+    image: ${API_IMAGE:?pin qualified image digest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://accesslobby:${IDENTITY_DB_PASSWORD:?}@identity-db:5432/accesslobby
+      OIDC_ISSUER: ${OIDC_ISSUER:?}
+      OIDC_API_AUDIENCE: accesslobby-api
+      ALLOWED_CLIENT_IDS: ${ALLOWED_CLIENT_IDS:?}
+      GIT_SHA: ${GIT_SHA:?}
+    ports: ["127.0.0.1:3001:3001"]
+    depends_on:
+      identity-db: { condition: service_healthy }
+      iam: { condition: service_started }
+  web:
+    image: ${WEB_IMAGE:?pin qualified image digest}
+    restart: unless-stopped
+    environment:
+      WEB_BASE_URL: ${WEB_BASE_URL:?}
+      OIDC_ISSUER: ${OIDC_ISSUER:?}
+      OIDC_CLIENT_ID: accesslobby-web
+      SESSION_SECRET: ${SESSION_SECRET:?}
+      API_INTERNAL_URL: http://api:3001
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: [api]
+volumes:
+  iam_data:
+  identity_data:
