@@ -2,7 +2,8 @@
 
 ## Verified in connected tools
 
-- `WB-DevWorld/AccessLobby` is public. Draft PR #1 on `feat/mvp0-identity-spine` has head `da695c1097fcbf0b3f846b58dd7abdbb50244bf5`; CI run #20 completed successfully at that SHA. Main still has the controlled bootstrap. No qualified main-branch image digests exist yet.
+- `WB-DevWorld/AccessLobby` is public. Draft PR #1 on `feat/mvp0-identity-spine` had head `0b54d5ab533ad90a64f5ba6e84d55e6fa3a0c0bc` when checked for this security review; CI run #27 passed `verify` and `iam-smoke` at that SHA. The network-isolation and publication-gate changes in this review are unverified until a new CI run. Main still has the controlled bootstrap. No qualified main-branch image digests exist yet.
+- A prior owner-session GitHub UI inspection verified an active `Protect main` ruleset targeting `main`, requiring a PR and the `verify`/`iam-smoke` checks, with no force pushes or deletion. Recheck its operation when PR #1 becomes ready for merge.
 - The connected GitHub inventory did not include a POII or DonLoft implementation. They remain later adopters of the independent AccessLobby contract.
 - The agent has no SSH key or access to the owner's host. Host and OVHcloud observations below are based on owner terminal output or screenshots, not an agent session.
 
@@ -22,7 +23,7 @@
 
 ## Remaining staging and release gates
 
-- Confirm bucket access policy; protect the main branch and qualify the final PR head; merge with owner release authorization and record exact GHCR image digests.
-- Verify the saved Dokploy Git/Compose settings. Prepare protected staging secrets, a persistent rendered realm, HTTPS routes and Keycloak admin route restriction before application deployment. Do not expose the Dokploy panel or database ports publicly.
+- Confirm bucket access policy and qualify the final PR head; merge after review and record exact GHCR image digests from successful main-branch CI.
+- Verify the saved Dokploy Git/Compose settings and enable Isolated Deployments. Prepare protected staging secrets, a persistent rendered realm, HTTPS routes, Keycloak admin route restriction and proxy-header handling before application deployment. Do not expose the Dokploy panel or database ports publicly.
 - After deployment, back up Keycloak and AccessLobby PostgreSQL independently, test an isolated restore, run real browser and generic consumer conformance flows, and record rollback evidence. No AccessLobby staging or production deployment or live browser login has occurred.
 - Production remains a distinct issuer/domain, environment and release decision. POII and DonLoft adoption resumes when their implementations are available.

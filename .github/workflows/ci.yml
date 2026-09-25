@@ -51,7 +51,19 @@ jobs:
           API_IMAGE: ghcr.io/example/api@sha256:0000000000000000000000000000000000000000000000000000000000000000
           WEB_IMAGE: ghcr.io/example/web@sha256:0000000000000000000000000000000000000000000000000000000000000000
           GIT_SHA: 0000000000000000000000000000000000000000
-        run: docker compose -f compose.dokploy.yaml config --quiet
+        run: |
+          docker compose -f compose.dokploy.yaml config --format json > /tmp/accesslobby-compose.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/accesslobby-compose.json') as source:
+              config = json.load(source)
+          assert set(config['networks']) == {'backend'}, 'No shared proxy network belongs in source Compose'
+          assert config['networks']['backend']['internal'] is True
+          for name, service in config['services'].items():
+              assert not service.get('ports'), f'{name} publishes a host port'
+              assert set(service.get('networks', {})) == {'backend'}, f'{name} joins another source network'
+          print('Source Compose has no shared network or published host ports')
+          PY
       - name: Check forbidden source material and secrets
         run: |
           forbidden=$(git ls-files | grep -Ei '(^|/)(project_sources|evidence|generated)/|\.env($|\.)|\.dump$|source.pack|conversation.archive' | grep -Ev '(^|/)\.env\.example$' || true)

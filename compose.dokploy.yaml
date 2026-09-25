@@ -1,5 +1,7 @@
 # Dokploy Compose service; configure HTTPS domains in Dokploy's Domains tab.
-# Requires the external dokploy-network created by Dokploy. No host ports are published.
+# Requires Dokploy's Isolated Deployments option. Dokploy connects Traefik to
+# this service's private network at deployment; do not join the shared dokploy-network.
+# No host ports are published.
 # Use a separate Dokploy service/project, secrets and volumes for each environment.
 services:
   iam-db:
@@ -48,7 +50,7 @@ services:
       KC_METRICS_ENABLED: "true"
     volumes: ["../files/keycloak-import:/opt/keycloak/data/import:ro"]
     expose: ["8080"]
-    networks: [backend, dokploy-network]
+    networks: [backend]
     depends_on:
       iam-db: { condition: service_healthy }
 
@@ -72,7 +74,7 @@ services:
       ALLOWED_CLIENT_IDS: ${ALLOWED_CLIENT_IDS:?}
       GIT_SHA: ${GIT_SHA:?}
     expose: ["3001"]
-    networks: [backend, dokploy-network]
+    networks: [backend]
     depends_on:
       migrate: { condition: service_completed_successfully }
       iam: { condition: service_started }
@@ -87,16 +89,13 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:?}
       API_INTERNAL_URL: http://api:3001
     expose: ["3000"]
-    networks: [backend, dokploy-network]
+    networks: [backend]
     depends_on:
       api: { condition: service_started }
 
 networks:
   backend:
     internal: true
-  dokploy-network:
-    external: true
-
 volumes:
   iam_data:
   identity_data:
