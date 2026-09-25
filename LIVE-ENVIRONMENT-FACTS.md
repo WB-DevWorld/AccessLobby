@@ -28,6 +28,6 @@
 
 ## Remaining staging and release gates
 
-- The reference consumer browser flow passed by owner report. Record the negative HTTP matrix, exact client representation hash and any deployment log details still missing; preserve the distinction from real POII/DonLoft adoption.
+- The reference consumer browser and negative HTTP matrix passed by owner report. Record the exact client representation hash and any deployment log details still missing; preserve the distinction from real POII/DonLoft adoption.
 - Confirm private bucket/object ACLs and scoped user access (OVHcloud Object Storage currently has no bucket policies), first scheduled backups and lifecycle behavior for versioned objects. Record a safe rollback rehearsal and staging monitoring observations before production review.
 - Production remains a distinct issuer/domain, environment and release decision. POII and DonLoft adoption resumes when their implementations are available.
