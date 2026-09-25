@@ -7,7 +7,16 @@ const required = (key: string) => {
   if (!value) throw new Error(`Missing ${key}`);
   return value;
 };
-export const origin = () => new URL(required('WEB_BASE_URL')).origin;
+export const origin = () => {
+  const url = new URL(required('WEB_BASE_URL'));
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) {
+    throw new Error('WEB_BASE_URL requires HTTPS outside localhost');
+  }
+  if (url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
+    throw new Error('WEB_BASE_URL must be a plain origin');
+  }
+  return url.origin;
+};
 export const issuer = () => required('OIDC_ISSUER');
 export const clientId = () => required('OIDC_CLIENT_ID');
 export const callbackUrl = () => `${origin()}/auth/callback`;
