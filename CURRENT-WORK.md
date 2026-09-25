@@ -9,7 +9,8 @@
 | Web handoff | BUILT, UNVERIFIED | Code + PKCE, state, nonce, sealed cookie, logout; browser smoke pending. |
 | Generic consumer | CODED, PARTLY SMOKED | Client renderer/onboarding, independent reference consumer, local authorization deny test and unauthenticated HTTP smoke. Live human E2E in staging remains issue #12. No named peer required for AccessLobby product deployment. |
 | POII | DEFERRED ADOPTION | Implementation unavailable; integration resumes when its repo/environment is accessible. Never map by email. |
-| Staging | PREPARED, NOT DEPLOYED | Owner-reported Hetzner host, Cloudflare development zone and OVHcloud Roubaix location. `infra/compose.dokploy.yaml` and staging runbook added; new CI check pending. Provider firewall absent, no agent SSH access, DNS/TLS and backup bucket unverified. Issue #7. |\n| Production | NOT DEPLOYED | Separate issuer/domain, environment, backup/restore, monitoring and release approval pending. |
+| Staging | PREPARED, NOT DEPLOYED | Owner-reported Hetzner host, Cloudflare development zone and OVHcloud Roubaix location. `infra/compose.dokploy.yaml` and staging runbook added; new CI check pending. Provider firewall absent, no agent SSH access, DNS/TLS and backup bucket unverified. Issue #7. |
+| Production | NOT DEPLOYED | Separate issuer/domain, environment, backup/restore, monitoring and release approval pending. |
 | DonLoft | DEFERRED ADOPTION | Implementation unavailable; reuse the same contract when accessible. |
 
 Decision states: SOURCE-CONFIRMED boundaries in constitution; MVP-PROVISIONAL choices in ADRs; DEFERRED items in MVP spec; OWNER-BLOCKED facts in live environment file. Exact SHA, PRs, CI runs, image digests and deployment evidence must be appended as they occur. **Production MVP is not complete.**
