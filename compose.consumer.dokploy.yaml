@@ -1,0 +1,13 @@
+services:
+  consumer:
+    image: ${CONSUMER_IMAGE:?pin qualified image digest}
+    restart: unless-stopped
+    environment:
+      CONSUMER_ORIGIN: ${CONSUMER_ORIGIN:?}
+      OIDC_ISSUER: ${OIDC_ISSUER:?}
+      OIDC_CLIENT_ID: reference-consumer
+      ACCESSLOBBY_API_URL: ${ACCESSLOBBY_API_URL:?}
+      PORT: "4000"
+      GRANTED_PERSON_IDS: ${GRANTED_PERSON_IDS:-}
+    expose:
+      - "4000"
