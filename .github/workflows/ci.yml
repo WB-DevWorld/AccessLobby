@@ -51,7 +51,7 @@ jobs:
           API_IMAGE: ghcr.io/example/api@sha256:0000000000000000000000000000000000000000000000000000000000000000
           WEB_IMAGE: ghcr.io/example/web@sha256:0000000000000000000000000000000000000000000000000000000000000000
           GIT_SHA: 0000000000000000000000000000000000000000
-        run: docker compose -f infra/compose.dokploy.yaml config --quiet
+        run: docker compose -f compose.dokploy.yaml config --quiet
       - name: Check forbidden source material and secrets
         run: |
           forbidden=$(git ls-files | grep -Ei '(^|/)(project_sources|evidence|generated)/|\.env($|\.)|\.dump$|source.pack|conversation.archive' | grep -Ev '(^|/)\.env\.example$' || true)
