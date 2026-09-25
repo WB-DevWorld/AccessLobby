@@ -82,6 +82,21 @@ jobs:
           docker build -f apps/api/Dockerfile -t accesslobby-api:ci .
           docker build -f apps/web/Dockerfile -t accesslobby-web:ci .
           docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
+          docker build -f examples/reference-consumer/Dockerfile -t accesslobby-reference-consumer:ci .
+      - name: Check reference consumer behind an HTTPS proxy
+        run: |
+          docker run -d --name accesslobby-ci-consumer -p 127.0.0.1:14000:4000 \
+            -e CONSUMER_ORIGIN=https://consumer.example.test \
+            -e OIDC_ISSUER=https://iam.example.test/realms/accesslobby-first-party \
+            -e OIDC_CLIENT_ID=reference-consumer \
+            -e ACCESSLOBBY_API_URL=https://api.example.test \
+            accesslobby-reference-consumer:ci
+          for attempt in $(seq 1 10); do
+            if curl --silent --fail http://127.0.0.1:14000/ -o /tmp/reference-consumer.html; then break; fi
+            sleep 1
+          done
+          grep -q 'Independent OIDC consumer' /tmp/reference-consumer.html
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:14000/private)" = 401
   iam-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 8

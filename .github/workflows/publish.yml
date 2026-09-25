@@ -18,6 +18,7 @@ jobs:
       api_digest: ${{ steps.api.outputs.digest }}
       web_digest: ${{ steps.web.outputs.digest }}
       iam_gateway_digest: ${{ steps.iam_gateway.outputs.digest }}
+      consumer_digest: ${{ steps.consumer.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,8 +50,16 @@ jobs:
           file: infra/iam-gateway/Dockerfile
           push: true
           tags: ghcr.io/wb-devworld/accesslobby-iam-gateway:sha-${{ github.event.workflow_run.head_sha }}
+      - uses: docker/build-push-action@v6
+        id: consumer
+        with:
+          context: .
+          file: examples/reference-consumer/Dockerfile
+          push: true
+          tags: ghcr.io/wb-devworld/accesslobby-reference-consumer:sha-${{ github.event.workflow_run.head_sha }}
       - name: Record immutable image references
         run: |
           echo "API: ghcr.io/wb-devworld/accesslobby-api@${{ steps.api.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Web: ghcr.io/wb-devworld/accesslobby-web@${{ steps.web.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
           echo "IAM gateway: ghcr.io/wb-devworld/accesslobby-iam-gateway@${{ steps.iam_gateway.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Reference consumer: ghcr.io/wb-devworld/accesslobby-reference-consumer@${{ steps.consumer.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"

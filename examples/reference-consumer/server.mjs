@@ -14,6 +14,8 @@ const issuer = required('OIDC_ISSUER');
 const clientId = required('OIDC_CLIENT_ID');
 const api = required('ACCESSLOBBY_API_URL');
 const callback = `${origin}/callback`;
+const port = Number(process.env.PORT || '4000');
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT must be an integer from 1 to 65535');
 const grants = new Set((process.env.GRANTED_PERSON_IDS || '').split(',').filter(Boolean));
 const secure = new URL(origin).protocol === 'https:';
 const flowName = secure ? '__Host-ref-flow' : 'ref-flow';
@@ -120,4 +122,4 @@ async function handle(request, response) {
   return send(response, 200, `<!doctype html><html lang="en"><meta charset="utf-8"><title>Reference consumer</title><h1>Independent OIDC consumer</h1>${content}</html>`);
 }
 http.createServer((request, response) => handle(request, response).catch(() => send(response, 502, 'Authentication service unavailable')))
-  .listen(new URL(origin).port || (secure ? 443 : 80));
+  .listen(port);
