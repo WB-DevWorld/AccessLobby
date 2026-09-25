@@ -1,6 +1,6 @@
 # Dokploy Compose service; configure HTTPS domains in Dokploy's Domains tab.
-# Requires Dokploy's Isolated Deployments option. Dokploy connects Traefik to
-# this service's private network at deployment; do not join the shared dokploy-network.
+# Keep Isolated Deployment off. Dokploy attaches only domain targets to its
+# shared proxy network; route IAM through the restricted gateway, never `iam`.
 # No host ports are published.
 # Use a separate Dokploy service/project, secrets and volumes for each environment.
 services:
@@ -50,9 +50,17 @@ services:
       KC_METRICS_ENABLED: "true"
     volumes: ["../files/keycloak-import:/opt/keycloak/data/import:ro"]
     expose: ["8080"]
-    networks: [backend]
+    networks: [backend, iam-edge]
     depends_on:
       iam-db: { condition: service_healthy }
+
+  iam-gateway:
+    image: ${IAM_GATEWAY_IMAGE:?pin qualified image digest}
+    restart: unless-stopped
+    expose: ["8080"]
+    networks: [iam-edge]
+    depends_on:
+      iam: { condition: service_started }
 
   migrate:
     image: ${API_IMAGE:?pin qualified image digest}
@@ -95,6 +103,8 @@ services:
 
 networks:
   backend:
+    internal: true
+  iam-edge:
     internal: true
 volumes:
   iam_data:

@@ -50,6 +50,7 @@ jobs:
           SESSION_SECRET: ci-only-placeholder
           API_IMAGE: ghcr.io/example/api@sha256:0000000000000000000000000000000000000000000000000000000000000000
           WEB_IMAGE: ghcr.io/example/web@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          IAM_GATEWAY_IMAGE: ghcr.io/example/iam-gateway@sha256:0000000000000000000000000000000000000000000000000000000000000000
           GIT_SHA: 0000000000000000000000000000000000000000
         run: |
           docker compose -f compose.dokploy.yaml config --format json > /tmp/accesslobby-compose.json
@@ -57,12 +58,18 @@ jobs:
           import json
           with open('/tmp/accesslobby-compose.json') as source:
               config = json.load(source)
-          assert set(config['networks']) == {'backend'}, 'No shared proxy network belongs in source Compose'
-          assert config['networks']['backend']['internal'] is True
+          assert set(config['networks']) == {'backend', 'iam-edge'}, 'No shared proxy network belongs in source Compose'
+          assert all(network['internal'] for network in config['networks'].values())
+          expected = {
+              'iam-db': {'backend'}, 'identity-db': {'backend'},
+              'iam': {'backend', 'iam-edge'}, 'iam-gateway': {'iam-edge'},
+              'migrate': {'backend'}, 'api': {'backend'}, 'web': {'backend'},
+          }
+          assert set(config['services']) == set(expected)
           for name, service in config['services'].items():
               assert not service.get('ports'), f'{name} publishes a host port'
-              assert set(service.get('networks', {})) == {'backend'}, f'{name} joins another source network'
-          print('Source Compose has no shared network or published host ports')
+              assert set(service.get('networks', {})) == expected[name], f'{name} has an unexpected network'
+          print('IAM gateway cannot reach databases; source Compose has no shared network or host ports')
           PY
       - name: Check forbidden source material and secrets
         run: |
@@ -74,6 +81,7 @@ jobs:
         run: |
           docker build -f apps/api/Dockerfile -t accesslobby-api:ci .
           docker build -f apps/web/Dockerfile -t accesslobby-web:ci .
+          docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
   iam-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -103,6 +111,7 @@ jobs:
             -v "$PWD/infra/keycloak/generated:/opt/keycloak/data/import:ro" \
             -e KC_BOOTSTRAP_ADMIN_USERNAME=ci-admin \
             -e KC_BOOTSTRAP_ADMIN_PASSWORD="$password" \
+            -e KC_PROXY_HEADERS=xforwarded \
             quay.io/keycloak/keycloak:26.7.4 start-dev --import-realm
       - name: Verify discovery and JWKS
         run: |
@@ -135,3 +144,33 @@ jobs:
             --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)
           test "$good" = 200
           test "$bad" = 400
+      - name: Verify public IAM gateway path and proxy headers
+        run: |
+          docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
+          docker network create accesslobby-ci
+          docker network connect accesslobby-ci accesslobby-ci-iam
+          docker run -d --name accesslobby-ci-gateway --network accesslobby-ci \
+            -p 127.0.0.1:8081:8080 accesslobby-iam-gateway:ci
+          for attempt in $(seq 1 20); do
+            if curl -sS -o /tmp/gateway-discovery -w '%{http_code}' \
+              http://localhost:8081/realms/accesslobby-first-party/.well-known/openid-configuration \
+              -H 'Host: iam.example.test' -H 'X-Forwarded-Proto: http' \
+              -H 'X-Forwarded-Host: spoof.example.test' | grep -qx 200; then break; fi
+            sleep 1
+          done
+          python3 - <<'PY'
+          import json
+          with open('/tmp/gateway-discovery') as source:
+              doc = json.load(source)
+          assert doc['issuer'] == 'https://iam.example.test/realms/accesslobby-first-party'
+          PY
+          for path in / /admin/ /realms/master/ /metrics /health \
+            /realms/accesslobby-first-party/../master/ \
+            /realms/accesslobby-first-party%2f..%2fmaster/; do
+            status=$(curl --path-as-is -sS -o /dev/null -w '%{http_code}' \
+              "http://localhost:8081$path" -H 'Host: iam.example.test')
+            case "$status" in
+              400|403|404) ;;
+              *) echo "Unexpected IAM path $path: $status"; exit 1 ;;
+            esac
+          done
