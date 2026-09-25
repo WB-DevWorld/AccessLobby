@@ -148,7 +148,7 @@ jobs:
         run: |
           docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
           docker network create accesslobby-ci
-          docker network connect accesslobby-ci accesslobby-ci-iam
+          docker network connect --alias iam accesslobby-ci accesslobby-ci-iam
           docker run -d --name accesslobby-ci-gateway --network accesslobby-ci \
             -p 127.0.0.1:8081:8080 accesslobby-iam-gateway:ci
           for attempt in $(seq 1 20); do
@@ -158,6 +158,10 @@ jobs:
               -H 'X-Forwarded-Host: spoof.example.test' | grep -qx 200; then break; fi
             sleep 1
           done
+          if [ ! -s /tmp/gateway-discovery ]; then
+            docker logs accesslobby-ci-gateway
+            exit 1
+          fi
           python3 - <<'PY'
           import json
           with open('/tmp/gateway-discovery') as source:
