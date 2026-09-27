@@ -18,7 +18,11 @@ export default async function Account() {
   } catch { /* Display a truthful unavailable state. */ }
   return <><h1>Account</h1>{person
     ? <><p>Signed in. Identity status: {person.status}.</p><p>Person ID: <code>{person.id}</code></p>
-      <form method="post" action="/auth/logout"><button type="submit">Sign out</button></form></>
+      <form method="post" action="/auth/logout">
+        <p>Where would you like to sign out?</p>
+        <button type="submit" name="scope" value="current">This app only</button>{' '}
+        <button type="submit" name="scope" value="all">All connected apps</button>
+      </form></>
     : <><p>No active identity could be resolved. The session may have expired or identity service is unavailable.</p>
       <Link href="/auth/login">Sign in again</Link></>}</>;
 }

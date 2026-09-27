@@ -105,11 +105,13 @@ jobs:
       - name: Render local realm and start IAM
         env:
           WEB_BASE_URL: http://localhost:3000
+          API_PUBLIC_ORIGIN: http://localhost:3001
         run: |
           python3 infra/scripts/render-realm.py
           python3 infra/scripts/render-client.py --client-id reference-consumer \
             --redirect-uri http://localhost:4000/callback \
             --logout-uri http://localhost:4000/ \
+            --backchannel-logout-uri http://localhost:4000/backchannel-logout \
             --output infra/keycloak/generated/reference-consumer.json
           python3 - <<'PY'
           import json

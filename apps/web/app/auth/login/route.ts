@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { callbackUrl, challenge, clientId, discover, flowCookie, origin, seal, secureCookie } from '@/lib/oidc';
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const doc = await discover();
     const { state, nonce, verifier, codeChallenge } = challenge();
@@ -8,6 +8,7 @@ export async function GET() {
     for (const [key, value] of Object.entries({ client_id: clientId(), redirect_uri: callbackUrl(),
       response_type: 'code', scope: 'openid profile email', state, nonce,
       code_challenge: codeChallenge, code_challenge_method: 'S256' })) url.searchParams.set(key, value);
+    if (new URL(request.url).searchParams.get('intent') === 'register') url.searchParams.set('prompt', 'create');
     const response = NextResponse.redirect(url);
     response.cookies.set(flowCookie(), await seal({ state, nonce, verifier }, 300), {
       httpOnly: true, secure: secureCookie(), sameSite: 'lax', path: '/', maxAge: 300

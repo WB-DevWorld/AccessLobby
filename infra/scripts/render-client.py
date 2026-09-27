@@ -23,7 +23,7 @@ def exact_url(value: str, *, origin: bool = False) -> str:
     return value.rstrip("/") if origin else value
 
 
-def representation(client_id: str, redirect: str, logout: str) -> dict:
+def representation(client_id: str, redirect: str, logout: str, backchannel: str | None = None) -> dict:
     if not client_id or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789-_" for c in client_id):
         raise ValueError("client ID must use lowercase letters, digits, hyphen or underscore")
     if client_id in ("accesslobby-api", "accesslobby-web"):
@@ -34,8 +34,13 @@ def representation(client_id: str, redirect: str, logout: str) -> dict:
     logout_origin = urlparse(post_logout)
     if (callback_origin.scheme, callback_origin.netloc) != (logout_origin.scheme, logout_origin.netloc):
         raise ValueError("logout and callback must have the same origin")
+    if backchannel:
+        exact_url(backchannel)
+        endpoint = urlparse(backchannel)
+        if (endpoint.scheme, endpoint.netloc) != (callback_origin.scheme, callback_origin.netloc):
+            raise ValueError("backchannel and callback must have the same origin")
     origin = f"{callback_origin.scheme}://{callback_origin.netloc}"
-    return {
+    client = {
         "clientId": client_id, "name": client_id, "enabled": True,
         "protocol": "openid-connect", "publicClient": True,
         "standardFlowEnabled": True, "implicitFlowEnabled": False,
@@ -48,6 +53,12 @@ def representation(client_id: str, redirect: str, logout: str) -> dict:
             "config": {"included.client.audience": "accesslobby-api", "access.token.claim": "true", "id.token.claim": "false"},
         }],
     }
+    if backchannel:
+        client["attributes"].update({
+            "backchannel.logout.url": backchannel,
+            "backchannel.logout.session.required": "true",
+        })
+    return client
 
 
 def main() -> None:
@@ -55,10 +66,11 @@ def main() -> None:
     parser.add_argument("--client-id", required=True)
     parser.add_argument("--redirect-uri", required=True)
     parser.add_argument("--logout-uri", required=True)
+    parser.add_argument("--backchannel-logout-uri", help="exact HTTPS endpoint implemented by the consumer")
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     try:
-        document = representation(args.client_id, args.redirect_uri, args.logout_uri)
+        document = representation(args.client_id, args.redirect_uri, args.logout_uri, args.backchannel_logout_uri)
     except ValueError as error:
         parser.error(str(error))
     args.output.write_text(json.dumps(document, indent=2) + "\n")

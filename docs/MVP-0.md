@@ -8,6 +8,6 @@ Source-confirmed: independent AccessLobby product, durable identity, replaceable
 
 Provisional: one first-party realm per isolated environment; person UUID field in v0.1 response; `accesslobby-api` token audience and explicit client allowlist; controlled pilot provisioning; short lived web cookie without refresh; initial deployment compose. See ADRs.
 
-Deferred: organization hierarchy, grants/entitlements, federation, public signup/recovery, passkeys, machine identities, delegation, WordPress/POS migration and full global revocation.
+Deferred: organization hierarchy, grants/entitlements, federation, passkeys, machine identities, delegation, WordPress/POS migration and offline-peer revocation reconciliation. Signup/recovery and backchannel logout now have implementation paths; enabling these in an existing realm requires protected SMTP, configuration reconciliation and staging verification.
 
 Go/no-go: valid and invalid auth, stable subject mapping, no email linking, reference consumer local denial, arbitrary client registration, restart, migration, health, TLS, secrets, backup/restore, rollback, staging E2E and exact artifact promotion. If issuer integrity, mapping uniqueness, backup/restore or local authorization isolation fails, do not promote. Staging alone is not MVP completion. Report real peer adoption separately.
