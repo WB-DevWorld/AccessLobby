@@ -1,0 +1,54 @@
+---
+description: AccessLobby frontend and UI implementation rules
+globs:
+  - "apps/web/**/*"
+  - "packages/ui/**/*"
+  - "docs/ui/**/*"
+alwaysApply: false
+---
+
+# Frontend rules
+
+Read `PROJECT-CONSTITUTION.md`, `SOURCE-OF-TRUTH.md`, `OWNERSHIP.md`, `CURRENT-WORK.md`, issue #16 and `docs/ui/` before editing the product UI.
+
+## Preserve the identity spine
+
+- Do not break `/auth/login`, `/auth/callback`, `/auth/logout` or the current server-side session flow.
+- Do not expose tokens or session cookies to client components.
+- Keep durable AccessLobby person identity distinct from email, phone, username and Keycloak private identifiers.
+- Authentication does not grant peer-resource authorization.
+
+## Truthful UI
+
+- Never turn visual-reference values into production facts.
+- Use live data only from approved contracts.
+- Render explicit signed-out, unavailable, denied, empty, loading and error states.
+- Never fall back from a failed live request to synthetic success data.
+- Keep development fixtures isolated and disabled by default in production.
+
+## Structure
+
+- Prefer reusable shell, navigation, feedback and primitive components over page duplication.
+- Keep feature code grouped by product capability.
+- Put server-only data access in server modules/components.
+- Use typed adapters between routes/components and backend contracts.
+- Avoid adding global dependencies or editing shared auth contracts without explicit review.
+
+## Responsive and accessible
+
+- Build mobile, tablet and desktop behavior intentionally.
+- Prevent page-level horizontal overflow.
+- Use semantic landmarks and heading order.
+- Provide a skip link and visible keyboard focus.
+- Give navigation, buttons, form controls and status indicators accessible names.
+- Do not rely on color alone.
+- Respect reduced-motion preferences.
+- Maintain useful touch target sizes.
+
+## Scope control
+
+The first production wave is Personal Account Overview, Identity Profile and Recovery & Trusted Contacts. Connected Apps, App Permissions, Launcher, Trust and Insights may influence component architecture but require separate contracts and approval before live activation.
+
+## Required checks
+
+Before declaring UI work complete, run the web typecheck, tests and production build, then capture browser evidence at representative desktop and mobile widths. Re-smoke login, account resolution and logout in staging after deployment.
