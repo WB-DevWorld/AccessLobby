@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 import type { Config } from './config.js';
 
-export interface AuthenticatedSubject { issuer: string; subject: string; client: string }
+export interface AuthenticatedSubject { issuer: string; subject: string; client: string; sid?: string }
 export type VerifyToken = (token: string) => Promise<AuthenticatedSubject>;
 
 export async function discovery(issuer: string) {
@@ -34,5 +34,6 @@ export function validateClaims(payload: JWTPayload, settings: Config): Authentic
       !settings.allowedClients.includes(client)) {
     throw new Error('Invalid subject or client');
   }
-  return { issuer: payload.iss, subject: payload.sub, client };
+  return { issuer: payload.iss, subject: payload.sub, client,
+    ...(typeof payload.sid === 'string' ? { sid: payload.sid } : {}) };
 }

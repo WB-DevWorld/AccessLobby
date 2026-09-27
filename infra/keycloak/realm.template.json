@@ -2,8 +2,10 @@
   "realm": "accesslobby-first-party",
   "enabled": true,
   "sslRequired": "external",
-  "registrationAllowed": false,
-  "resetPasswordAllowed": false,
+  "registrationAllowed": true,
+  "verifyEmail": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
   "loginWithEmailAllowed": true,
   "bruteForceProtected": true,
   "eventsEnabled": true,
@@ -23,7 +25,9 @@
       "webOrigins": ["__WEB_ORIGIN__"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "__WEB_ORIGIN__"
+        "post.logout.redirect.uris": "__WEB_ORIGIN__",
+        "backchannel.logout.url": "__API_ORIGIN__/v1/backchannel-logout",
+        "backchannel.logout.session.required": "true"
       },
       "protocolMappers": [
         {

@@ -1,16 +1,20 @@
 import 'reflect-metadata';
-import { Controller, Get, Inject, Module, Req, Res } from '@nestjs/common';
+import { Controller, Get, Inject, Module, Post, Req, Res } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { config } from './config.js';
 import { discovery, tokenVerifier, type VerifyToken } from './auth.js';
 import { PostgresIdentityStore, type IdentityStore } from './identity.js';
+import { logoutVerifier, SessionRevocations } from './logout.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
-const verify = tokenVerifier(settings, await discovery(settings.issuer));
+const jwksUri = await discovery(settings.issuer);
+const verify = tokenVerifier(settings, jwksUri);
+const verifyLogout = logoutVerifier(settings.issuer, jwksUri, 'accesslobby-web');
 const store = new PostgresIdentityStore(pool);
+const revocations = new SessionRevocations(pool);
 
 @Controller()
 class ApiController {
@@ -40,6 +44,10 @@ class ApiController {
       return res.status(401).json({ error: 'unauthorized', requestId });
     }
     try {
+      if (actor.client === 'accesslobby-web' && !actor.sid) return res.status(401).json({ error: 'missing_session', requestId });
+      if (actor.sid && await revocations.isRevoked(actor.issuer, actor.sid)) {
+        return res.status(401).json({ error: 'session_ended', requestId });
+      }
       const person = await this.identities.resolve(actor);
       if (person.status !== 'active') return res.status(403).json({ error: 'identity_suspended', requestId });
       console.info(JSON.stringify({ event: 'identity.resolved', requestId, client: actor.client }));
@@ -48,6 +56,22 @@ class ApiController {
       console.error(JSON.stringify({ event: 'identity.unavailable', requestId }));
       return res.status(503).json({ error: 'identity_unavailable', requestId });
     }
+  }
+
+  @Post('v1/backchannel-logout')
+  async backchannel(@Req() req: any, @Res() res: any) {
+    if (req.headers['content-type']?.split(';')[0] !== 'application/x-www-form-urlencoded') {
+      return res.status(415).send('Expected form data');
+    }
+    const token = req.body?.logout_token;
+    if (typeof token !== 'string' || token.length > 16384) return res.status(400).send('Invalid logout token');
+    let logout;
+    try { logout = await verifyLogout(token); }
+    catch { return res.status(400).send('Invalid logout token'); }
+    try {
+      if (!await revocations.revoke(settings.issuer, logout.sid, logout.jti)) return res.status(400).send('Replay rejected');
+      return res.status(200).send('OK');
+    } catch { return res.status(503).send('Session service unavailable'); }
   }
 }
 

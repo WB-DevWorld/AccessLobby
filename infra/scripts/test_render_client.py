@@ -31,6 +31,15 @@ class ClientRegistrationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             module.representation("accesslobby-api", "http://localhost:4000/callback", "http://localhost:4000/")
 
+    def test_backchannel_is_explicit_and_exact(self):
+        client = module.representation("sample-portal", "https://portal.example.test/callback",
+                                       "https://portal.example.test/", "https://portal.example.test/backchannel-logout")
+        self.assertEqual(client["attributes"]["backchannel.logout.session.required"], "true")
+        self.assertEqual(client["attributes"]["backchannel.logout.url"], "https://portal.example.test/backchannel-logout")
+        with self.assertRaises(ValueError):
+            module.representation("sample-portal", "https://portal.example.test/callback",
+                                  "https://portal.example.test/", "https://other.example.test/backchannel-logout")
+
 
 if __name__ == "__main__":
     unittest.main()

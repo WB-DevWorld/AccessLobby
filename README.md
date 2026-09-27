@@ -4,7 +4,7 @@ AccessLobby is the independent identity product boundary for shared human sign-i
 
 Any compatible application can consume the same [OIDC and identity contract](docs/integration-contract-v0.1.md). Follow [consumer onboarding](docs/consumer-onboarding.md) to register a client and verify it. POII and DonLoft are intended adopters when available; their repositories are not dependencies of AccessLobby.
 
-**Current state:** MVP-0 implementation in progress. No staging or production deployment is claimed. See [CURRENT-WORK.md](CURRENT-WORK.md) and [LIVE-ENVIRONMENT-FACTS.md](LIVE-ENVIRONMENT-FACTS.md).
+**Current state:** MVP-0 implementation in progress. Staging deployment evidence is recorded, but production and real peer adoption are not claimed. See [CURRENT-WORK.md](CURRENT-WORK.md) and [LIVE-ENVIRONMENT-FACTS.md](LIVE-ENVIRONMENT-FACTS.md).
 
 ## Local start
 
@@ -16,7 +16,7 @@ Requirements: Node 24, pnpm 11.19, Docker Compose, Python 3.
 4. `pnpm install --frozen-lockfile`
 5. `pnpm --filter @accesslobby/api migrate`
 6. In separate terminals, `pnpm --filter @accesslobby/api dev` and `pnpm --filter @accesslobby/web dev`.
-7. Provision a controlled pilot user in the local Keycloak realm. Visit `http://localhost:3000` and sign in.
+7. Configure a working Keycloak SMTP server before testing email verification or recovery. Visit `http://localhost:3000` to create an account or sign in. For an existing realm, apply the reviewed updates in [consumer onboarding](docs/consumer-onboarding.md); startup import does not update it.
 
 The local import configures `accesslobby-web` with exact callback `http://localhost:3000/auth/callback` and PKCE S256. Local development uses Keycloak's `start-dev`; production uses `start` behind a trusted HTTPS proxy. An import creates a realm only when absent; changes to an existing realm require explicit reconciliation.
 
