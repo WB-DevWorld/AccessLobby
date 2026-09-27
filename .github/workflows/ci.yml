@@ -69,7 +69,10 @@ jobs:
           for name, service in config['services'].items():
               assert not service.get('ports'), f'{name} publishes a host port'
               assert set(service.get('networks', {})) == expected[name], f'{name} has an unexpected network'
-          print('IAM gateway cannot reach databases; source Compose has no shared network or host ports')
+          web_environment = config['services']['web']['environment']
+          assert web_environment['HOSTNAME'] == '0.0.0.0', 'Web must bind every container interface'
+          assert str(web_environment['PORT']) == '3000', 'Web must listen on the routed container port'
+          print('IAM gateway cannot reach databases; web binds all interfaces; source Compose has no shared network or host ports')
           PY
       - name: Check forbidden source material and secrets
         run: |
@@ -83,6 +86,28 @@ jobs:
           docker build -f apps/web/Dockerfile -t accesslobby-web:ci .
           docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
           docker build -f examples/reference-consumer/Dockerfile -t accesslobby-reference-consumer:ci .
+      - name: Verify web is reachable across a secondary container network
+        run: |
+          docker network create accesslobby-ci-backend
+          docker network create accesslobby-ci-proxy
+          docker run -d --name accesslobby-ci-web --network accesslobby-ci-backend \
+            -e HOSTNAME=0.0.0.0 \
+            -e PORT=3000 \
+            -e WEB_BASE_URL=https://web.example.test \
+            -e OIDC_ISSUER=https://iam.example.test/realms/accesslobby-first-party \
+            -e OIDC_CLIENT_ID=accesslobby-web \
+            -e SESSION_SECRET=ci-only-placeholder \
+            -e API_INTERNAL_URL=http://api:3001 \
+            accesslobby-web:ci
+          docker network connect accesslobby-ci-proxy accesslobby-ci-web
+          for attempt in $(seq 1 20); do
+            if docker run --rm --network accesslobby-ci-proxy curlimages/curl:8.16.0 \
+              --silent --fail http://accesslobby-ci-web:3000/ > /tmp/accesslobby-web.html; then
+              break
+            fi
+            sleep 1
+          done
+          grep -q 'AccessLobby' /tmp/accesslobby-web.html
       - name: Check reference consumer behind an HTTPS proxy
         run: |
           docker run -d --name accesslobby-ci-consumer -p 127.0.0.1:14000:4000 \
