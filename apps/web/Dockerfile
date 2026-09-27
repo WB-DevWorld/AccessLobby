@@ -9,6 +9,8 @@ COPY apps/web apps/web
 RUN pnpm --filter @accesslobby/web build
 FROM node:24.19.0-alpine
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 WORKDIR /app
 COPY --from=build /app/apps/web/.next/standalone ./
 COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
