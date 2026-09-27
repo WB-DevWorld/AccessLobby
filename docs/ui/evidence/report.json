@@ -1,0 +1,1207 @@
+{
+  "reducedMotion": "1e-05s / auto",
+  "checks": [
+    {
+      "route": "/",
+      "viewport": "390x844",
+      "theme": "light",
+      "file": "home-390x844-light.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "COMMON IDENTITY FOR CONNECTED APPLICATIONS\n\nYour identity.\nYour access.\nIn your control.\n\nAccessLobby gives compatible applications one secure sign-in foundation while keeping each",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=z-Wmy2wA8lQapOtclBGaO' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550403922.138,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/",
+      "viewport": "390x844",
+      "theme": "dark",
+      "file": "home-390x844-dark.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "COMMON IDENTITY FOR CONNECTED APPLICATIONS\n\nYour identity.\nYour access.\nIn your control.\n\nAccessLobby gives compatible applications one secure sign-in foundation while keeping each",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=qXRUg6UhVEyGdkV6b7h-2' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550404387.446,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/?error=shared_logout_unavailable",
+      "viewport": "390x844",
+      "theme": "light",
+      "file": "home-logout-error-390x844-light.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "i\nShared sign-out could not be completed\n\nThis app signed out safely, but AccessLobby could not complete sign-out from connected apps. Try the shared sign-out again when the identi",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=OgLkccaISE3Ox0H1pKz3j' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550404816.805,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/account",
+      "viewport": "390x844",
+      "theme": "light",
+      "file": "account-390x844-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=vgUHSiKlu-nhQgcwp9Gwb' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550405249.473,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/account",
+      "viewport": "390x844",
+      "theme": "dark",
+      "file": "account-390x844-dark.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=36Rooz2NI7Hrvwjjzjqrm' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550405700.38,\"url\":\"http://127.0.0.1:300"
+      ]
+    },
+    {
+      "route": "/identity",
+      "viewport": "390x844",
+      "theme": "light",
+      "file": "identity-390x844-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=Vr0msA0vQzKO7VZiTL3EW' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550406118.966,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/recovery",
+      "viewport": "390x844",
+      "theme": "light",
+      "file": "recovery-390x844-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=D3UTUidHl1R3DdTZkTKQx' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550406559.29,\"url\":\"http://127.0.0.1:300"
+      ]
+    },
+    {
+      "route": "/preview?screen=account",
+      "viewport": "390x844",
+      "theme": "light",
+      "file": "preview-account-390x844-light.png",
+      "h1": "Personal Account Overview",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 7,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\nAccessLobby identity resolved\nActive\n\nYour durable person identity is activ",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=ug9G7CEYKQbZ1cNrP_rdI' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550407122.456,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/preview?screen=account",
+      "viewport": "390x844",
+      "theme": "dark",
+      "file": "preview-account-390x844-dark.png",
+      "h1": "Personal Account Overview",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 7,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\nAccessLobby identity resolved\nActive\n\nYour durable person identity is activ",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=yd5OeuP2DQ2SBDFG9_834' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550407808.806,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/preview?screen=identity",
+      "viewport": "390x844",
+      "theme": "light",
+      "file": "preview-identity-390x844-light.png",
+      "h1": "Identity Profile",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 6,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\n\nACCESSLOBBY PERSON\n\nProvider-independent identity\nActive\nDurable ID\nPERSON",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=VHovoUL1Go1aDfslkBgpo' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550408446.957,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/preview?screen=identity",
+      "viewport": "390x844",
+      "theme": "dark",
+      "file": "preview-identity-390x844-dark.png",
+      "h1": "Identity Profile",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 6,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\n\nACCESSLOBBY PERSON\n\nProvider-independent identity\nActive\nDurable ID\nPERSON",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=D0ply1eLmmhrwduA5S4Ry' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550409361.541,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/preview?screen=recovery",
+      "viewport": "390x844",
+      "theme": "light",
+      "file": "preview-recovery-390x844-light.png",
+      "h1": "Recovery & Trusted Contacts",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 5,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nFEATURE STATE\n\nRecovery foundation is being prepared\n\nTrusted contacts, backup",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=QKrBWW7far1NG4ljxeBKp' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550410276.1,\"url\":\"http://127.0.0.1:3000"
+      ]
+    },
+    {
+      "route": "/preview?screen=recovery",
+      "viewport": "390x844",
+      "theme": "dark",
+      "file": "preview-recovery-390x844-dark.png",
+      "h1": "Recovery & Trusted Contacts",
+      "overflow": false,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 5,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nFEATURE STATE\n\nRecovery foundation is being prepared\n\nTrusted contacts, backup",
+      "consoleErrors": [
+        "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"network\",\"level\":\"error\",\"text\":\"WebSocket connection to 'ws://127.0.0.1:3000/_next/hmr?id=atZruOD2rJTut4wix1ihl' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE\",\"timestamp\":1790550411166.599,\"url\":\"http://127.0.0.1:30"
+      ]
+    },
+    {
+      "route": "/",
+      "viewport": "768x1024",
+      "theme": "light",
+      "file": "home-768x1024-light.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "COMMON IDENTITY FOR CONNECTED APPLICATIONS\n\nYour identity.\nYour access.\nIn your control.\n\nAccessLobby gives compatible applications one secure sign-in foundation while keeping each",
+      "consoleErrors": []
+    },
+    {
+      "route": "/?error=shared_logout_unavailable",
+      "viewport": "768x1024",
+      "theme": "light",
+      "file": "home-logout-error-768x1024-light.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "i\nShared sign-out could not be completed\n\nThis app signed out safely, but AccessLobby could not complete sign-out from connected apps. Try the shared sign-out again when the identi",
+      "consoleErrors": []
+    },
+    {
+      "route": "/account",
+      "viewport": "768x1024",
+      "theme": "light",
+      "file": "account-768x1024-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/identity",
+      "viewport": "768x1024",
+      "theme": "light",
+      "file": "identity-768x1024-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/recovery",
+      "viewport": "768x1024",
+      "theme": "light",
+      "file": "recovery-768x1024-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=account",
+      "viewport": "768x1024",
+      "theme": "light",
+      "file": "preview-account-768x1024-light.png",
+      "h1": "Personal Account Overview",
+      "overflow": false,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 7,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\nAccessLobby identity resolved\nActive\n\nYour durable person identity is activ",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=identity",
+      "viewport": "768x1024",
+      "theme": "light",
+      "file": "preview-identity-768x1024-light.png",
+      "h1": "Identity Profile",
+      "overflow": false,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 6,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\n\nACCESSLOBBY PERSON\n\nProvider-independent identity\nActive\nDurable ID\nPERSON",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=recovery",
+      "viewport": "768x1024",
+      "theme": "light",
+      "file": "preview-recovery-768x1024-light.png",
+      "h1": "Recovery & Trusted Contacts",
+      "overflow": false,
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 5,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nFEATURE STATE\n\nRecovery foundation is being prepared\n\nTrusted contacts, backup",
+      "consoleErrors": []
+    },
+    {
+      "route": "/",
+      "viewport": "1366x768",
+      "theme": "light",
+      "file": "home-1366x768-light.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "COMMON IDENTITY FOR CONNECTED APPLICATIONS\n\nYour identity.\nYour access.\nIn your control.\n\nAccessLobby gives compatible applications one secure sign-in foundation while keeping each",
+      "consoleErrors": []
+    },
+    {
+      "route": "/?error=shared_logout_unavailable",
+      "viewport": "1366x768",
+      "theme": "light",
+      "file": "home-logout-error-1366x768-light.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "i\nShared sign-out could not be completed\n\nThis app signed out safely, but AccessLobby could not complete sign-out from connected apps. Try the shared sign-out again when the identi",
+      "consoleErrors": []
+    },
+    {
+      "route": "/account",
+      "viewport": "1366x768",
+      "theme": "light",
+      "file": "account-1366x768-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/identity",
+      "viewport": "1366x768",
+      "theme": "light",
+      "file": "identity-1366x768-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/recovery",
+      "viewport": "1366x768",
+      "theme": "light",
+      "file": "recovery-1366x768-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=account",
+      "viewport": "1366x768",
+      "theme": "light",
+      "file": "preview-account-1366x768-light.png",
+      "h1": "Personal Account Overview",
+      "overflow": false,
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 7,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\nAccessLobby identity resolved\nActive\n\nYour durable person identity is activ",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=identity",
+      "viewport": "1366x768",
+      "theme": "light",
+      "file": "preview-identity-1366x768-light.png",
+      "h1": "Identity Profile",
+      "overflow": false,
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 6,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\n\nACCESSLOBBY PERSON\n\nProvider-independent identity\nActive\nDurable ID\nPERSON",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=recovery",
+      "viewport": "1366x768",
+      "theme": "light",
+      "file": "preview-recovery-1366x768-light.png",
+      "h1": "Recovery & Trusted Contacts",
+      "overflow": false,
+      "scrollWidth": 1366,
+      "clientWidth": 1366,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 5,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nFEATURE STATE\n\nRecovery foundation is being prepared\n\nTrusted contacts, backup",
+      "consoleErrors": []
+    },
+    {
+      "route": "/",
+      "viewport": "1440x900",
+      "theme": "light",
+      "file": "home-1440x900-light.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "COMMON IDENTITY FOR CONNECTED APPLICATIONS\n\nYour identity.\nYour access.\nIn your control.\n\nAccessLobby gives compatible applications one secure sign-in foundation while keeping each",
+      "consoleErrors": []
+    },
+    {
+      "route": "/",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "file": "home-1440x900-dark.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "COMMON IDENTITY FOR CONNECTED APPLICATIONS\n\nYour identity.\nYour access.\nIn your control.\n\nAccessLobby gives compatible applications one secure sign-in foundation while keeping each",
+      "consoleErrors": []
+    },
+    {
+      "route": "/?error=shared_logout_unavailable",
+      "viewport": "1440x900",
+      "theme": "light",
+      "file": "home-logout-error-1440x900-light.png",
+      "h1": "Your identity.Your access.In your control.",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 1
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "i\nShared sign-out could not be completed\n\nThis app signed out safely, but AccessLobby could not complete sign-out from connected apps. Try the shared sign-out again when the identi",
+      "consoleErrors": []
+    },
+    {
+      "route": "/account",
+      "viewport": "1440x900",
+      "theme": "light",
+      "file": "account-1440x900-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/account",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "file": "account-1440x900-dark.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/identity",
+      "viewport": "1440x900",
+      "theme": "light",
+      "file": "identity-1440x900-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/recovery",
+      "viewport": "1440x900",
+      "theme": "light",
+      "file": "recovery-1440x900-light.png",
+      "h1": "Sign in to continue",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 1,
+        "main": 1,
+        "nav": 0,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "→\n\nACCESSLOBBY ACCOUNT\n\nSign in to continue\n\nUse AccessLobby to securely continue to your identity and account controls.\n\nSign in with AccessLobby\nReturn home",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=account",
+      "viewport": "1440x900",
+      "theme": "light",
+      "file": "preview-account-1440x900-light.png",
+      "h1": "Personal Account Overview",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 7,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\nAccessLobby identity resolved\nActive\n\nYour durable person identity is activ",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=account",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "file": "preview-account-1440x900-dark.png",
+      "h1": "Personal Account Overview",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 7,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\nAccessLobby identity resolved\nActive\n\nYour durable person identity is activ",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=identity",
+      "viewport": "1440x900",
+      "theme": "light",
+      "file": "preview-identity-1440x900-light.png",
+      "h1": "Identity Profile",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 6,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\n\nACCESSLOBBY PERSON\n\nProvider-independent identity\nActive\nDurable ID\nPERSON",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=identity",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "file": "preview-identity-1440x900-dark.png",
+      "h1": "Identity Profile",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 6,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nAL\n\nACCESSLOBBY PERSON\n\nProvider-independent identity\nActive\nDurable ID\nPERSON",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=recovery",
+      "viewport": "1440x900",
+      "theme": "light",
+      "file": "preview-recovery-1440x900-light.png",
+      "h1": "Recovery & Trusted Contacts",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 5,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(8, 70, 199)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nFEATURE STATE\n\nRecovery foundation is being prepared\n\nTrusted contacts, backup",
+      "consoleErrors": []
+    },
+    {
+      "route": "/preview?screen=recovery",
+      "viewport": "1440x900",
+      "theme": "dark",
+      "file": "preview-recovery-1440x900-dark.png",
+      "h1": "Recovery & Trusted Contacts",
+      "overflow": false,
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflowing": [],
+      "smallTargets": [],
+      "overlay": true,
+      "landmarks": {
+        "header": 5,
+        "main": 1,
+        "nav": 3,
+        "footer": 0
+      },
+      "skip": true,
+      "focus": {
+        "tag": "A",
+        "text": "Skip to main content",
+        "outline": "solid 3px rgb(185, 210, 255)"
+      },
+      "motion": "0.18s, 0.18s, 0.18s, 0.18s",
+      "mainText": "Layout preview only. No live account is signed in, and this identifier is not an AccessLobby person.\n\nFEATURE STATE\n\nRecovery foundation is being prepared\n\nTrusted contacts, backup",
+      "consoleErrors": []
+    }
+  ]
+}
