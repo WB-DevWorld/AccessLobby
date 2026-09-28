@@ -1,5 +1,8 @@
 {
   "realm": "accesslobby-first-party",
+  "displayName": "AccessLobby",
+  "displayNameHtml": "AccessLobby",
+  "loginTheme": "accesslobby",
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": false,
