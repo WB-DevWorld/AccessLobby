@@ -26,7 +26,7 @@ services:
       interval: 10s
       retries: 10
   iam:
-    image: quay.io/keycloak/keycloak:26.7.4
+    image: ${IAM_IMAGE:?pin qualified image digest}
     restart: unless-stopped
     command: ["start", "--import-realm"]
     environment:
@@ -46,7 +46,7 @@ services:
     depends_on:
       iam-db: { condition: service_healthy }
   iam-config:
-    image: quay.io/keycloak/keycloak:26.7.4
+    image: ${IAM_IMAGE:?pin qualified image digest}
     restart: "no"
     entrypoint: ["/bin/bash", "/opt/accesslobby/reconcile-realm.sh"]
     environment:
@@ -54,6 +54,8 @@ services:
       IAM_REALM: accesslobby-first-party
       IAM_ADMIN_USERNAME: ${IAM_ADMIN_USERNAME:?}
       IAM_ADMIN_PASSWORD: ${IAM_ADMIN_PASSWORD:?}
+      IAM_LOGIN_THEME: accesslobby
+      IAM_DISPLAY_NAME: AccessLobby
       PUBLIC_REGISTRATION_ENABLED: ${PUBLIC_REGISTRATION_ENABLED:-false}
       IAM_VERIFY_EMAIL: ${IAM_VERIFY_EMAIL:-false}
       IAM_RESET_PASSWORD_ENABLED: ${IAM_RESET_PASSWORD_ENABLED:-false}
@@ -77,6 +79,8 @@ services:
     image: ${WEB_IMAGE:?pin qualified image digest}
     restart: unless-stopped
     environment:
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
       WEB_BASE_URL: ${WEB_BASE_URL:?}
       OIDC_ISSUER: ${OIDC_ISSUER:?}
       OIDC_CLIENT_ID: accesslobby-web
