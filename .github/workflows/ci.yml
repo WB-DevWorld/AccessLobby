@@ -51,6 +51,7 @@ jobs:
           PUBLIC_REGISTRATION_ENABLED: "false"
           IAM_VERIFY_EMAIL: "false"
           IAM_RESET_PASSWORD_ENABLED: "false"
+          IAM_IMAGE: ghcr.io/example/iam@sha256:0000000000000000000000000000000000000000000000000000000000000000
           API_IMAGE: ghcr.io/example/api@sha256:0000000000000000000000000000000000000000000000000000000000000000
           WEB_IMAGE: ghcr.io/example/web@sha256:0000000000000000000000000000000000000000000000000000000000000000
           IAM_GATEWAY_IMAGE: ghcr.io/example/iam-gateway@sha256:0000000000000000000000000000000000000000000000000000000000000000
@@ -73,15 +74,19 @@ jobs:
           for name, service in config['services'].items():
               assert not service.get('ports'), f'{name} publishes a host port'
               assert set(service.get('networks', {})) == expected[name], f'{name} has an unexpected network'
+          assert config['services']['iam']['image'].startswith('ghcr.io/example/iam@sha256:')
+          assert config['services']['iam-config']['image'] == config['services']['iam']['image']
           web_environment = config['services']['web']['environment']
           assert web_environment['HOSTNAME'] == '0.0.0.0', 'Web must bind every container interface'
           assert str(web_environment['PORT']) == '3000', 'Web must listen on the routed container port'
           assert str(web_environment['PUBLIC_REGISTRATION_ENABLED']).lower() == 'false'
           iam_config = config['services']['iam-config']['environment']
+          assert iam_config['IAM_LOGIN_THEME'] == 'accesslobby'
+          assert iam_config['IAM_DISPLAY_NAME'] == 'AccessLobby'
           assert str(iam_config['PUBLIC_REGISTRATION_ENABLED']).lower() == 'false'
           assert str(iam_config['IAM_VERIFY_EMAIL']).lower() == 'false'
           assert str(iam_config['IAM_RESET_PASSWORD_ENABLED']).lower() == 'false'
-          print('IAM settings reconcile privately; web binds all interfaces; source Compose has no shared network or host ports')
+          print('Branded IAM reconciles privately; web binds all interfaces; source Compose has no shared network or host ports')
           PY
       - name: Check forbidden source material and secrets
         run: |
@@ -93,6 +98,7 @@ jobs:
         run: |
           docker build -f apps/api/Dockerfile -t accesslobby-api:ci .
           docker build -f apps/web/Dockerfile -t accesslobby-web:ci .
+          docker build -f infra/keycloak/Dockerfile -t accesslobby-iam:ci .
           docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
           docker build -f examples/reference-consumer/Dockerfile -t accesslobby-reference-consumer:ci .
       - name: Verify web is reachable across a secondary container network
@@ -141,9 +147,11 @@ jobs:
           grep -q 'We could not complete sign-in' /tmp/bad-consumer-callback
   iam-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - name: Build branded IAM image
+        run: docker build -f infra/keycloak/Dockerfile -t accesslobby-iam:ci .
       - name: Render local realm and start IAM
         env:
           WEB_BASE_URL: http://localhost:3000
@@ -170,7 +178,7 @@ jobs:
             -e KC_BOOTSTRAP_ADMIN_USERNAME=ci-admin \
             -e KC_BOOTSTRAP_ADMIN_PASSWORD=ci-admin-password \
             -e KC_PROXY_HEADERS=xforwarded \
-            quay.io/keycloak/keycloak:26.7.4 start-dev --import-realm
+            accesslobby-iam:ci start-dev --import-realm
       - name: Verify discovery and JWKS
         run: |
           for attempt in $(seq 1 60); do
@@ -193,26 +201,31 @@ jobs:
             -e IAM_REALM=accesslobby-first-party \
             -e IAM_ADMIN_USERNAME=ci-admin \
             -e IAM_ADMIN_PASSWORD=ci-admin-password \
+            -e IAM_LOGIN_THEME=accesslobby \
+            -e IAM_DISPLAY_NAME=AccessLobby \
             -e PUBLIC_REGISTRATION_ENABLED=true \
             -e IAM_VERIFY_EMAIL=false \
             -e IAM_RESET_PASSWORD_ENABLED=true \
             --entrypoint /bin/bash \
-            quay.io/keycloak/keycloak:26.7.4 /opt/accesslobby/reconcile-realm.sh
+            accesslobby-iam:ci /opt/accesslobby/reconcile-realm.sh
           docker exec accesslobby-ci-iam /opt/keycloak/bin/kcadm.sh config credentials \
             --server http://127.0.0.1:8080 --realm master --user ci-admin --password ci-admin-password
           docker exec accesslobby-ci-iam /opt/keycloak/bin/kcadm.sh get realms/accesslobby-first-party > /tmp/reconciled-realm.json
           python3 - <<'PY'
           import json
           data = json.load(open('/tmp/reconciled-realm.json'))
+          assert data['displayName'] == 'AccessLobby'
+          assert data['displayNameHtml'] == 'AccessLobby'
+          assert data['loginTheme'] == 'accesslobby'
           assert data['registrationAllowed'] is True
           assert data['verifyEmail'] is False
           assert data['resetPasswordAllowed'] is True
           assert data['loginWithEmailAllowed'] is True
           assert data['duplicateEmailsAllowed'] is False
           assert data['bruteForceProtected'] is True
-          print('Existing realm registration and recovery settings reconciled')
+          print('Existing realm branding, registration and recovery settings reconciled')
           PY
-      - name: Check generic client and exact callback registration
+      - name: Check branded pages and exact callback registration
         run: |
           issuer=http://localhost:8080/realms/accesslobby-first-party
           good=$(curl -sS -o /tmp/good-login -w '%{http_code}' -G "$issuer/protocol/openid-connect/auth" \
@@ -235,8 +248,12 @@ jobs:
             --data-urlencode code_challenge_method=S256 \
             --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)
           test "$good" = 200
+          grep -q 'Sign in to AccessLobby' /tmp/good-login
+          grep -q 'accesslobby.css' /tmp/good-login
+          ! grep -q 'ACCESSLOBBY-FIRST-PARTY' /tmp/good-login
           test "$register" = 200
-          grep -Eqi 'register|create|username|email' /tmp/register-login
+          grep -q 'Create your AccessLobby account' /tmp/register-login
+          ! grep -q 'ACCESSLOBBY-FIRST-PARTY' /tmp/register-login
           test "$bad" = 400
       - name: Verify public IAM gateway path and proxy headers
         run: |
