@@ -98,13 +98,15 @@ def json_object(body: bytes) -> dict:
 
 
 def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str | None,
-        check_auth_pages: bool = False) -> dict:
+        check_auth_pages: bool = False, consumer_home_samples: int = 1) -> dict:
     web = checked_url(web, origin=True)
     api = checked_url(api, origin=True)
     issuer = checked_url(issuer, origin=False)
     consumer = checked_url(consumer, origin=True) if consumer else None
     if expected_sha and not SHA.fullmatch(expected_sha):
         raise ValueError("Expected SHA must be a full 40-character lowercase Git commit")
+    if consumer_home_samples < 1 or consumer_home_samples > 10 or (consumer_home_samples > 1 and not consumer):
+        raise ValueError("Consumer home samples must be 1–10 and require a consumer origin")
 
     report = {"checkedAt": datetime.now(timezone.utc).isoformat(), "expectedSha": expected_sha,
               "checks": [], "passed": False}
@@ -112,6 +114,7 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
     def check(name: str, url: str, statuses: set[int], predicate=None, *, accept=None):
         entry = {"name": name, "passed": False}
         report["checks"].append(entry)
+        started = time.monotonic()
         try:
             status, body, content_type = read_url(url, accept=accept) if accept else read_url(url)
             entry["status"] = status
@@ -124,6 +127,8 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
             entry["passed"] = True
         except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
             entry["reason"] = "invalid_or_unavailable_response"
+        finally:
+            entry["durationMs"] = round((time.monotonic() - started) * 1000)
 
     def web_check(body, _content_type):
         if b"AccessLobby" not in body:
@@ -168,6 +173,8 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
         check("gateway.denies_" + name, iam_origin + path, {400, 403, 404})
     if consumer:
         check("consumer.home", consumer + "/", {200})
+        for sample in range(2, consumer_home_samples + 1):
+            check(f"consumer.home.sample_{sample}", consumer + "/", {200})
         check("consumer.private_unauthenticated", consumer + "/private", {401})
         check("consumer.rejects_bad_callback", consumer + "/callback?state=invalid&code=invalid", {400})
 
@@ -227,11 +234,13 @@ def main() -> int:
     parser.add_argument("--expected-sha")
     parser.add_argument("--check-auth-pages", action="store_true",
                         help="Check live branded login, registration and invalid-request pages without signing in")
+    parser.add_argument("--consumer-home-samples", type=int, default=1,
+                        help="Repeat the public consumer home check 1–10 times to detect intermittent failures")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
         report = run(args.web_origin, args.api_origin, args.issuer, args.consumer_origin, args.expected_sha,
-                     args.check_auth_pages)
+                     args.check_auth_pages, args.consumer_home_samples)
     except ValueError as error:
         parser.error(str(error))
     args.output.parent.mkdir(parents=True, exist_ok=True)

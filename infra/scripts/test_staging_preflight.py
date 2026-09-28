@@ -161,6 +161,34 @@ class StagingPreflightTests(unittest.TestCase):
         self.assertEqual({check["name"] for check in result["checks"] if not check["passed"]},
                          {"auth.login_theme", "auth.registration_theme", "auth.rejects_bad_redirect"})
 
+    def test_bounded_consumer_samples_report_intermittent_status_without_body(self):
+        data = fixture()
+        calls = 0
+
+        def read(url):
+            nonlocal calls
+            if url == CONSUMER + "/":
+                calls += 1
+                if calls == 3:
+                    return 502, b"private proxy detail", "text/plain"
+            return data[url]
+
+        with patch.object(preflight, "read_url", side_effect=read):
+            result = preflight.run(WEB, API, ISSUER, CONSUMER, SHA, consumer_home_samples=5)
+        self.assertFalse(result["passed"])
+        self.assertEqual(calls, 5)
+        self.assertEqual(len(result["checks"]), 18)
+        self.assertEqual([item["name"] for item in result["checks"] if not item["passed"]],
+                         ["consumer.home.sample_3"])
+        self.assertTrue(all("durationMs" in item for item in result["checks"]))
+        self.assertNotIn("private proxy detail", json.dumps(result))
+
+    def test_extra_consumer_samples_require_consumer_origin(self):
+        with self.assertRaises(ValueError):
+            preflight.run(WEB, API, ISSUER, None, SHA, consumer_home_samples=2)
+        with self.assertRaises(ValueError):
+            preflight.run(WEB, API, ISSUER, CONSUMER, SHA, consumer_home_samples=11)
+
 
 if __name__ == "__main__":
     unittest.main()
