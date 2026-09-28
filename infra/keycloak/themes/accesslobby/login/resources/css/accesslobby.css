@@ -1,0 +1,337 @@
+:root {
+  --al-ink: #0b1733;
+  --al-muted: #5c6d8b;
+  --al-blue: #1558d6;
+  --al-blue-strong: #0d47bd;
+  --al-blue-soft: #e9f1ff;
+  --al-surface: rgba(255, 255, 255, 0.97);
+  --al-border: #cddbf2;
+  --al-background: #f2f6fc;
+  --al-shadow: 0 24px 70px rgba(35, 66, 117, 0.15);
+  --keycloak-bg-logo-url: none;
+  --keycloak-logo-url: none;
+  --keycloak-card-top-color: transparent;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+.login-pf body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--al-ink);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(67, 126, 232, 0.16), transparent 31rem),
+    linear-gradient(180deg, #f6f9fe 0%, var(--al-background) 100%);
+  background-attachment: fixed;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.pf-v5-c-login,
+.login-pf-page {
+  min-height: 100vh;
+}
+
+.pf-v5-c-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 3rem);
+}
+
+.pf-v5-c-login__container {
+  width: min(100%, 38rem);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "header" "main";
+  gap: 1rem;
+}
+
+#kc-header {
+  margin: 0;
+  padding: 0;
+}
+
+#kc-header-wrapper {
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--al-ink) !important;
+  font-size: 0;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-transform: none;
+}
+
+#kc-header-wrapper::before {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+  content: "";
+  background: url("../img/accesslobby-mark.svg") center / contain no-repeat;
+}
+
+#kc-header-wrapper::after {
+  content: "AccessLobby";
+  font-size: 1.35rem;
+}
+
+.pf-v5-c-login__main,
+.card-pf {
+  width: 100%;
+  overflow: hidden;
+  color: var(--al-ink);
+  background: var(--al-surface);
+  border: 1px solid var(--al-border);
+  border-radius: 1.5rem;
+  box-shadow: var(--al-shadow);
+}
+
+.pf-v5-c-login__main-header,
+.login-pf-header {
+  padding: clamp(1.5rem, 5vw, 2.35rem) clamp(1.25rem, 5vw, 2.5rem) 1rem;
+  border: 0;
+}
+
+.pf-v5-c-login__main-body,
+#kc-content,
+#kc-content-wrapper {
+  min-width: 0;
+}
+
+#kc-content {
+  padding: 0 clamp(1.25rem, 5vw, 2.5rem) clamp(1.5rem, 5vw, 2.5rem);
+}
+
+#kc-page-title {
+  margin: 0;
+  color: var(--al-ink);
+  font-size: clamp(1.8rem, 6vw, 2.55rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+.pf-v5-c-form,
+#kc-form-login,
+#kc-register-form,
+#kc-logout-confirm {
+  width: 100%;
+}
+
+.pf-v5-c-form__group,
+.form-group {
+  margin-block-end: 1.1rem;
+}
+
+.pf-v5-c-form__label,
+.pf-v5-c-form__label-text,
+.control-label,
+label {
+  color: var(--al-ink);
+  font-weight: 700;
+}
+
+.pf-v5-c-form-control,
+.form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  min-height: 3rem;
+  color: var(--al-ink);
+  background: #fff;
+  border: 1px solid #b8c9e5;
+  border-radius: 0.75rem;
+  box-shadow: none;
+}
+
+.pf-v5-c-form-control:focus-within,
+.form-control:focus,
+input:focus {
+  border-color: var(--al-blue);
+  outline: 3px solid rgba(21, 88, 214, 0.2);
+  outline-offset: 1px;
+}
+
+.pf-v5-c-button,
+.btn {
+  min-height: 3rem;
+  border-radius: 0.75rem;
+  font-weight: 750;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.pf-v5-c-button.pf-m-primary,
+.btn-primary,
+input[type="submit"] {
+  color: #fff;
+  background: var(--al-blue);
+  border-color: var(--al-blue);
+  box-shadow: 0 10px 26px rgba(21, 88, 214, 0.22);
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+.btn-primary:hover,
+input[type="submit"]:hover {
+  background: var(--al-blue-strong);
+  border-color: var(--al-blue-strong);
+  transform: translateY(-1px);
+}
+
+.pf-v5-c-button:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(21, 88, 214, 0.3);
+  outline-offset: 3px;
+}
+
+a {
+  color: var(--al-blue);
+  font-weight: 650;
+}
+
+a:hover {
+  color: var(--al-blue-strong);
+}
+
+#kc-info,
+.pf-v5-c-login__main-footer-band {
+  margin-block-start: 1.25rem;
+  padding: 1rem 1.1rem;
+  color: var(--al-muted);
+  background: var(--al-blue-soft);
+  border: 1px solid #d6e4fb;
+  border-radius: 0.9rem;
+}
+
+#kc-info-wrapper,
+#kc-registration,
+.subtitle,
+.instruction,
+.pf-v5-c-helper-text,
+.pf-v5-c-form__helper-text {
+  color: var(--al-muted);
+}
+
+.pf-v5-c-alert,
+.alert-error,
+.alert-warning,
+.alert-success,
+.alert-info {
+  border-radius: 0.8rem;
+}
+
+#kc-locale-dropdown button,
+#kc-current-locale-link {
+  min-height: 2.75rem;
+  color: var(--al-ink);
+  background: transparent;
+  border: 1px solid var(--al-border);
+  border-radius: 0.7rem;
+}
+
+hr {
+  border-color: var(--al-border);
+}
+
+@media (max-width: 480px) {
+  .pf-v5-c-login {
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+
+  .pf-v5-c-login__container {
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  #kc-header-wrapper {
+    justify-content: flex-start;
+    min-height: 2.75rem;
+  }
+
+  #kc-header-wrapper::before {
+    width: 2rem;
+    height: 2rem;
+    flex-basis: 2rem;
+  }
+
+  #kc-header-wrapper::after {
+    font-size: 1.1rem;
+  }
+
+  .pf-v5-c-login__main,
+  .card-pf {
+    border-radius: 1.1rem;
+  }
+
+  .pf-v5-c-login__main-header,
+  .login-pf-header {
+    padding: 1.35rem 1rem 0.8rem;
+  }
+
+  #kc-content {
+    padding: 0 1rem 1.35rem;
+  }
+
+  #kc-page-title {
+    font-size: clamp(1.65rem, 9vw, 2.1rem);
+  }
+
+  .pf-v5-c-button,
+  .btn,
+  input[type="submit"] {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --al-ink: #f4f7ff;
+    --al-muted: #b4c1d9;
+    --al-blue: #6f9dff;
+    --al-blue-strong: #8bb0ff;
+    --al-blue-soft: #132744;
+    --al-surface: rgba(12, 27, 49, 0.97);
+    --al-border: #294465;
+    --al-background: #071425;
+    --al-shadow: 0 24px 70px rgba(0, 0, 0, 0.36);
+  }
+
+  .login-pf body {
+    background:
+      radial-gradient(circle at 50% 16%, rgba(54, 103, 196, 0.2), transparent 30rem),
+      linear-gradient(180deg, #071425 0%, #06101e 100%);
+  }
+
+  .pf-v5-c-form-control,
+  .form-control,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    color: var(--al-ink);
+    background: #0b1c33;
+    border-color: #365477;
+  }
+
+  #kc-locale-dropdown button,
+  #kc-current-locale-link {
+    color: var(--al-ink);
+  }
+}
