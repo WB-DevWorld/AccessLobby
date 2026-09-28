@@ -90,16 +90,16 @@ export function AccountAccessState({ result }: { result: Exclude<CurrentIdentity
       </header>
       <main className="state-panel" id="main-content">
         <div className="state-icon" aria-hidden="true">{signedOut ? '→' : '!'}</div>
-        <p className="eyebrow">AccessLobby account</p>
-        <h1>{signedOut ? 'Sign in to continue' : 'Identity service unavailable'}</h1>
+        <p className="eyebrow">Your AccessLobby account</p>
+        <h1>{signedOut ? 'Sign in to continue' : 'We cannot load your account right now'}</h1>
         <p>
           {signedOut
-            ? 'Use AccessLobby to securely continue to your identity and account controls.'
-            : 'We could not resolve your identity safely. No account information has been substituted or guessed.'}
+            ? 'Sign in to view your AccessLobby account and account controls.'
+            : 'Your account information was not changed or replaced. Please try again when the service is available.'}
         </p>
         <div className="state-actions">
           <Link className="button button-primary" href="/auth/login">
-            {signedOut ? 'Sign in with AccessLobby' : 'Try signing in again'}
+            {signedOut ? 'Sign in' : 'Try again'}
           </Link>
           <Link className="button button-secondary" href="/">Return home</Link>
         </div>

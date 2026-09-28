@@ -13,20 +13,20 @@ export const dynamic = 'force-dynamic';
 
 const plannedMethods = [
   {
-    title: 'Verified recovery contact',
-    description: 'A carefully verified email or phone recovery method with lifecycle and change protection.',
+    title: 'Verified recovery email or phone',
+    description: 'A confirmed contact method that can help you regain access safely.',
   },
   {
     title: 'Backup recovery codes',
-    description: 'One-time codes generated, stored and rotated through an approved secure workflow.',
+    description: 'One-time codes you can store somewhere safe and use if your normal sign-in method is unavailable.',
   },
   {
     title: 'Trusted contacts',
-    description: 'Explicitly invited people with limited, auditable recovery authority—not account access.',
+    description: 'People you choose who may help confirm a recovery request without receiving access to your account.',
   },
   {
-    title: 'Trusted device or passkey recovery',
-    description: 'Recovery using an approved authenticator without turning a device into the canonical identity.',
+    title: 'Trusted device or passkey',
+    description: 'A previously approved device or passkey that may help you recover access securely.',
   },
 ];
 
@@ -38,8 +38,8 @@ export default async function RecoveryPage() {
   return (
     <AppShell
       active="recovery"
-      title="Recovery & Trusted Contacts"
-      description="A truthful preview of the recovery controls planned for AccessLobby."
+      title="Account recovery"
+      description="Recovery options are not active yet. This page shows what is planned and what you can do now."
       personStatus={identity.person.status}
     >
       <section className="recovery-hero">
@@ -51,12 +51,12 @@ export default async function RecoveryPage() {
           </svg>
         </div>
         <div>
-          <p className="eyebrow">Feature state</p>
+          <p className="eyebrow">Not active yet</p>
           <h2>{productFeatures.recovery.title}</h2>
           <p>{productFeatures.recovery.description}</p>
           <div className="profile-badges">
             <StatusBadge tone="warning">Planned</StatusBadge>
-            <StatusBadge tone="neutral">No data collected</StatusBadge>
+            <StatusBadge tone="neutral">No recovery data collected</StatusBadge>
           </div>
         </div>
       </section>
@@ -64,21 +64,21 @@ export default async function RecoveryPage() {
       <section className="recovery-grid">
         <SurfaceCard title="Available now">
           <ul className="check-list">
-            <li>Standards-based AccessLobby sign-in</li>
-            <li>Safe sign-out and re-entry</li>
-            <li>Durable person identity resolution</li>
-            <li>Controlled pilot account administration</li>
+            <li>Sign in securely with AccessLobby</li>
+            <li>Sign out and sign in again safely</li>
+            <li>Return to the same AccessLobby account</li>
+            <li>Ask an administrator for pilot-account help</li>
           </ul>
         </SurfaceCard>
 
-        <SurfaceCard title="Why recovery is gated">
+        <SurfaceCard title="Why we are waiting">
           <p className="card-copy">
-            Recovery changes who can regain control of an identity. The UI will not collect contacts, generate codes or imply authority before the backend security model, audit rules and revocation behavior are approved.
+            Recovery can give someone control of an account. We will activate it only after the checks, audit trail and emergency rules have been tested.
           </p>
-          <Link className="text-link" href="/identity">Review your current identity facts</Link>
+          <Link className="text-link" href="/identity">Review your profile</Link>
         </SurfaceCard>
 
-        <SurfaceCard title="Planned recovery methods" className="recovery-wide-card">
+        <SurfaceCard title="Planned recovery options" className="recovery-wide-card">
           <div className="planned-methods">
             {plannedMethods.map((method, index) => (
               <article key={method.title}>
@@ -89,10 +89,10 @@ export default async function RecoveryPage() {
           </div>
         </SurfaceCard>
 
-        <SurfaceCard title="Trusted contacts are not app administrators" className="recovery-wide-card">
+        <SurfaceCard title="Trusted contacts will have limited authority" className="recovery-wide-card">
           <AvailabilityPanel
-            title="Recovery authority will be narrow and auditable"
-            description="A future trusted contact may help confirm recovery under an approved process. That role must not grant access to connected apps, files, orders, knowledge or other domain resources."
+            title="A trusted contact will not become an account administrator"
+            description="A future trusted contact may help confirm a recovery request, but will not automatically gain access to your apps, files, orders or other information."
           />
         </SurfaceCard>
       </section>

@@ -48,6 +48,9 @@ jobs:
           WEB_BASE_URL: https://web.example.test
           ALLOWED_CLIENT_IDS: accesslobby-web
           SESSION_SECRET: ci-only-placeholder
+          PUBLIC_REGISTRATION_ENABLED: "false"
+          IAM_VERIFY_EMAIL: "false"
+          IAM_RESET_PASSWORD_ENABLED: "false"
           API_IMAGE: ghcr.io/example/api@sha256:0000000000000000000000000000000000000000000000000000000000000000
           WEB_IMAGE: ghcr.io/example/web@sha256:0000000000000000000000000000000000000000000000000000000000000000
           IAM_GATEWAY_IMAGE: ghcr.io/example/iam-gateway@sha256:0000000000000000000000000000000000000000000000000000000000000000
@@ -62,8 +65,9 @@ jobs:
           assert all(network['internal'] for network in config['networks'].values())
           expected = {
               'iam-db': {'backend'}, 'identity-db': {'backend'},
-              'iam': {'backend', 'iam-edge'}, 'iam-gateway': {'iam-edge'},
-              'migrate': {'backend'}, 'api': {'backend'}, 'web': {'backend'},
+              'iam': {'backend', 'iam-edge'}, 'iam-config': {'backend'},
+              'iam-gateway': {'iam-edge'}, 'migrate': {'backend'},
+              'api': {'backend'}, 'web': {'backend'},
           }
           assert set(config['services']) == set(expected)
           for name, service in config['services'].items():
@@ -72,7 +76,12 @@ jobs:
           web_environment = config['services']['web']['environment']
           assert web_environment['HOSTNAME'] == '0.0.0.0', 'Web must bind every container interface'
           assert str(web_environment['PORT']) == '3000', 'Web must listen on the routed container port'
-          print('IAM gateway cannot reach databases; web binds all interfaces; source Compose has no shared network or host ports')
+          assert str(web_environment['PUBLIC_REGISTRATION_ENABLED']).lower() == 'false'
+          iam_config = config['services']['iam-config']['environment']
+          assert str(iam_config['PUBLIC_REGISTRATION_ENABLED']).lower() == 'false'
+          assert str(iam_config['IAM_VERIFY_EMAIL']).lower() == 'false'
+          assert str(iam_config['IAM_RESET_PASSWORD_ENABLED']).lower() == 'false'
+          print('IAM settings reconcile privately; web binds all interfaces; source Compose has no shared network or host ports')
           PY
       - name: Check forbidden source material and secrets
         run: |
@@ -98,6 +107,7 @@ jobs:
             -e OIDC_CLIENT_ID=accesslobby-web \
             -e SESSION_SECRET=ci-only-placeholder \
             -e API_INTERNAL_URL=http://api:3001 \
+            -e PUBLIC_REGISTRATION_ENABLED=false \
             accesslobby-web:ci
           docker network connect accesslobby-ci-proxy accesslobby-ci-web
           for attempt in $(seq 1 20); do
@@ -108,6 +118,8 @@ jobs:
             sleep 1
           done
           grep -q 'AccessLobby' /tmp/accesslobby-web.html
+          grep -q 'Access is currently limited' /tmp/accesslobby-web.html
+          ! grep -q '>Create an account<' /tmp/accesslobby-web.html
       - name: Check reference consumer behind an HTTPS proxy
         run: |
           docker run -d --name accesslobby-ci-consumer -p 127.0.0.1:14000:4000 \
@@ -115,13 +127,18 @@ jobs:
             -e OIDC_ISSUER=https://iam.example.test/realms/accesslobby-first-party \
             -e OIDC_CLIENT_ID=reference-consumer \
             -e ACCESSLOBBY_API_URL=https://api.example.test \
+            -e PUBLIC_REGISTRATION_ENABLED=false \
             accesslobby-reference-consumer:ci
           for attempt in $(seq 1 10); do
             if curl --silent --fail http://127.0.0.1:14000/ -o /tmp/reference-consumer.html; then break; fi
             sleep 1
           done
-          grep -q 'Independent OIDC consumer' /tmp/reference-consumer.html
+          grep -q 'AccessLobby reference app' /tmp/reference-consumer.html
+          grep -q 'Sign in to the reference app' /tmp/reference-consumer.html
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:14000/private)" = 401
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:14000/register)" = 404
+          test "$(curl -sS -o /tmp/bad-consumer-callback -w '%{http_code}' 'http://127.0.0.1:14000/callback?state=invalid&code=invalid')" = 400
+          grep -q "We couldn't complete sign-in" /tmp/bad-consumer-callback
   iam-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -146,13 +163,12 @@ jobs:
           data = json.loads(realm.read_text())
           data['clients'].append(json.loads(client.read_text()))
           realm.write_text(json.dumps(data))
-          client.unlink()  # Realm import directory contains only the realm export.
+          client.unlink()
           PY
-          password=$(openssl rand -hex 32)
           docker run -d --name accesslobby-ci-iam -p 127.0.0.1:8080:8080 \
             -v "$PWD/infra/keycloak/generated:/opt/keycloak/data/import:ro" \
             -e KC_BOOTSTRAP_ADMIN_USERNAME=ci-admin \
-            -e KC_BOOTSTRAP_ADMIN_PASSWORD="$password" \
+            -e KC_BOOTSTRAP_ADMIN_PASSWORD=ci-admin-password \
             -e KC_PROXY_HEADERS=xforwarded \
             quay.io/keycloak/keycloak:26.7.4 start-dev --import-realm
       - name: Verify discovery and JWKS
@@ -169,6 +185,33 @@ jobs:
           assert keys and any(key['kty'] == 'RSA' for key in keys)
           print('Exact issuer and signing keys verified')
           PY
+      - name: Reconcile and verify an existing realm
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/infra/keycloak/reconcile-realm.sh:/opt/accesslobby/reconcile-realm.sh:ro" \
+            -e IAM_INTERNAL_URL=http://127.0.0.1:8080 \
+            -e IAM_REALM=accesslobby-first-party \
+            -e IAM_ADMIN_USERNAME=ci-admin \
+            -e IAM_ADMIN_PASSWORD=ci-admin-password \
+            -e PUBLIC_REGISTRATION_ENABLED=true \
+            -e IAM_VERIFY_EMAIL=false \
+            -e IAM_RESET_PASSWORD_ENABLED=true \
+            --entrypoint /bin/bash \
+            quay.io/keycloak/keycloak:26.7.4 /opt/accesslobby/reconcile-realm.sh
+          docker exec accesslobby-ci-iam /opt/keycloak/bin/kcadm.sh config credentials \
+            --server http://127.0.0.1:8080 --realm master --user ci-admin --password ci-admin-password
+          docker exec accesslobby-ci-iam /opt/keycloak/bin/kcadm.sh get realms/accesslobby-first-party > /tmp/reconciled-realm.json
+          python3 - <<'PY'
+          import json
+          data = json.load(open('/tmp/reconciled-realm.json'))
+          assert data['registrationAllowed'] is True
+          assert data['verifyEmail'] is False
+          assert data['resetPasswordAllowed'] is True
+          assert data['loginWithEmailAllowed'] is True
+          assert data['duplicateEmailsAllowed'] is False
+          assert data['bruteForceProtected'] is True
+          print('Existing realm registration and recovery settings reconciled')
+          PY
       - name: Check generic client and exact callback registration
         run: |
           issuer=http://localhost:8080/realms/accesslobby-first-party
@@ -178,6 +221,13 @@ jobs:
             --data-urlencode response_type=code --data-urlencode scope=openid \
             --data-urlencode code_challenge_method=S256 \
             --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)
+          register=$(curl -sS -o /tmp/register-login -w '%{http_code}' -G "$issuer/protocol/openid-connect/auth" \
+            --data-urlencode client_id=reference-consumer \
+            --data-urlencode redirect_uri=http://localhost:4000/callback \
+            --data-urlencode response_type=code --data-urlencode scope=openid \
+            --data-urlencode prompt=create \
+            --data-urlencode code_challenge_method=S256 \
+            --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)
           bad=$(curl -sS -o /tmp/bad-login -w '%{http_code}' -G "$issuer/protocol/openid-connect/auth" \
             --data-urlencode client_id=reference-consumer \
             --data-urlencode redirect_uri=http://localhost:4000/unregistered \
@@ -185,6 +235,8 @@ jobs:
             --data-urlencode code_challenge_method=S256 \
             --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA)
           test "$good" = 200
+          test "$register" = 200
+          grep -Eqi 'register|create|username|email' /tmp/register-login
           test "$bad" = 400
       - name: Verify public IAM gateway path and proxy headers
         run: |
