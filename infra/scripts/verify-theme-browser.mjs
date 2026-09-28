@@ -35,7 +35,7 @@ async function inspect(page, kind, colorScheme, viewport) {
   const body = await page.locator('body').innerText();
   requireTrue(body.includes(heading), `${kind}: missing AccessLobby heading`);
   requireTrue(!body.toUpperCase().includes('ACCESSLOBBY-FIRST-PARTY'), `${kind}: technical realm heading shown`);
-  const controls = await page.evaluate(() => {
+  const controls = await page.evaluate((scheme) => {
     const form = document.querySelector('#kc-form-login, #kc-register-form');
     const primary = form?.querySelector('input[type="submit"], button[type="submit"]');
     const rect = primary?.getBoundingClientRect();
@@ -47,11 +47,11 @@ async function inspect(page, kind, colorScheme, viewport) {
       primary: rect && { left: rect.left, right: rect.right, width: rect.width, height: rect.height },
       enabled: primary && !primary.disabled,
       fields: form?.querySelectorAll('input:not([type="hidden"]):not([type="submit"])').length ?? 0,
-      schemeMatches: matchMedia(`(prefers-color-scheme: ${colorScheme})`).matches,
+      schemeMatches: matchMedia(`(prefers-color-scheme: ${scheme})`).matches,
       ink: css.getPropertyValue('--al-ink').trim(),
       surface: css.getPropertyValue('--al-surface').trim(),
     };
-  });
+  }, colorScheme);
   requireTrue(controls.documentWidth <= viewport.width + 1 && controls.bodyWidth <= viewport.width + 1,
     `${kind}: horizontal overflow at ${viewport.width}px (${controls.documentWidth}/${controls.bodyWidth})`);
   requireTrue(controls.fields >= (kind === 'login' ? 2 : 3), `${kind}: form fields unavailable`);
@@ -83,7 +83,7 @@ async function main() {
             try {
               const response = await page.goto(url.href, { waitUntil: 'networkidle', timeout: 30_000 });
               requireTrue(response?.status() === 200, `${kind}: unexpected HTTP status ${response?.status()}`);
-              await page.evaluate(() => document.fonts.ready);
+              await page.evaluate(async () => { await document.fonts.ready; });
               const inspected = await inspect(page, kind === 'registration' ? 'registration' : 'login', colorScheme, viewport);
               Object.assign(entry, inspected);
               await page.screenshot({ path: join(output, `${kind}-${viewport.width}x${viewport.height}-${colorScheme}.png`), fullPage: true });
