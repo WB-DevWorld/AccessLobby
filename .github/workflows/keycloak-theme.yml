@@ -8,7 +8,7 @@ permissions:
 jobs:
   iam-theme:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Validate theme source
@@ -90,3 +90,21 @@ jobs:
           ! grep -q 'ACCESSLOBBY-FIRST-PARTY' /tmp/theme-register.html
           docker exec accesslobby-theme-iam test -f \
             /opt/keycloak/themes/accesslobby/login/messages/messages_en.properties
+      - name: Install pinned Playwright Chromium
+        run: |
+          npm install --prefix /tmp/accesslobby-playwright --no-audit --no-fund playwright@1.63.0
+          /tmp/accesslobby-playwright/node_modules/.bin/playwright install --with-deps chromium
+      - name: Browser-qualify responsive authentication surfaces
+        env:
+          NODE_PATH: /tmp/accesslobby-playwright/node_modules
+          IAM_BROWSER_BASE_URL: http://127.0.0.1:18080
+          IAM_BROWSER_OUTPUT_DIR: artifacts/keycloak-theme
+        run: node infra/scripts/auth-surface-browser.cjs
+      - name: Upload authentication screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: keycloak-theme-browser-${{ github.run_id }}
+          path: artifacts/keycloak-theme
+          if-no-files-found: warn
+          retention-days: 30
