@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import './style.css';
+import './alignment.css';
 
 export const metadata: Metadata = {
   title: {
     default: 'AccessLobby',
     template: '%s | AccessLobby',
   },
-  description: 'Your identity, your access and your account controls.',
+  description: 'One secure AccessLobby identity for supported apps, with clear account and sign-out controls.',
 };
 
 export const viewport: Viewport = {

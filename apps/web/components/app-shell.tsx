@@ -17,13 +17,13 @@ type AppShellProps = {
 
 const enabledNavigation = [
   { key: 'overview', label: 'Overview', href: '/account', icon: 'home' },
-  { key: 'identity', label: 'Profile', href: '/identity', icon: 'person' },
+  { key: 'identity', label: 'Identity', href: '/identity', icon: 'person' },
   { key: 'recovery', label: 'Recovery', href: '/recovery', icon: 'recovery' },
 ] as const;
 
 const plannedNavigation = [
   { label: 'Security', icon: 'shield' },
-  { label: 'Connected apps', icon: 'apps' },
+  { label: 'Apps & Access', icon: 'apps' },
   { label: 'Privacy', icon: 'privacy' },
 ] as const;
 
@@ -63,9 +63,9 @@ export function AppShell({ active, title, description, personStatus, children, a
     <div className="app-frame">
       <SkipLink />
 
-      <aside className="app-sidebar" aria-label="Account">
+      <aside className="app-sidebar" aria-label="AccessLobby Identity">
         <div className="sidebar-brand"><BrandMark /></div>
-        <nav className="primary-nav" aria-label="Account navigation">
+        <nav className="primary-nav" aria-label="Identity account navigation">
           <p className="nav-label">Your account</p>
           {enabledNavigation.map((item) => (
             <Link
@@ -79,7 +79,7 @@ export function AppShell({ active, title, description, personStatus, children, a
             </Link>
           ))}
 
-          <p className="nav-label nav-label-spaced">More controls</p>
+          <p className="nav-label nav-label-spaced">Planned modules</p>
           {plannedNavigation.map((item) => (
             <span className="nav-item nav-item-disabled" key={item.label}>
               <NavigationIcon name={item.icon} />
@@ -91,7 +91,7 @@ export function AppShell({ active, title, description, personStatus, children, a
 
         <div className="sidebar-foot">
           <div className="system-state"><span aria-hidden="true" /> Signed in</div>
-          <p>Your AccessLobby account is separate from each app&apos;s own permissions.</p>
+          <p>AccessLobby confirms your identity. Each app keeps its own account data and permissions.</p>
         </div>
       </aside>
 
@@ -102,7 +102,7 @@ export function AppShell({ active, title, description, personStatus, children, a
             <StatusBadge>{formatIdentityStatus(personStatus)}</StatusBadge>
           </div>
           <div className="page-heading">
-            <p className="eyebrow">Your AccessLobby account</p>
+            <p className="eyebrow">AccessLobby Identity</p>
             <h1>{title}</h1>
             <p>{description}</p>
           </div>
@@ -114,7 +114,7 @@ export function AppShell({ active, title, description, personStatus, children, a
           </div>
         </header>
 
-        <nav className="tablet-nav" aria-label="Account sections">
+        <nav className="tablet-nav" aria-label="Identity account sections">
           <AccountLinks active={active} itemClassName="tablet-nav-item" />
           <Link className="tablet-nav-item" href="/account#sign-out">
             <NavigationIcon name="signout" />
@@ -125,7 +125,7 @@ export function AppShell({ active, title, description, personStatus, children, a
         <main className="app-main" id="main-content">{children}</main>
       </div>
 
-      <nav className="mobile-nav" aria-label="Mobile account navigation">
+      <nav className="mobile-nav" aria-label="Mobile identity account navigation">
         <AccountLinks active={active} itemClassName="mobile-nav-item" />
         <Link className="mobile-nav-item" href="/account#sign-out">
           <NavigationIcon name="signout" />

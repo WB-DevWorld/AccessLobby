@@ -1,0 +1,176 @@
+/* Identity-clarity and narrow-screen corrections layered after the base design system. */
+
+.identifier-block {
+  min-width: 0;
+  display: grid;
+  gap: .55rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: var(--surface-soft);
+}
+
+.identifier-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  color: var(--text-soft);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.identifier-block code {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: .65rem;
+  padding: .65rem .75rem;
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .82rem;
+  overflow-wrap: anywhere;
+}
+
+.identifier-block p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: .86rem;
+}
+
+.identifier-copy {
+  min-height: var(--touch);
+  border: 1px solid var(--border-strong);
+  border-radius: .7rem;
+  padding: .45rem .75rem;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 750;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.identifier-copy:hover {
+  border-color: var(--primary);
+  background: var(--surface-tint);
+}
+
+.identity-hero .identifier-block,
+.profile-summary .identifier-block {
+  width: min(100%, 34rem);
+  grid-column: 1 / -1;
+}
+
+.public-page,
+.public-main,
+.public-header,
+.public-header-actions,
+.public-hero,
+.hero-copy,
+.hero-visual,
+.foundation-grid,
+.app-frame,
+.app-workspace,
+.app-header,
+.app-main {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .public-page {
+    width: 100%;
+    padding-inline: .9rem;
+  }
+
+  .public-header {
+    min-height: 4.75rem;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .public-header .brand {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: 1rem;
+  }
+
+  .public-header .brand > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .public-header-actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+
+  .public-header-actions .theme-toggle {
+    max-width: 6.5rem;
+    padding-inline: .7rem;
+  }
+
+  .public-main {
+    padding-top: 2.25rem;
+  }
+
+  .hero-visual {
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .65rem;
+    overflow: clip;
+    padding: 1.25rem 0 .75rem;
+  }
+
+  .hero-visual::before,
+  .identity-orbit {
+    display: none;
+  }
+
+  .identity-core {
+    width: min(11rem, 52vw);
+    flex: 0 0 auto;
+  }
+
+  .orbit-label {
+    position: static;
+    max-width: min(100%, 18rem);
+    box-shadow: none;
+  }
+
+  .hero-copy h1 {
+    max-width: 12ch;
+    font-size: clamp(2.65rem, 13vw, 4.4rem);
+  }
+
+  .identity-hero .identifier-block,
+  .profile-summary .identifier-block {
+    width: 100%;
+  }
+}
+
+@media (max-width: 34rem) {
+  .identifier-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .identifier-copy {
+    width: 100%;
+  }
+
+  .public-header .brand-mark {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .public-header-actions {
+    gap: .35rem;
+  }
+}

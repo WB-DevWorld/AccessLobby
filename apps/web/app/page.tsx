@@ -5,16 +5,16 @@ import { isPublicRegistrationEnabled } from '@/lib/features';
 
 const foundations = [
   {
-    title: 'One account for supported apps',
-    description: 'Use the same AccessLobby account to sign in wherever AccessLobby is supported.',
+    title: 'One AccessLobby identity',
+    description: 'Use the same stable AccessLobby identity when you sign in to supported apps.',
   },
   {
-    title: 'Your account stays with you',
-    description: 'Changing an email address or sign-in method does not have to create a completely new account.',
+    title: 'Your identity stays with you',
+    description: 'Changing an email address or sign-in method does not have to create a new AccessLobby identity.',
   },
   {
-    title: 'Each app keeps control',
-    description: 'AccessLobby signs you in. Each app still decides what you can see and do inside that app.',
+    title: 'Apps keep their own accounts',
+    description: 'Each app may keep a separate local account, profile, data and permissions linked to AccessLobby.',
   },
 ];
 
@@ -38,7 +38,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
           <div className="public-alert">
             <AvailabilityPanel
               title="You are signed out of this app"
-              description="We could not also sign you out of the shared AccessLobby session. You can try signing out of all apps again later."
+              description="We could not also end the shared AccessLobby sign-in session. You can try signing out of AccessLobby and supported apps again later."
             />
           </div>
         )}
@@ -61,10 +61,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
 
         <section className="public-hero">
           <div className="hero-copy">
-            <p className="eyebrow">One account for supported apps</p>
-            <h1>One secure sign-in.<br />Your account across apps.<br /><span>You stay in control.</span></h1>
+            <p className="eyebrow">One AccessLobby identity for supported apps</p>
+            <h1>One secure sign-in.<br />Your identity across apps.<br /><span>You stay in control.</span></h1>
             <p className="hero-lede">
-              Use AccessLobby to sign in to supported apps without creating a different password for every app. Each app still controls its own information and permissions.
+              Use AccessLobby to sign in to supported apps without creating a different password for every app. Each app may still keep its own local account, information and permissions.
             </p>
             <div className="hero-actions">
               <Link className="button button-primary" href="/auth/login">Sign in</Link>
@@ -74,29 +74,29 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
             </div>
             <p className="hero-note">
               {registrationEnabled
-                ? 'New account registration is open in this environment.'
-                : 'Access is currently limited to users whose accounts have already been created.'}
+                ? 'New AccessLobby registration is open in this environment.'
+                : 'Access is currently limited to users whose AccessLobby identity has already been created.'}
             </p>
           </div>
 
-          <div className="hero-visual" role="img" aria-label="One AccessLobby account can be used with supported apps while each app keeps its own permissions.">
+          <div className="hero-visual" role="img" aria-label="One stable AccessLobby identity can be used with supported apps, while each app keeps its own account data and permissions.">
             <div className="identity-orbit identity-orbit-one" />
             <div className="identity-orbit identity-orbit-two" />
             <div className="identity-core">
               <span className="identity-core-mark" aria-hidden="true">A</span>
-              <strong>One account</strong>
-              <small>Secure sign-in</small>
+              <strong>One identity</strong>
+              <small>Secure AccessLobby sign-in</small>
             </div>
             <div className="orbit-label orbit-label-one">Supported apps</div>
-            <div className="orbit-label orbit-label-two">Same account</div>
-            <div className="orbit-label orbit-label-three">App permissions</div>
+            <div className="orbit-label orbit-label-two">Stable AccessLobby ID</div>
+            <div className="orbit-label orbit-label-three">App accounts &amp; permissions</div>
           </div>
         </section>
 
         <section className="foundation-grid" aria-labelledby="foundation-title">
           <div className="section-intro">
             <p className="eyebrow">Simple for you, secure underneath</p>
-            <h2 id="foundation-title">A sign-in foundation that can grow with you</h2>
+            <h2 id="foundation-title">A shared identity foundation that can grow safely</h2>
           </div>
           {foundations.map((foundation, index) => (
             <article className="foundation-card" key={foundation.title}>
@@ -110,7 +110,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
 
       <footer className="public-footer">
         <span>AccessLobby</span>
-        <span>Secure sign-in · clear choices</span>
+        <span>Secure identity · clear choices</span>
       </footer>
     </div>
   );
