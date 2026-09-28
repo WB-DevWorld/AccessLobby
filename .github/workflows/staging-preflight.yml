@@ -1,0 +1,44 @@
+name: Public staging preflight
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Full deployed API source SHA, if known
+        required: false
+        type: string
+      include_consumer:
+        description: Check the separate public reference consumer
+        required: true
+        default: true
+        type: boolean
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check public staging endpoints
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          INCLUDE_CONSUMER: ${{ inputs.include_consumer }}
+        run: |
+          args=(
+            --web-origin https://accesslobby.realjanelove.com
+            --api-origin https://api.accesslobby.realjanelove.com
+            --issuer https://iam.accesslobby.realjanelove.com/realms/accesslobby-first-party
+            --output "$RUNNER_TEMP/accesslobby-staging-preflight/report.json"
+          )
+          if [ -n "$EXPECTED_SHA" ]; then args+=(--expected-sha "$EXPECTED_SHA"); fi
+          if [ "$INCLUDE_CONSUMER" = true ]; then
+            args+=(--consumer-origin https://consumer.accesslobby.realjanelove.com)
+          fi
+          python3 infra/scripts/staging_preflight.py "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-staging-preflight
+          path: ${{ runner.temp }}/accesslobby-staging-preflight/report.json
+          if-no-files-found: warn
+          retention-days: 7

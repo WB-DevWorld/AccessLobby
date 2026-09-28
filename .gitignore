@@ -8,3 +8,5 @@ dist/
 infra/keycloak/generated/
 *.dump
 *.sql.gz
+__pycache__/
+artifacts/
