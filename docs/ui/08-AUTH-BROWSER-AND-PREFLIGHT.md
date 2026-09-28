@@ -20,7 +20,7 @@ IAM_BROWSER_ORIGIN=http://127.0.0.1:18080 node infra/scripts/verify-theme-browse
 
 The manual `Public staging preflight` workflow calls `infra/scripts/staging_preflight.py` with the known HTTPS web, API, realm issuer and optional reference-consumer origins. Supply the full `expected_sha` from the deployed API when available. It checks homepage branding, both API health endpoints and exact revision, unauthenticated `/v1/me`, exact OIDC issuer, public signing keys, rejection of private IAM paths, and optional consumer public/negative paths.
 
-The report records status codes, a public key count, and the deployed source revision. It never records response bodies, cookies, authorization headers or account data. A redirect is a failure rather than a route to follow. The workflow uploads a short-lived JSON report even when a check fails. It is safe to run without a pilot account and is read-only.
+The report records status codes, a public key count, the deployed API source revision, and safe request IDs for consumer-home checks. It never records response bodies, cookies, authorization headers or account data. A redirect is a failure rather than a route to follow. The workflow uploads a short-lived JSON report even when a check fails. It is safe to run without a pilot account and is read-only. Use `consumer_home_samples` (1–10) for repeated home requests. Enable `check_consumer_health` only after the reference-consumer image with live/ready diagnostics is deployed.
 
 Run the script directly when needed:
 

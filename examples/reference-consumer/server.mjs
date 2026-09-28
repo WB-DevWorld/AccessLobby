@@ -6,6 +6,7 @@ import { mayViewPrivate } from './policy.mjs';
 import { verifyLogoutToken, removeSessions } from './logout.mjs';
 import { AccountLinks } from './account-links.mjs';
 import { publicRegistrationEnabled } from './config.mjs';
+import { traceRequest } from './diagnostics.mjs';
 
 const required = name => {
   const value = process.env[name];
@@ -46,6 +47,10 @@ const cookies = request => Object.fromEntries((request.headers.cookie || '').spl
 const send = (response, status, body, headers = {}) => {
   response.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...headers });
   response.end(body);
+};
+const sendHealth = (response, status, state) => {
+  response.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+  response.end(JSON.stringify({ status: state }));
 };
 const redirect = (response, location, setCookies = []) => send(response, 303, '', { location, 'set-cookie': setCookies });
 const html = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
@@ -132,6 +137,21 @@ function createConsumerSession(person, localUserId) {
 
 async function handle(request, response) {
   const path = new URL(request.url, origin);
+  if (request.method === 'GET' && path.pathname === '/health/live') {
+    return sendHealth(response, 200, 'ok');
+  }
+  if (request.method === 'GET' && path.pathname === '/health/ready') {
+    try {
+      const [, apiResponse] = await Promise.all([
+        discover(),
+        fetch(`${api}/health/ready`, { signal: AbortSignal.timeout(5000) }),
+      ]);
+      if (!apiResponse.ok || (await apiResponse.json()).status !== 'ready') throw new Error('API unavailable');
+      return sendHealth(response, 200, 'ready');
+    } catch {
+      return sendHealth(response, 503, 'unavailable');
+    }
+  }
   const jar = cookies(request);
   const legacy = legacySessions.get(jar[legacyName]);
   const activeLegacy = legacy && legacy.expires > Date.now() ? legacy : null;
@@ -414,11 +434,16 @@ async function handle(request, response) {
   });
 }
 
-http.createServer((request, response) => handle(request, response).catch(error => {
-  console.error('reference-consumer request failed', error instanceof Error ? error.message : 'unknown error');
-  sendPage(response, 502, {
-    title: 'The sign-in service is temporarily unavailable',
-    message: 'No account changes were made. Please return home and try again.',
-    content: '<div class="actions"><a class="button button-primary" href="/">Return home</a></div>',
+http.createServer((request, response) => {
+  const requestId = traceRequest(request, response);
+  return handle(request, response).catch(error => {
+    // Keep logged errors categorical; callback query strings can contain OIDC codes.
+    console.error(JSON.stringify({ event: 'consumer.failure', requestId, kind: error instanceof Error ? error.name : 'Error' }));
+    if (response.headersSent) return response.destroy();
+    sendPage(response, 502, {
+      title: 'The sign-in service is temporarily unavailable',
+      message: 'No account changes were made. Please return home and try again.',
+      content: '<div class="actions"><a class="button button-primary" href="/">Return home</a></div>',
+    });
   });
-})).listen(port);
+}).listen(port);

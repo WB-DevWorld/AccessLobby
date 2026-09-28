@@ -4,7 +4,7 @@ from email.message import Message
 from io import BytesIO
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlparse
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from infra.scripts import staging_preflight as preflight
 
@@ -27,6 +27,8 @@ def fixture():
             (200, encoded({"issuer": ISSUER, "jwks_uri": jwks}), "application/json"),
         jwks: (200, encoded({"keys": [{"kid": "public-key", "kty": "RSA"}]}), "application/json"),
         CONSUMER + "/": (200, b"consumer", "text/html"),
+        CONSUMER + "/health/live": (200, encoded({"status": "ok"}), "application/json"),
+        CONSUMER + "/health/ready": (200, encoded({"status": "ready"}), "application/json"),
         CONSUMER + "/private": (401, b"", ""),
         CONSUMER + "/callback?state=invalid&code=invalid": (400, b"", ""),
     }
@@ -37,7 +39,7 @@ def fixture():
 
 class StagingPreflightTests(unittest.TestCase):
     def run_fixture(self, data, *, sha=SHA):
-        with patch.object(preflight, "read_url", side_effect=lambda url: data[url]):
+        with patch.object(preflight, "read_url", side_effect=lambda url, **_options: data[url]):
             return preflight.run(WEB, API, ISSUER, CONSUMER, sha)
 
     def test_public_contract_passes_without_exposing_response_bodies(self):
@@ -82,11 +84,24 @@ class StagingPreflightTests(unittest.TestCase):
         self.assertEqual((status, content_type), (400, "text/html"))
         self.assertEqual(body, b"We could not complete that request")
 
+    def test_public_probe_sends_only_a_safe_correlation_header(self):
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.status = 200
+        response.headers = Message()
+        response.headers["Content-Type"] = "text/plain"
+        response.read.return_value = b"ok"
+        with patch.object(preflight.OPENER, "open", return_value=response) as opened:
+            self.assertEqual(preflight.read_url(CONSUMER + "/", request_id="probe_123")[0], 200)
+        request = opened.call_args.args[0]
+        self.assertEqual(request.get_header("X-request-id"), "probe_123")
+        self.assertNotIn("authorization", str(request.headers).lower())
+
     def test_live_auth_pages_require_branded_forms_and_plain_language_errors(self):
         data = fixture()
         seen_urls = []
 
-        def read(url, *, accept="application/json, text/html"):
+        def read(url, *, accept="application/json, text/html", request_id=None):
             seen_urls.append(url)
             if not url.startswith(ISSUER + "/protocol/openid-connect/auth?"):
                 return data[url]
@@ -123,7 +138,7 @@ class StagingPreflightTests(unittest.TestCase):
     def test_technical_realm_name_in_visible_page_text_fails_auth_gate(self):
         data = fixture()
 
-        def read(url, *, accept="application/json, text/html"):
+        def read(url, *, accept="application/json, text/html", request_id=None):
             if "/protocol/openid-connect/auth?" not in url:
                 return data[url]
             params = parse_qs(urlparse(url).query)
@@ -145,7 +160,7 @@ class StagingPreflightTests(unittest.TestCase):
     def test_unbranded_login_and_disabled_registration_fail_auth_gate(self):
         data = fixture()
 
-        def read(url, *, accept="application/json, text/html"):
+        def read(url, *, accept="application/json, text/html", request_id=None):
             if "/protocol/openid-connect/auth?" not in url:
                 return data[url]
             params = parse_qs(urlparse(url).query)
@@ -165,7 +180,7 @@ class StagingPreflightTests(unittest.TestCase):
         data = fixture()
         calls = 0
 
-        def read(url):
+        def read(url, *, request_id=None):
             nonlocal calls
             if url == CONSUMER + "/":
                 calls += 1
@@ -182,12 +197,35 @@ class StagingPreflightTests(unittest.TestCase):
                          ["consumer.home.sample_3"])
         self.assertTrue(all("durationMs" in item for item in result["checks"]))
         self.assertNotIn("private proxy detail", json.dumps(result))
+        self.assertEqual(len({item["requestId"] for item in result["checks"]
+                              if item["name"].startswith("consumer.home")}), 5)
+
+    def test_opt_in_consumer_health_reports_dependency_failure_and_correlation(self):
+        data = fixture()
+        data[CONSUMER + "/health/ready"] = (503, b'{"status":"unavailable"}', "application/json")
+        sent = {}
+
+        def read(url, *, request_id=None):
+            if request_id:
+                sent[url] = request_id
+            return data[url]
+
+        with patch.object(preflight, "read_url", side_effect=read):
+            result = preflight.run(WEB, API, ISSUER, CONSUMER, SHA, check_consumer_health=True)
+        self.assertEqual(len(result["checks"]), 16)
+        self.assertEqual([item["name"] for item in result["checks"] if not item["passed"]],
+                         ["consumer.ready"])
+        self.assertEqual(next(item["requestId"] for item in result["checks"]
+                              if item["name"] == "consumer.ready"), sent[CONSUMER + "/health/ready"])
+        self.assertNotIn("unavailable", json.dumps(result))
 
     def test_extra_consumer_samples_require_consumer_origin(self):
         with self.assertRaises(ValueError):
             preflight.run(WEB, API, ISSUER, None, SHA, consumer_home_samples=2)
         with self.assertRaises(ValueError):
             preflight.run(WEB, API, ISSUER, CONSUMER, SHA, consumer_home_samples=11)
+        with self.assertRaises(ValueError):
+            preflight.run(WEB, API, ISSUER, None, SHA, check_consumer_health=True)
 
 
 if __name__ == "__main__":

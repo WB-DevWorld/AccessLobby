@@ -77,3 +77,5 @@ python3 infra/scripts/staging_preflight.py \
 ```
 
 The ordered account, logout, identity and viewport cases are in the [bulk staging acceptance matrix](bulk-staging-acceptance.md). Keep blocked prerequisites explicit; no case in that matrix is marked as executed by this preparation.
+
+The manual **Public staging preflight** workflow also accepts `consumer_home_samples=5`. The resulting home checks include safe request IDs for private log correlation. Leave `check_consumer_health=false` against the current deployed consumer image; turn it on only after publishing and deploying the diagnostic consumer image described in [the consumer runbook](reference-consumer-staging.md#consumer-availability-diagnostics-prepared-not-yet-deployed). If that image replaces the consumer, prepare a separate five-image manifest with the new digest before using the private inventory command as a pass/fail gate.
