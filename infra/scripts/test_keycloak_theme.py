@@ -27,6 +27,7 @@ class KeycloakThemeTests(unittest.TestCase):
             "registerTitle=Create your AccessLobby account",
             "logoutConfirmTitle=Sign out of AccessLobby",
             "doLogout=Sign out",
+            "invalidParameterMessage=This sign-in request is not valid. Return to the app and try again.",
         ):
             self.assertIn(expected, messages)
         self.assertNotIn("ACCESSLOBBY-FIRST-PARTY", messages.upper())

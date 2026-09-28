@@ -8,7 +8,7 @@ permissions:
 jobs:
   iam-theme:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Validate theme source
@@ -90,3 +90,22 @@ jobs:
           ! grep -q 'ACCESSLOBBY-FIRST-PARTY' /tmp/theme-register.html
           docker exec accesslobby-theme-iam test -f \
             /opt/keycloak/themes/accesslobby/login/messages/messages_en.properties
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install browser qualification dependencies
+        run: |
+          npm install -g pnpm@11.19.0
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps --only-shell chromium
+      - name: Qualify authentication pages in Chromium
+        env:
+          IAM_BROWSER_OUTPUT: ${{ runner.temp }}/accesslobby-auth-browser
+        run: node infra/scripts/verify-theme-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-auth-browser
+          path: ${{ runner.temp }}/accesslobby-auth-browser/
+          if-no-files-found: warn
+          retention-days: 7
