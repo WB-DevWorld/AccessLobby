@@ -113,7 +113,10 @@ async function main() {
         requireTrue(response?.status() === 400, `error: unexpected status ${response?.status()}`);
         const body = await page.locator('body').innerText();
         requireTrue(!body.toUpperCase().includes('ACCESSLOBBY-FIRST-PARTY'), 'error: realm name shown');
-        requireTrue(body.includes('AccessLobby') || body.includes('sign-in'), 'error: no user-facing message');
+        requireTrue(body.includes('We could not complete that request') &&
+          body.includes('This sign-in request is not valid. Return to the app and try again.'),
+        'error: no user-facing message');
+        requireTrue(!body.includes('Invalid parameter:'), 'error: raw parameter name shown');
         await page.screenshot({ path: join(output, 'invalid-redirect-390x844-light.png'), fullPage: true });
         entry.passed = true;
       } catch (error) {
