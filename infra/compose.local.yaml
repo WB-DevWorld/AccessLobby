@@ -23,7 +23,10 @@ services:
       interval: 5s
       retries: 15
   iam:
-    image: quay.io/keycloak/keycloak:26.7.4
+    image: ${IAM_IMAGE:-accesslobby-iam:local}
+    build:
+      context: ..
+      dockerfile: infra/keycloak/Dockerfile
     command: ["start-dev", "--import-realm"]
     environment:
       KC_DB: postgres
@@ -39,7 +42,7 @@ services:
     depends_on:
       iam-db: { condition: service_healthy }
   iam-config:
-    image: quay.io/keycloak/keycloak:26.7.4
+    image: ${IAM_IMAGE:-accesslobby-iam:local}
     restart: "no"
     entrypoint: ["/bin/bash", "/opt/accesslobby/reconcile-realm.sh"]
     environment:
@@ -47,6 +50,8 @@ services:
       IAM_REALM: accesslobby-first-party
       IAM_ADMIN_USERNAME: ${IAM_ADMIN_USERNAME:?set IAM_ADMIN_USERNAME}
       IAM_ADMIN_PASSWORD: ${IAM_ADMIN_PASSWORD:?set IAM_ADMIN_PASSWORD}
+      IAM_LOGIN_THEME: accesslobby
+      IAM_DISPLAY_NAME: AccessLobby
       PUBLIC_REGISTRATION_ENABLED: ${PUBLIC_REGISTRATION_ENABLED:-false}
       IAM_VERIFY_EMAIL: ${IAM_VERIFY_EMAIL:-false}
       IAM_RESET_PASSWORD_ENABLED: ${IAM_RESET_PASSWORD_ENABLED:-false}
