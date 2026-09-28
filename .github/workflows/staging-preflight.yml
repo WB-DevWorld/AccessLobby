@@ -16,6 +16,16 @@ on:
         required: true
         default: false
         type: boolean
+      consumer_home_samples:
+        description: Sequential public consumer-home samples (1–10)
+        required: true
+        default: 1
+        type: number
+      check_consumer_health:
+        description: Check consumer health routes after the diagnostic image is deployed
+        required: true
+        default: false
+        type: boolean
 permissions:
   contents: read
 jobs:
@@ -29,18 +39,22 @@ jobs:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
           INCLUDE_CONSUMER: ${{ inputs.include_consumer }}
           CHECK_AUTH_PAGES: ${{ inputs.check_auth_pages }}
+          CONSUMER_HOME_SAMPLES: ${{ inputs.consumer_home_samples }}
+          CHECK_CONSUMER_HEALTH: ${{ inputs.check_consumer_health }}
         run: |
           args=(
             --web-origin https://accesslobby.realjanelove.com
             --api-origin https://api.accesslobby.realjanelove.com
             --issuer https://iam.accesslobby.realjanelove.com/realms/accesslobby-first-party
             --output "$RUNNER_TEMP/accesslobby-staging-preflight/report.json"
+            --consumer-home-samples "$CONSUMER_HOME_SAMPLES"
           )
           if [ -n "$EXPECTED_SHA" ]; then args+=(--expected-sha "$EXPECTED_SHA"); fi
           if [ "$INCLUDE_CONSUMER" = true ]; then
             args+=(--consumer-origin https://consumer.accesslobby.realjanelove.com)
           fi
           if [ "$CHECK_AUTH_PAGES" = true ]; then args+=(--check-auth-pages); fi
+          if [ "$CHECK_CONSUMER_HEALTH" = true ]; then args+=(--check-consumer-health); fi
           python3 infra/scripts/staging_preflight.py "${args[@]}"
       - uses: actions/upload-artifact@v4
         if: always()

@@ -65,8 +65,12 @@ def checked_url(value: str, *, origin: bool) -> str:
     return value.rstrip("/")
 
 
-def read_url(url: str, *, accept: str = "application/json, text/html") -> tuple[int, bytes, str]:
-    request = Request(url, headers={"Accept": accept, "Cache-Control": "no-store"})
+def read_url(url: str, *, accept: str = "application/json, text/html",
+             request_id: str | None = None) -> tuple[int, bytes, str]:
+    headers = {"Accept": accept, "Cache-Control": "no-store"}
+    if request_id:
+        headers["X-Request-Id"] = request_id
+    request = Request(url, headers=headers)
     for attempt in range(2):
         try:
             response = OPENER.open(request, timeout=8)
@@ -98,7 +102,8 @@ def json_object(body: bytes) -> dict:
 
 
 def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str | None,
-        check_auth_pages: bool = False, consumer_home_samples: int = 1) -> dict:
+        check_auth_pages: bool = False, consumer_home_samples: int = 1,
+        check_consumer_health: bool = False) -> dict:
     web = checked_url(web, origin=True)
     api = checked_url(api, origin=True)
     issuer = checked_url(issuer, origin=False)
@@ -107,16 +112,24 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
         raise ValueError("Expected SHA must be a full 40-character lowercase Git commit")
     if consumer_home_samples < 1 or consumer_home_samples > 10 or (consumer_home_samples > 1 and not consumer):
         raise ValueError("Consumer home samples must be 1–10 and require a consumer origin")
+    if check_consumer_health and not consumer:
+        raise ValueError("Consumer health checks require a consumer origin")
 
     report = {"checkedAt": datetime.now(timezone.utc).isoformat(), "expectedSha": expected_sha,
               "checks": [], "passed": False}
 
-    def check(name: str, url: str, statuses: set[int], predicate=None, *, accept=None):
+    def check(name: str, url: str, statuses: set[int], predicate=None, *, accept=None, correlate=False):
         entry = {"name": name, "passed": False}
+        options = {}
+        if accept:
+            options["accept"] = accept
+        if correlate:
+            entry["requestId"] = secrets.token_urlsafe(18)
+            options["request_id"] = entry["requestId"]
         report["checks"].append(entry)
         started = time.monotonic()
         try:
-            status, body, content_type = read_url(url, accept=accept) if accept else read_url(url)
+            status, body, content_type = read_url(url, **options)
             entry["status"] = status
             if status not in statuses:
                 entry["reason"] = "unexpected_status"
@@ -143,6 +156,13 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
         if not isinstance(version, str) or (expected_sha and version != expected_sha):
             raise ValueError("Unexpected deployed source revision")
         return {"version": version}
+
+    def consumer_health(expected: str):
+        def validate(body, content_type):
+            if content_type != "application/json" or json_object(body).get("status") != expected:
+                raise ValueError("Unexpected consumer health state")
+            return {}
+        return validate
 
     def discovery(body, _content_type):
         data = json_object(body)
@@ -172,9 +192,14 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
                        ("metrics", "/metrics"), ("health", "/health")):
         check("gateway.denies_" + name, iam_origin + path, {400, 403, 404})
     if consumer:
-        check("consumer.home", consumer + "/", {200})
+        check("consumer.home", consumer + "/", {200}, correlate=True)
         for sample in range(2, consumer_home_samples + 1):
-            check(f"consumer.home.sample_{sample}", consumer + "/", {200})
+            check(f"consumer.home.sample_{sample}", consumer + "/", {200}, correlate=True)
+        if check_consumer_health:
+            check("consumer.live", consumer + "/health/live", {200},
+                  consumer_health("ok"), correlate=True)
+            check("consumer.ready", consumer + "/health/ready", {200},
+                  consumer_health("ready"), correlate=True)
         check("consumer.private_unauthenticated", consumer + "/private", {401})
         check("consumer.rejects_bad_callback", consumer + "/callback?state=invalid&code=invalid", {400})
 
@@ -236,11 +261,13 @@ def main() -> int:
                         help="Check live branded login, registration and invalid-request pages without signing in")
     parser.add_argument("--consumer-home-samples", type=int, default=1,
                         help="Repeat the public consumer home check 1–10 times to detect intermittent failures")
+    parser.add_argument("--check-consumer-health", action="store_true",
+                        help="Check optional consumer health routes after deploying a compatible consumer image")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
         report = run(args.web_origin, args.api_origin, args.issuer, args.consumer_origin, args.expected_sha,
-                     args.check_auth_pages, args.consumer_home_samples)
+                     args.check_auth_pages, args.consumer_home_samples, args.check_consumer_health)
     except ValueError as error:
         parser.error(str(error))
     args.output.parent.mkdir(parents=True, exist_ok=True)
