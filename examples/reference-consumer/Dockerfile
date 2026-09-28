@@ -7,7 +7,7 @@ COPY examples/reference-consumer/package.json examples/reference-consumer/packag
 RUN pnpm install --frozen-lockfile --filter @accesslobby/reference-consumer --prod
 COPY examples/reference-consumer/server.mjs examples/reference-consumer/policy.mjs \
   examples/reference-consumer/logout.mjs examples/reference-consumer/account-links.mjs \
-  examples/reference-consumer/
+  examples/reference-consumer/config.mjs examples/reference-consumer/
 USER node
 WORKDIR /app/examples/reference-consumer
 EXPOSE 4000
