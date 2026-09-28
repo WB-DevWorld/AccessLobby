@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">AccessLobby</title>
+  <path fill="#dce9ff" d="M32 3 52 14.5v35L32 61 12 49.5v-35L32 3Z"/>
+  <path fill="#1660e8" d="M32 8.5 46.7 17 32 25.5 17.3 17 32 8.5Z"/>
+  <path fill="#0f48bd" d="m16.5 20.4 13.2 7.7v16.5l-13.2-7.7V20.4Z"/>
+  <path fill="#2e78f4" d="m47.5 20.4-13.2 7.7v16.5l13.2-7.7V20.4Z"/>
+  <path fill="#0d3997" d="m16.5 41.1 13.2 7.7v7L16.5 48.2v-7.1Z"/>
+  <path fill="#1458d6" d="m47.5 41.1-13.2 7.7v7l13.2-7.6v-7.1Z"/>
+</svg>
