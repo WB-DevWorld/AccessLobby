@@ -1,0 +1,64 @@
+name: Public staging smoke
+on:
+  workflow_dispatch:
+    inputs:
+      web_origin:
+        description: Public AccessLobby web origin
+        required: true
+        default: https://accesslobby.realjanelove.com
+        type: string
+      api_origin:
+        description: Public AccessLobby API origin
+        required: true
+        default: https://api.accesslobby.realjanelove.com
+        type: string
+      issuer:
+        description: Exact public OIDC issuer
+        required: true
+        default: https://iam.accesslobby.realjanelove.com/realms/accesslobby-first-party
+        type: string
+      consumer_origin:
+        description: Optional separately deployed reference-consumer origin
+        required: false
+        default: ''
+        type: string
+      expected_sha:
+        description: Optional exact deployed Git SHA expected from API health
+        required: false
+        default: ''
+        type: string
+      registration_enabled:
+        description: Expected public-registration state
+        required: true
+        default: skip
+        type: choice
+        options:
+          - skip
+          - 'false'
+          - 'true'
+permissions:
+  contents: read
+jobs:
+  public-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run credential-free public checks
+        run: |
+          python3 infra/scripts/public-staging-smoke.py \
+            --web-origin '${{ inputs.web_origin }}' \
+            --api-origin '${{ inputs.api_origin }}' \
+            --issuer '${{ inputs.issuer }}' \
+            --consumer-origin '${{ inputs.consumer_origin }}' \
+            --expected-sha '${{ inputs.expected_sha }}' \
+            --registration-enabled '${{ inputs.registration_enabled }}' \
+            --output artifacts/staging-public-smoke.json
+      - name: Upload smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-public-smoke-${{ github.run_id }}
+          path: artifacts/staging-public-smoke.json
+          if-no-files-found: error
+          retention-days: 30
