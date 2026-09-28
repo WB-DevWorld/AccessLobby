@@ -1,6 +1,6 @@
 # Branded IAM staging cutover — 2026-09-28
 
-This is the operator handoff for issues #25, #27 and #29. It records a qualified candidate, **not** a deployment or production approval. The protected Dokploy environment and the running container digests are visible only through the owner's private operator access. Do not paste environment exports, credentials, tokens, cookies or person IDs into GitHub.
+This is the operator handoff for issues #25, #27 and #29. It records a qualified candidate, the owner-reported staging deployment and a public smoke check, **not** a production approval. The protected Dokploy environment and the running container digests are visible only through the owner's private operator access. Do not paste environment exports, credentials, tokens, cookies or person IDs into GitHub.
 
 ## Observed public baseline
 
@@ -48,3 +48,32 @@ Main source SHA: `4debd6eaf154f82c82c20579c4fe08a89fb25c9e` (PR #32). [Main CI](
 The owner reported both staging Compose services deployed. The first post-deployment public run confirmed API SHA `4debd6eaf154f82c82c20579c4fe08a89fb25c9e` and passed the 14 base checks, but its three auth-page assertions falsely failed: the realm identifier occurs in ordinary Keycloak URL attributes, and the malformed-redirect endpoint returns JSON when the request prefers JSON. After correcting the checker to examine body text and to request HTML for auth pages, the credential-free public preflight passed **17 of 17** checks at 20:20 UTC on 2026-09-28. This includes web 200; API live/ready 200 at the expected SHA; unauthenticated `/v1/me` 401; exact issuer and two JWKS keys; gateway root/admin/master/metrics/health 404; consumer home/private/invalid callback 200/401/400; branded login and registration 200; and branded invalid redirect 400.
 
 The public pass does not prove the actual running container digests or the signed-in flows in step 5. Record those through the protected operator path and controlled browser before closing the staging issues. The consumer's earlier intermittent 502/timeout remains an open reliability observation until private logs or a sustained check resolves it. Do not redeploy runtime images solely to pick up this preflight-only correction.
+
+## Prepared bulk evidence pass
+
+When the controlled testing window begins, run these **read-only** checks from the current checkout. The manifest at `infra/releases/staging-2026-09-28.json` records the immutable image references published from source SHA `4debd6e`. The first command needs private Docker access on the staging host and does not read or output container environment variables. Use a fresh protected output filename on each run; the script refuses to overwrite an existing report. Keep the JSON outside Git and do not paste raw private Docker output into an issue.
+
+```sh
+python3 infra/scripts/inspect_staging_runtime.py \
+  --main-project accesslobby-accesslobbystaging-beass9 \
+  --consumer-project accesslobby-referenceconsumerstaging-yuxqwo \
+  --manifest infra/releases/staging-2026-09-28.json \
+  --output /var/tmp/accesslobby-runtime-check.json
+```
+
+It checks the eight main services and separate consumer for their configured digest references, running or successful one-shot state, database health, expected network isolation and absence of published host ports. A public API version alone cannot establish this. Record a sanitized pass/fail summary and the date; investigate any mismatch in the private operator session.
+
+The credential-free public probe can be repeated without an account. Five sequential consumer-home samples add four checks to the usual 17. Their status and duration help characterize the earlier intermittent 502/timeout; they do not identify its cause. Correlate any failure time with private Traefik and consumer logs, then run the controlled signed-in matrix in step 5 as one batch. Do not include credentials, cookies, OIDC codes or person IDs in reports.
+
+```sh
+python3 infra/scripts/staging_preflight.py \
+  --web-origin https://accesslobby.realjanelove.com \
+  --api-origin https://api.accesslobby.realjanelove.com \
+  --issuer https://iam.accesslobby.realjanelove.com/realms/accesslobby-first-party \
+  --consumer-origin https://consumer.accesslobby.realjanelove.com \
+  --expected-sha 4debd6eaf154f82c82c20579c4fe08a89fb25c9e \
+  --check-auth-pages --consumer-home-samples 5 \
+  --output /var/tmp/accesslobby-consumer-repeat.json
+```
+
+The ordered account, logout, identity and viewport cases are in the [bulk staging acceptance matrix](bulk-staging-acceptance.md). Keep blocked prerequisites explicit; no case in that matrix is marked as executed by this preparation.
