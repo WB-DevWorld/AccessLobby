@@ -138,7 +138,7 @@ jobs:
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:14000/private)" = 401
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:14000/register)" = 404
           test "$(curl -sS -o /tmp/bad-consumer-callback -w '%{http_code}' 'http://127.0.0.1:14000/callback?state=invalid&code=invalid')" = 400
-          grep -q "We couldn't complete sign-in" /tmp/bad-consumer-callback
+          grep -q 'We could not complete sign-in' /tmp/bad-consumer-callback
   iam-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 8
