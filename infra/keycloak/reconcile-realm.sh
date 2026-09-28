@@ -57,7 +57,7 @@ settings=$("$kcadm" get "realms/$realm" \
 
 expect_boolean() {
   local key="$1" expected="$2"
-  if ! grep -Eq "\"${key}\"[[:space:]]*:[[:space:]]*${expected}[[:space:]]*([,}])" <<<"$settings"; then
+  if ! grep -Eq "\"${key}\"[[:space:]]*:[[:space:]]*${expected}[[:space:]]*,?[[:space:]]*$" <<<"$settings"; then
     echo "Realm reconciliation mismatch for ${key}; expected ${expected}" >&2
     echo "$settings" >&2
     exit 1
