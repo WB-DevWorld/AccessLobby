@@ -8,6 +8,7 @@ import secrets
 import sys
 import time
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlencode, urlparse
@@ -25,6 +26,33 @@ class NoRedirect(HTTPRedirectHandler):
 OPENER = build_opener(NoRedirect)
 
 
+class PageText(HTMLParser):
+    """Read body text, excluding metadata and scripts."""
+
+    def __init__(self):
+        super().__init__()
+        self.ignored = 0
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"head", "script", "style", "template"}:
+            self.ignored += 1
+
+    def handle_endtag(self, tag):
+        if tag in {"head", "script", "style", "template"}:
+            self.ignored -= 1
+
+    def handle_data(self, data):
+        if not self.ignored:
+            self.parts.append(data)
+
+
+def visible_text(html: str) -> str:
+    page = PageText()
+    page.feed(html)
+    return " ".join(" ".join(page.parts).split())
+
+
 def checked_url(value: str, *, origin: bool) -> str:
     parsed = urlparse(value)
     local = parsed.hostname in {"localhost", "127.0.0.1", "::1"}
@@ -37,8 +65,8 @@ def checked_url(value: str, *, origin: bool) -> str:
     return value.rstrip("/")
 
 
-def read_url(url: str) -> tuple[int, bytes, str]:
-    request = Request(url, headers={"Accept": "application/json, text/html", "Cache-Control": "no-store"})
+def read_url(url: str, *, accept: str = "application/json, text/html") -> tuple[int, bytes, str]:
+    request = Request(url, headers={"Accept": accept, "Cache-Control": "no-store"})
     for attempt in range(2):
         try:
             response = OPENER.open(request, timeout=8)
@@ -81,11 +109,11 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
     report = {"checkedAt": datetime.now(timezone.utc).isoformat(), "expectedSha": expected_sha,
               "checks": [], "passed": False}
 
-    def check(name: str, url: str, statuses: set[int], predicate=None):
+    def check(name: str, url: str, statuses: set[int], predicate=None, *, accept=None):
         entry = {"name": name, "passed": False}
         report["checks"].append(entry)
         try:
-            status, body, content_type = read_url(url)
+            status, body, content_type = read_url(url, accept=accept) if accept else read_url(url)
             entry["status"] = status
             if status not in statuses:
                 entry["reason"] = "unexpected_status"
@@ -162,7 +190,8 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
                 if content_type != "text/html":
                     raise ValueError("Expected an HTML authentication page")
                 html = body.decode("utf-8", "replace")
-                if heading not in html or form_id not in html or "ACCESSLOBBY-FIRST-PARTY" in html.upper():
+                visible = visible_text(html)
+                if heading not in visible or form_id not in html or "ACCESSLOBBY-FIRST-PARTY" in visible.upper():
                     raise ValueError("Authentication page does not show the branded form")
                 return {"branded": True}
             return inspect
@@ -170,19 +199,20 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
         def themed_error(body: bytes, content_type: str):
             if content_type != "text/html":
                 raise ValueError("Expected an HTML authentication error")
-            html = body.decode("utf-8", "replace")
-            if ("We could not complete that request" not in html
-                    or "This sign-in request is not valid. Return to the app and try again." not in html
-                    or "Invalid parameter:" in html
-                    or "ACCESSLOBBY-FIRST-PARTY" in html.upper()):
+            visible = visible_text(body.decode("utf-8", "replace"))
+            if ("We could not complete that request" not in visible
+                    or "This sign-in request is not valid. Return to the app and try again." not in visible
+                    or "Invalid parameter:" in visible
+                    or "ACCESSLOBBY-FIRST-PARTY" in visible.upper()):
                 raise ValueError("Authentication error is not branded and plain-language")
             return {"branded": True}
 
         check("auth.login_theme", auth_url(), {200},
-              themed_page("Sign in to AccessLobby", 'id="kc-form-login"'))
+              themed_page("Sign in to AccessLobby", 'id="kc-form-login"'), accept="text/html")
         check("auth.registration_theme", auth_url(prompt="create"), {200},
-              themed_page("Create your AccessLobby account", 'id="kc-register-form"'))
-        check("auth.rejects_bad_redirect", auth_url(redirect_uri=web + "/unregistered"), {400}, themed_error)
+              themed_page("Create your AccessLobby account", 'id="kc-register-form"'), accept="text/html")
+        check("auth.rejects_bad_redirect", auth_url(redirect_uri=web + "/unregistered"), {400},
+              themed_error, accept="text/html")
 
     report["passed"] = all(entry["passed"] for entry in report["checks"])
     return report

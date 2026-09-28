@@ -86,22 +86,27 @@ class StagingPreflightTests(unittest.TestCase):
         data = fixture()
         seen_urls = []
 
-        def read(url):
+        def read(url, *, accept="application/json, text/html"):
             seen_urls.append(url)
             if not url.startswith(ISSUER + "/protocol/openid-connect/auth?"):
                 return data[url]
+            self.assertEqual(accept, "text/html")
             params = parse_qs(urlparse(url).query)
             self.assertEqual(params["client_id"], ["accesslobby-web"])
             self.assertEqual(params["code_challenge_method"], ["S256"])
             self.assertEqual(params["redirect_uri"],
                              [WEB + ("/unregistered" if "unregistered" in url else "/auth/callback")])
             if "unregistered" in url:
-                return (400, b"We could not complete that request. "
+                return (400, b'<a href="/realms/accesslobby-first-party/login-actions">Back</a>'
+                        b"We could not complete that request. "
                         b"This sign-in request is not valid. Return to the app and try again.", "text/html")
             if params.get("prompt") == ["create"]:
-                return (200, b'<h1>Create your AccessLobby account</h1><form id="kc-register-form">',
+                return (200, b'<h1>Create your AccessLobby account</h1>'
+                        b'<form id="kc-register-form" action="/realms/accesslobby-first-party/login-actions">',
                         "text/html")
-            return (200, b'<h1>Sign in to AccessLobby</h1><form id="kc-form-login">', "text/html")
+            return (200, b'<h1>Sign in to AccessLobby</h1>'
+                    b'<form id="kc-form-login" action="/realms/accesslobby-first-party/login-actions">',
+                    "text/html")
 
         with patch.object(preflight, "read_url", side_effect=read):
             result = preflight.run(WEB, API, ISSUER, CONSUMER, SHA, check_auth_pages=True)
@@ -115,10 +120,32 @@ class StagingPreflightTests(unittest.TestCase):
             self.assertNotIn(params["nonce"][0], serialized)
         self.assertEqual(len([url for url in seen_urls if "/auth?" in url]), 3)
 
+    def test_technical_realm_name_in_visible_page_text_fails_auth_gate(self):
+        data = fixture()
+
+        def read(url, *, accept="application/json, text/html"):
+            if "/protocol/openid-connect/auth?" not in url:
+                return data[url]
+            params = parse_qs(urlparse(url).query)
+            if "unregistered" in url:
+                return 400, (b"We could not complete that request. "
+                             b"This sign-in request is not valid. Return to the app and try again. "
+                             b"<p>ACCESSLOBBY-FIRST-PARTY</p>"), "text/html"
+            if params.get("prompt") == ["create"]:
+                return 200, (b'<h1>Create your AccessLobby account</h1>'
+                             b'<p>ACCESSLOBBY-FIRST-PARTY</p><form id="kc-register-form">'), "text/html"
+            return 200, (b'<h1>Sign in to AccessLobby</h1>'
+                         b'<p>ACCESSLOBBY-FIRST-PARTY</p><form id="kc-form-login">'), "text/html"
+
+        with patch.object(preflight, "read_url", side_effect=read):
+            result = preflight.run(WEB, API, ISSUER, CONSUMER, SHA, check_auth_pages=True)
+        self.assertEqual({check["name"] for check in result["checks"] if not check["passed"]},
+                         {"auth.login_theme", "auth.registration_theme", "auth.rejects_bad_redirect"})
+
     def test_unbranded_login_and_disabled_registration_fail_auth_gate(self):
         data = fixture()
 
-        def read(url):
+        def read(url, *, accept="application/json, text/html"):
             if "/protocol/openid-connect/auth?" not in url:
                 return data[url]
             params = parse_qs(urlparse(url).query)
