@@ -61,9 +61,6 @@
 .identity-hero .identifier-block,
 .profile-summary .identifier-block {
   width: min(100%, 34rem);
-}
-
-.profile-summary .identifier-block {
   grid-column: 1 / -1;
 }
 
