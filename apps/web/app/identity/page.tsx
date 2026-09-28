@@ -21,63 +21,68 @@ export default async function IdentityProfile() {
   return (
     <AppShell
       active="identity"
-      title="Identity Profile"
-      description="The authoritative identity facts AccessLobby can safely resolve for this account today."
+      title="Your profile"
+      description="The account information AccessLobby can safely show you today."
       personStatus={identity.person.status}
     >
       <section className="profile-summary">
         <div className="identity-avatar identity-avatar-large" aria-hidden="true">AL</div>
         <div>
-          <p className="eyebrow">AccessLobby person</p>
-          <h2>Provider-independent identity</h2>
+          <p className="eyebrow">Your AccessLobby account</p>
+          <h2>One account that can work across supported apps</h2>
           <div className="profile-badges">
             <StatusBadge>{status}</StatusBadge>
-            <StatusBadge tone="neutral">Durable ID</StatusBadge>
+            <StatusBadge tone="neutral">Account ID available</StatusBadge>
           </div>
-        </div>
-        <div className="profile-id">
-          <span>Person ID</span>
-          <code>{identity.person.id}</code>
         </div>
       </section>
 
       <section className="profile-grid">
-        <SurfaceCard title="Core identity" className="profile-primary-card">
+        <SurfaceCard title="Account information" className="profile-primary-card">
           <dl className="data-list">
-            <DataRow label="AccessLobby person ID" mono>{identity.person.id}</DataRow>
-            <DataRow label="Lifecycle status"><StatusBadge>{status}</StatusBadge></DataRow>
-            <DataRow label="Identity type">Human person</DataRow>
-            <DataRow label="Canonical owner">AccessLobby</DataRow>
+            <DataRow label="Account status"><StatusBadge>{status}</StatusBadge></DataRow>
+            <DataRow label="Account type">Personal account</DataRow>
+            <DataRow label="Managed by">AccessLobby</DataRow>
           </dl>
         </SurfaceCard>
 
-        <SurfaceCard title="Why this identity is durable">
+        <SurfaceCard title="How your account stays the same">
           <div className="principle-stack">
-            <div><span aria-hidden="true">01</span><p><strong>Not an email address</strong>Contact details may change without creating a different person.</p></div>
-            <div><span aria-hidden="true">02</span><p><strong>Not a Keycloak private ID</strong>The IAM engine can be replaced without replacing the canonical person.</p></div>
-            <div><span aria-hidden="true">03</span><p><strong>Not an app-local user ID</strong>Each application can maintain its own linked domain record.</p></div>
+            <div><span aria-hidden="true">01</span><p><strong>Your email can change</strong>You do not need a completely new AccessLobby account just because a contact detail changes.</p></div>
+            <div><span aria-hidden="true">02</span><p><strong>The sign-in system can change</strong>Your AccessLobby account is kept separately from the technology that checks your password.</p></div>
+            <div><span aria-hidden="true">03</span><p><strong>Apps keep their own records</strong>Each app can connect your AccessLobby account to its own local profile and permissions.</p></div>
           </div>
         </SurfaceCard>
 
-        <SurfaceCard title="Personal information">
+        <SurfaceCard title="Personal details">
           <AvailabilityPanel
-            title="Profile attributes are not available yet"
-            description="The current identity API does not expose legal name, date of birth, nationality, language or address. AccessLobby will not guess or copy those values from unapproved sources."
+            title="More profile details are not available yet"
+            description="Name, date of birth, nationality, language and address are not part of the current AccessLobby account response. We will not guess or copy them from an unapproved source."
           />
         </SurfaceCard>
 
-        <SurfaceCard title="Contact methods">
+        <SurfaceCard title="Email and phone">
           <AvailabilityPanel
-            title="Contact data is not exposed yet"
-            description="Email and phone may be used by the authentication engine, but they are not the canonical person identity and are not part of the current product API response."
+            title="Contact details are not shown here yet"
+            description="An email address may be used during sign-in, but the current account service does not yet provide verified contact details to this page."
           />
         </SurfaceCard>
 
-        <SurfaceCard title="Verification and identity claims" className="profile-wide-card">
+        <SurfaceCard title="Identity checks" className="profile-wide-card">
           <AvailabilityPanel
-            title="No verification assertion is available to this UI"
-            description="Government documents, KYC/KYB results, assurance levels and trust claims will appear only when an authoritative verification provider and versioned assertion contract are approved."
+            title="No identity-check result is available yet"
+            description="Document checks, business checks and trust information will appear only after an approved verification service is connected."
           />
+        </SurfaceCard>
+
+        <SurfaceCard title="Technical details" className="profile-wide-card">
+          <details>
+            <summary>Show your AccessLobby account ID</summary>
+            <dl className="data-list">
+              <DataRow label="AccessLobby account ID" mono>{identity.person.id}</DataRow>
+              <DataRow label="Identity record status"><StatusBadge>{status}</StatusBadge></DataRow>
+            </dl>
+          </details>
         </SurfaceCard>
       </section>
     </AppShell>

@@ -17,13 +17,13 @@ type AppShellProps = {
 
 const enabledNavigation = [
   { key: 'overview', label: 'Overview', href: '/account', icon: 'home' },
-  { key: 'identity', label: 'Identity', href: '/identity', icon: 'person' },
+  { key: 'identity', label: 'Profile', href: '/identity', icon: 'person' },
   { key: 'recovery', label: 'Recovery', href: '/recovery', icon: 'recovery' },
 ] as const;
 
 const plannedNavigation = [
   { label: 'Security', icon: 'shield' },
-  { label: 'Apps & Access', icon: 'apps' },
+  { label: 'Connected apps', icon: 'apps' },
   { label: 'Privacy', icon: 'privacy' },
 ] as const;
 
@@ -79,7 +79,7 @@ export function AppShell({ active, title, description, personStatus, children, a
             </Link>
           ))}
 
-          <p className="nav-label nav-label-spaced">Coming later</p>
+          <p className="nav-label nav-label-spaced">More controls</p>
           {plannedNavigation.map((item) => (
             <span className="nav-item nav-item-disabled" key={item.label}>
               <NavigationIcon name={item.icon} />
@@ -90,8 +90,8 @@ export function AppShell({ active, title, description, personStatus, children, a
         </nav>
 
         <div className="sidebar-foot">
-          <div className="system-state"><span aria-hidden="true" /> Signed-in session</div>
-          <p>AccessLobby keeps identity separate from each app&apos;s permissions.</p>
+          <div className="system-state"><span aria-hidden="true" /> Signed in</div>
+          <p>Your AccessLobby account is separate from each app&apos;s own permissions.</p>
         </div>
       </aside>
 
@@ -102,7 +102,7 @@ export function AppShell({ active, title, description, personStatus, children, a
             <StatusBadge>{formatIdentityStatus(personStatus)}</StatusBadge>
           </div>
           <div className="page-heading">
-            <p className="eyebrow">AccessLobby Identity</p>
+            <p className="eyebrow">Your AccessLobby account</p>
             <h1>{title}</h1>
             <p>{description}</p>
           </div>

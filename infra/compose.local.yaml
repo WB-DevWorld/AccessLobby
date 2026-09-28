@@ -38,6 +38,22 @@ services:
     ports: ["127.0.0.1:8080:8080"]
     depends_on:
       iam-db: { condition: service_healthy }
+  iam-config:
+    image: quay.io/keycloak/keycloak:26.7.4
+    restart: "no"
+    entrypoint: ["/bin/bash", "/opt/accesslobby/reconcile-realm.sh"]
+    environment:
+      IAM_INTERNAL_URL: http://iam:8080
+      IAM_REALM: accesslobby-first-party
+      IAM_ADMIN_USERNAME: ${IAM_ADMIN_USERNAME:?set IAM_ADMIN_USERNAME}
+      IAM_ADMIN_PASSWORD: ${IAM_ADMIN_PASSWORD:?set IAM_ADMIN_PASSWORD}
+      PUBLIC_REGISTRATION_ENABLED: ${PUBLIC_REGISTRATION_ENABLED:-false}
+      IAM_VERIFY_EMAIL: ${IAM_VERIFY_EMAIL:-false}
+      IAM_RESET_PASSWORD_ENABLED: ${IAM_RESET_PASSWORD_ENABLED:-false}
+    volumes:
+      - ./keycloak/reconcile-realm.sh:/opt/accesslobby/reconcile-realm.sh:ro
+    depends_on:
+      iam: { condition: service_started }
 volumes:
   iam_data:
   identity_data:

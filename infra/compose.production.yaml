@@ -45,6 +45,21 @@ services:
     ports: ["127.0.0.1:8080:8080"]
     depends_on:
       iam-db: { condition: service_healthy }
+  iam-config:
+    image: quay.io/keycloak/keycloak:26.7.4
+    restart: "no"
+    entrypoint: ["/bin/bash", "/opt/accesslobby/reconcile-realm.sh"]
+    environment:
+      IAM_INTERNAL_URL: http://iam:8080
+      IAM_REALM: accesslobby-first-party
+      IAM_ADMIN_USERNAME: ${IAM_ADMIN_USERNAME:?}
+      IAM_ADMIN_PASSWORD: ${IAM_ADMIN_PASSWORD:?}
+      PUBLIC_REGISTRATION_ENABLED: ${PUBLIC_REGISTRATION_ENABLED:-false}
+      IAM_VERIFY_EMAIL: ${IAM_VERIFY_EMAIL:-false}
+      IAM_RESET_PASSWORD_ENABLED: ${IAM_RESET_PASSWORD_ENABLED:-false}
+    volumes: ["./keycloak/reconcile-realm.sh:/opt/accesslobby/reconcile-realm.sh:ro"]
+    depends_on:
+      iam: { condition: service_started }
   api:
     image: ${API_IMAGE:?pin qualified image digest}
     restart: unless-stopped
@@ -57,7 +72,7 @@ services:
     ports: ["127.0.0.1:3001:3001"]
     depends_on:
       identity-db: { condition: service_healthy }
-      iam: { condition: service_started }
+      iam-config: { condition: service_completed_successfully }
   web:
     image: ${WEB_IMAGE:?pin qualified image digest}
     restart: unless-stopped
@@ -67,8 +82,11 @@ services:
       OIDC_CLIENT_ID: accesslobby-web
       SESSION_SECRET: ${SESSION_SECRET:?}
       API_INTERNAL_URL: http://api:3001
+      PUBLIC_REGISTRATION_ENABLED: ${PUBLIC_REGISTRATION_ENABLED:-false}
     ports: ["127.0.0.1:3000:3000"]
-    depends_on: [api]
+    depends_on:
+      api: { condition: service_started }
+      iam-config: { condition: service_completed_successfully }
 volumes:
   iam_data:
   identity_data:
