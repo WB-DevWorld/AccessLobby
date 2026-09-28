@@ -1,4 +1,5 @@
 import importlib.util
+import sys
 import unittest
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -8,6 +9,7 @@ MODULE_PATH = Path(__file__).with_name("public-staging-smoke.py")
 SPEC = importlib.util.spec_from_file_location("public_staging_smoke", MODULE_PATH)
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
