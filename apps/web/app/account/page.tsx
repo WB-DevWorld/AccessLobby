@@ -97,12 +97,12 @@ export default async function Account() {
           />
         </SurfaceCard>
 
-        <div id="sign-out" className="dashboard-span-two">
-          <SurfaceCard title="Where would you like to sign out?">
+        <div id="sign-out" className="dashboard-span-two" tabIndex={-1}>
+          <SurfaceCard title="Where would you like to sign out?" className="decision-card">
             <p className="card-copy">
               Choose whether to end only this AccessLobby web session or also end the shared browser SSO session used by participating connected apps. Signing out of this app only may allow a quick sign-in again while the shared AccessLobby session remains active.
             </p>
-            <div className="hero-actions" aria-label="Sign-out scope">
+            <div className="decision-actions" role="group" aria-label="Sign-out scope">
               <form action="/auth/logout" method="post">
                 <input type="hidden" name="scope" value="current" />
                 <button className="button button-secondary" type="submit">Sign out of this app only</button>

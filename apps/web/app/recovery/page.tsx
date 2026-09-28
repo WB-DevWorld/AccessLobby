@@ -43,7 +43,13 @@ export default async function RecoveryPage() {
       personStatus={identity.person.status}
     >
       <section className="recovery-hero">
-        <div className="recovery-shield" aria-hidden="true">+</div>
+        <div className="recovery-shield" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 3 19 6v5c0 4.6-2.8 8-7 10-4.2-2-7-5.4-7-10V6l7-3Z" />
+            <path d="M12 8v5" />
+            <path d="M12 16h.01" />
+          </svg>
+        </div>
         <div>
           <p className="eyebrow">Feature state</p>
           <h2>{productFeatures.recovery.title}</h2>

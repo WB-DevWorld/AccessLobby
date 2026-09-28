@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { AvailabilityPanel, BrandMark } from '@/components/ui';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { AvailabilityPanel, BrandMark, SkipLink } from '@/components/ui';
 
 const foundations = [
   {
@@ -21,17 +22,23 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
 
   return (
     <div className="public-page">
+      <SkipLink />
       <header className="public-header">
         <BrandMark />
-        <Link className="text-link" href="/account">Account status</Link>
+        <div className="public-header-actions">
+          <ThemeToggle />
+          <Link className="text-link" href="/account">Account status</Link>
+        </div>
       </header>
 
       <main className="public-main" id="main-content">
         {error === 'shared_logout_unavailable' && (
-          <AvailabilityPanel
-            title="Shared sign-out could not be completed"
-            description="This app signed out safely, but AccessLobby could not complete sign-out from connected apps. Try the shared sign-out again when the identity service is available."
-          />
+          <div className="public-alert">
+            <AvailabilityPanel
+              title="Shared sign-out could not be completed"
+              description="This app signed out safely, but AccessLobby could not complete sign-out from connected apps. Try the shared sign-out again when the identity service is available."
+            />
+          </div>
         )}
 
         <section className="public-hero">
@@ -48,7 +55,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
             <p className="hero-note">Account creation is available. Email verification and recovery depend on the services configured for this environment.</p>
           </div>
 
-          <div className="hero-visual" aria-label="AccessLobby identity foundation">
+          <div className="hero-visual" role="img" aria-label="AccessLobby identity foundation: one identity, compatible apps, a stable person ID, and local permissions.">
             <div className="identity-orbit identity-orbit-one" />
             <div className="identity-orbit identity-orbit-two" />
             <div className="identity-core">

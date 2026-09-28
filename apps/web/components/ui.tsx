@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { ThemeToggle } from '@/components/theme-toggle';
 import type { CurrentIdentityResult } from '@/lib/current-identity-model';
+
+export function SkipLink() {
+  return <a className="skip-link" href="#main-content">Skip to main content</a>;
+}
 
 export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -78,7 +83,11 @@ export function AccountAccessState({ result }: { result: Exclude<CurrentIdentity
   const signedOut = result.state === 'signed-out';
   return (
     <div className="state-page">
-      <header className="state-page-header"><BrandMark /></header>
+      <SkipLink />
+      <header className="state-page-header">
+        <BrandMark />
+        <ThemeToggle />
+      </header>
       <main className="state-panel" id="main-content">
         <div className="state-icon" aria-hidden="true">{signedOut ? '→' : '!'}</div>
         <p className="eyebrow">AccessLobby account</p>

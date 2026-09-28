@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { BrandMark, StatusBadge } from '@/components/ui';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { BrandMark, SkipLink, StatusBadge } from '@/components/ui';
 import { formatIdentityStatus } from '@/lib/current-identity-model';
 
 type ActiveSection = 'overview' | 'identity' | 'recovery';
@@ -34,17 +35,35 @@ function NavigationIcon({ name }: { name: string }) {
     shield: <path d="M12 3 19 6v5c0 4.6-2.8 8-7 10-4.2-2-7-5.4-7-10V6l7-3Z" />,
     apps: <><rect x="4" y="4" width="6" height="6" rx="1.2" /><rect x="14" y="4" width="6" height="6" rx="1.2" /><rect x="4" y="14" width="6" height="6" rx="1.2" /><rect x="14" y="14" width="6" height="6" rx="1.2" /></>,
     privacy: <><path d="M12 3 19 6v5c0 4.6-2.8 8-7 10-4.2-2-7-5.4-7-10V6l7-3Z" /><path d="M9.5 12h5" /></>,
+    signout: <><path d="M10 6V4.5H4.5v15H10V18" /><path d="M10 12h9" /><path d="m15.5 8.5 3.5 3.5-3.5 3.5" /></>,
   };
 
   return <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
+function AccountLinks({ active, itemClassName }: { active: ActiveSection; itemClassName: string }) {
+  return enabledNavigation.map((item) => {
+    const current = active === item.key;
+    return (
+      <Link
+        key={item.key}
+        className={`${itemClassName} ${current ? `${itemClassName}-active` : ''}`.trim()}
+        href={item.href}
+        aria-current={current ? 'page' : undefined}
+      >
+        <NavigationIcon name={item.icon} />
+        <span>{item.label}</span>
+      </Link>
+    );
+  });
+}
+
 export function AppShell({ active, title, description, personStatus, children, actions }: AppShellProps) {
   return (
     <div className="app-frame">
-      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <SkipLink />
 
-      <aside className="app-sidebar">
+      <aside className="app-sidebar" aria-label="Account">
         <div className="sidebar-brand"><BrandMark /></div>
         <nav className="primary-nav" aria-label="Account navigation">
           <p className="nav-label">Your account</p>
@@ -62,27 +81,26 @@ export function AppShell({ active, title, description, personStatus, children, a
 
           <p className="nav-label nav-label-spaced">Coming later</p>
           {plannedNavigation.map((item) => (
-            <span className="nav-item nav-item-disabled" aria-disabled="true" key={item.label} title="Not available in this release">
+            <span className="nav-item nav-item-disabled" key={item.label}>
               <NavigationIcon name={item.icon} />
               <span>{item.label}</span>
-              <span className="nav-soon">Later</span>
+              <span className="nav-soon">Planned</span>
             </span>
           ))}
         </nav>
 
         <div className="sidebar-foot">
-          <div className="system-state"><span aria-hidden="true" /> Identity foundation online</div>
+          <div className="system-state"><span aria-hidden="true" /> Signed-in session</div>
           <p>AccessLobby keeps identity separate from each app&apos;s permissions.</p>
         </div>
       </aside>
 
       <div className="app-workspace">
-        <header className="mobile-bar">
-          <BrandMark />
-          <StatusBadge>{formatIdentityStatus(personStatus)}</StatusBadge>
-        </header>
-
         <header className="app-header">
+          <div className="mobile-bar">
+            <BrandMark />
+            <StatusBadge>{formatIdentityStatus(personStatus)}</StatusBadge>
+          </div>
           <div className="page-heading">
             <p className="eyebrow">AccessLobby Identity</p>
             <h1>{title}</h1>
@@ -90,27 +108,29 @@ export function AppShell({ active, title, description, personStatus, children, a
           </div>
           <div className="header-actions">
             <StatusBadge>{formatIdentityStatus(personStatus)}</StatusBadge>
+            <ThemeToggle />
             {actions}
             <Link className="button button-secondary button-compact" href="/account#sign-out">Sign out</Link>
           </div>
         </header>
 
+        <nav className="tablet-nav" aria-label="Account sections">
+          <AccountLinks active={active} itemClassName="tablet-nav-item" />
+          <Link className="tablet-nav-item" href="/account#sign-out">
+            <NavigationIcon name="signout" />
+            <span>Sign out</span>
+          </Link>
+        </nav>
+
         <main className="app-main" id="main-content">{children}</main>
       </div>
 
       <nav className="mobile-nav" aria-label="Mobile account navigation">
-        {enabledNavigation.map((item) => (
-          <Link
-            key={item.key}
-            className={active === item.key ? 'mobile-nav-active' : undefined}
-            href={item.href}
-            aria-current={active === item.key ? 'page' : undefined}
-          >
-            <NavigationIcon name={item.icon} />
-            <span>{item.label}</span>
-          </Link>
-        ))}
-        <Link href="/account#sign-out"><NavigationIcon name="shield" /><span>Sign out</span></Link>
+        <AccountLinks active={active} itemClassName="mobile-nav-item" />
+        <Link className="mobile-nav-item" href="/account#sign-out">
+          <NavigationIcon name="signout" />
+          <span>Sign out</span>
+        </Link>
       </nav>
     </div>
   );
