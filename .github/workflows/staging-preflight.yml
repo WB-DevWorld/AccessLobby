@@ -11,6 +11,11 @@ on:
         required: true
         default: true
         type: boolean
+      check_auth_pages:
+        description: Check branded login, registration and invalid-request pages after IAM cutover
+        required: true
+        default: false
+        type: boolean
 permissions:
   contents: read
 jobs:
@@ -23,6 +28,7 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
           INCLUDE_CONSUMER: ${{ inputs.include_consumer }}
+          CHECK_AUTH_PAGES: ${{ inputs.check_auth_pages }}
         run: |
           args=(
             --web-origin https://accesslobby.realjanelove.com
@@ -34,6 +40,7 @@ jobs:
           if [ "$INCLUDE_CONSUMER" = true ]; then
             args+=(--consumer-origin https://consumer.accesslobby.realjanelove.com)
           fi
+          if [ "$CHECK_AUTH_PAGES" = true ]; then args+=(--check-auth-pages); fi
           python3 infra/scripts/staging_preflight.py "${args[@]}"
       - uses: actions/upload-artifact@v4
         if: always()

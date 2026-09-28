@@ -4,12 +4,13 @@
 import argparse
 import json
 import re
+import secrets
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 MAX_BODY = 256 * 1024
@@ -44,8 +45,11 @@ def read_url(url: str) -> tuple[int, bytes, str]:
             break
         except HTTPError as error:
             # A redirect is an unexpected status; never follow it to a different origin.
-            error.close()
-            return error.code, b"", ""
+            with error:
+                body = error.read(MAX_BODY + 1)
+                if len(body) > MAX_BODY:
+                    raise ValueError("Response exceeds the public preflight size limit")
+                return error.code, body, error.headers.get_content_type()
         except OSError:
             if attempt:
                 raise
@@ -65,7 +69,8 @@ def json_object(body: bytes) -> dict:
     return value
 
 
-def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str | None) -> dict:
+def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str | None,
+        check_auth_pages: bool = False) -> dict:
     web = checked_url(web, origin=True)
     api = checked_url(api, origin=True)
     issuer = checked_url(issuer, origin=False)
@@ -138,6 +143,47 @@ def run(web: str, api: str, issuer: str, consumer: str | None, expected_sha: str
         check("consumer.private_unauthenticated", consumer + "/private", {401})
         check("consumer.rejects_bad_callback", consumer + "/callback?state=invalid&code=invalid", {400})
 
+    if check_auth_pages:
+        # A fresh, unprivileged OIDC request loads the actual staging realm theme.
+        # No credentials, cookies, authorization code or response body enter the report.
+        auth_path = issuer + "/protocol/openid-connect/auth"
+        parameters = {
+            "client_id": "accesslobby-web", "redirect_uri": web + "/auth/callback",
+            "response_type": "code", "scope": "openid", "code_challenge_method": "S256",
+            "code_challenge": "A" * 43, "state": secrets.token_urlsafe(24),
+            "nonce": secrets.token_urlsafe(24),
+        }
+
+        def auth_url(**changes):
+            return auth_path + "?" + urlencode(parameters | changes)
+
+        def themed_page(heading: str, form_id: str):
+            def inspect(body: bytes, content_type: str):
+                if content_type != "text/html":
+                    raise ValueError("Expected an HTML authentication page")
+                html = body.decode("utf-8", "replace")
+                if heading not in html or form_id not in html or "ACCESSLOBBY-FIRST-PARTY" in html.upper():
+                    raise ValueError("Authentication page does not show the branded form")
+                return {"branded": True}
+            return inspect
+
+        def themed_error(body: bytes, content_type: str):
+            if content_type != "text/html":
+                raise ValueError("Expected an HTML authentication error")
+            html = body.decode("utf-8", "replace")
+            if ("We could not complete that request" not in html
+                    or "This sign-in request is not valid. Return to the app and try again." not in html
+                    or "Invalid parameter:" in html
+                    or "ACCESSLOBBY-FIRST-PARTY" in html.upper()):
+                raise ValueError("Authentication error is not branded and plain-language")
+            return {"branded": True}
+
+        check("auth.login_theme", auth_url(), {200},
+              themed_page("Sign in to AccessLobby", 'id="kc-form-login"'))
+        check("auth.registration_theme", auth_url(prompt="create"), {200},
+              themed_page("Create your AccessLobby account", 'id="kc-register-form"'))
+        check("auth.rejects_bad_redirect", auth_url(redirect_uri=web + "/unregistered"), {400}, themed_error)
+
     report["passed"] = all(entry["passed"] for entry in report["checks"])
     return report
 
@@ -149,10 +195,13 @@ def main() -> int:
     parser.add_argument("--issuer", required=True)
     parser.add_argument("--consumer-origin")
     parser.add_argument("--expected-sha")
+    parser.add_argument("--check-auth-pages", action="store_true",
+                        help="Check live branded login, registration and invalid-request pages without signing in")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
-        report = run(args.web_origin, args.api_origin, args.issuer, args.consumer_origin, args.expected_sha)
+        report = run(args.web_origin, args.api_origin, args.issuer, args.consumer_origin, args.expected_sha,
+                     args.check_auth_pages)
     except ValueError as error:
         parser.error(str(error))
     args.output.parent.mkdir(parents=True, exist_ok=True)
