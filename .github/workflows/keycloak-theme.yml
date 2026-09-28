@@ -1,0 +1,92 @@
+name: Keycloak theme
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  iam-theme:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate theme source
+        run: python3 -m unittest infra.scripts.test_keycloak_theme
+      - name: Build branded IAM image
+        run: docker build -f infra/keycloak/Dockerfile -t accesslobby-iam:ci .
+      - name: Render realm and generic client
+        env:
+          WEB_BASE_URL: http://localhost:3000
+          API_PUBLIC_ORIGIN: http://localhost:3001
+        run: |
+          python3 infra/scripts/render-realm.py
+          python3 infra/scripts/render-client.py --client-id reference-consumer \
+            --redirect-uri http://localhost:4000/callback \
+            --logout-uri http://localhost:4000/ \
+            --backchannel-logout-uri http://localhost:4000/backchannel-logout \
+            --output infra/keycloak/generated/reference-consumer.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          realm = Path('infra/keycloak/generated/accesslobby-first-party-realm.json')
+          client = Path('infra/keycloak/generated/reference-consumer.json')
+          data = json.loads(realm.read_text())
+          data['registrationAllowed'] = True
+          data['clients'].append(json.loads(client.read_text()))
+          realm.write_text(json.dumps(data))
+          client.unlink()
+          PY
+      - name: Start branded IAM
+        run: |
+          docker run -d --name accesslobby-theme-iam -p 127.0.0.1:18080:8080 \
+            -v "$PWD/infra/keycloak/generated:/opt/keycloak/data/import:ro" \
+            -e KC_BOOTSTRAP_ADMIN_USERNAME=ci-admin \
+            -e KC_BOOTSTRAP_ADMIN_PASSWORD=ci-admin-password \
+            accesslobby-iam:ci start-dev --import-realm
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail \
+              http://127.0.0.1:18080/realms/accesslobby-first-party/.well-known/openid-configuration \
+              >/tmp/theme-discovery.json; then break; fi
+            sleep 2
+          done
+          test -s /tmp/theme-discovery.json || { docker logs accesslobby-theme-iam; exit 1; }
+      - name: Verify realm theme and public pages
+        run: |
+          docker exec accesslobby-theme-iam /opt/keycloak/bin/kcadm.sh config credentials \
+            --server http://127.0.0.1:8080 --realm master \
+            --user ci-admin --password ci-admin-password
+          docker exec accesslobby-theme-iam /opt/keycloak/bin/kcadm.sh \
+            get realms/accesslobby-first-party --fields realm,displayName,displayNameHtml,loginTheme \
+            >/tmp/theme-realm.json
+          python3 - <<'PY'
+          import json
+          data = json.load(open('/tmp/theme-realm.json'))
+          assert data['realm'] == 'accesslobby-first-party'
+          assert data['displayName'] == 'AccessLobby'
+          assert data['displayNameHtml'] == 'AccessLobby'
+          assert data['loginTheme'] == 'accesslobby'
+          PY
+          issuer=http://127.0.0.1:18080/realms/accesslobby-first-party
+          curl -sS -G "$issuer/protocol/openid-connect/auth" \
+            --data-urlencode client_id=reference-consumer \
+            --data-urlencode redirect_uri=http://localhost:4000/callback \
+            --data-urlencode response_type=code --data-urlencode scope=openid \
+            --data-urlencode code_challenge_method=S256 \
+            --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \
+            -o /tmp/theme-login.html
+          curl -sS -G "$issuer/protocol/openid-connect/auth" \
+            --data-urlencode client_id=reference-consumer \
+            --data-urlencode redirect_uri=http://localhost:4000/callback \
+            --data-urlencode response_type=code --data-urlencode scope=openid \
+            --data-urlencode prompt=create \
+            --data-urlencode code_challenge_method=S256 \
+            --data-urlencode code_challenge=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \
+            -o /tmp/theme-register.html
+          grep -q 'Sign in to AccessLobby' /tmp/theme-login.html
+          grep -q 'Create your AccessLobby account' /tmp/theme-register.html
+          grep -q 'accesslobby.css' /tmp/theme-login.html
+          ! grep -q 'ACCESSLOBBY-FIRST-PARTY' /tmp/theme-login.html
+          ! grep -q 'ACCESSLOBBY-FIRST-PARTY' /tmp/theme-register.html
+          docker exec accesslobby-theme-iam test -f \
+            /opt/keycloak/themes/accesslobby/login/messages/messages_en.properties
