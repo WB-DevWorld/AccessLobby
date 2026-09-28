@@ -1,5 +1,9 @@
 import json
 import unittest
+from email.message import Message
+from io import BytesIO
+from urllib.error import HTTPError
+from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
 
 from infra.scripts import staging_preflight as preflight
@@ -67,6 +71,68 @@ class StagingPreflightTests(unittest.TestCase):
                 preflight.checked_url(value, origin=True)
         with self.assertRaises(ValueError):
             preflight.checked_url("https://example.com/realms/master/../private", origin=False)
+
+    def test_http_error_page_is_inspected_without_reporting_raw_body(self):
+        headers = Message()
+        headers["Content-Type"] = "text/html; charset=utf-8"
+        error = HTTPError(WEB + "/bad", 400, "Bad Request", headers,
+                          BytesIO(b"We could not complete that request"))
+        with patch.object(preflight.OPENER, "open", side_effect=error):
+            status, body, content_type = preflight.read_url(WEB + "/bad")
+        self.assertEqual((status, content_type), (400, "text/html"))
+        self.assertEqual(body, b"We could not complete that request")
+
+    def test_live_auth_pages_require_branded_forms_and_plain_language_errors(self):
+        data = fixture()
+        seen_urls = []
+
+        def read(url):
+            seen_urls.append(url)
+            if not url.startswith(ISSUER + "/protocol/openid-connect/auth?"):
+                return data[url]
+            params = parse_qs(urlparse(url).query)
+            self.assertEqual(params["client_id"], ["accesslobby-web"])
+            self.assertEqual(params["code_challenge_method"], ["S256"])
+            self.assertEqual(params["redirect_uri"],
+                             [WEB + ("/unregistered" if "unregistered" in url else "/auth/callback")])
+            if "unregistered" in url:
+                return (400, b"We could not complete that request. "
+                        b"This sign-in request is not valid. Return to the app and try again.", "text/html")
+            if params.get("prompt") == ["create"]:
+                return (200, b'<h1>Create your AccessLobby account</h1><form id="kc-register-form">',
+                        "text/html")
+            return (200, b'<h1>Sign in to AccessLobby</h1><form id="kc-form-login">', "text/html")
+
+        with patch.object(preflight, "read_url", side_effect=read):
+            result = preflight.run(WEB, API, ISSUER, CONSUMER, SHA, check_auth_pages=True)
+        self.assertTrue(result["passed"])
+        self.assertEqual(len(result["checks"]), 17)
+        serialized = json.dumps(result)
+        auth_urls = [url for url in seen_urls if "/protocol/openid-connect/auth?" in url]
+        for url in auth_urls:
+            params = parse_qs(urlparse(url).query)
+            self.assertNotIn(params["state"][0], serialized)
+            self.assertNotIn(params["nonce"][0], serialized)
+        self.assertEqual(len([url for url in seen_urls if "/auth?" in url]), 3)
+
+    def test_unbranded_login_and_disabled_registration_fail_auth_gate(self):
+        data = fixture()
+
+        def read(url):
+            if "/protocol/openid-connect/auth?" not in url:
+                return data[url]
+            params = parse_qs(urlparse(url).query)
+            if params.get("prompt") == ["create"]:
+                return 400, b"Registration not allowed", "text/html"
+            if "unregistered" in url:
+                return 400, b"Invalid parameter: redirect_uri", "text/html"
+            return 200, b'<h1>ACCESSLOBBY-FIRST-PARTY</h1><form id="kc-form-login">', "text/html"
+
+        with patch.object(preflight, "read_url", side_effect=read):
+            result = preflight.run(WEB, API, ISSUER, CONSUMER, SHA, check_auth_pages=True)
+        self.assertFalse(result["passed"])
+        self.assertEqual({check["name"] for check in result["checks"] if not check["passed"]},
+                         {"auth.login_theme", "auth.registration_theme", "auth.rejects_bad_redirect"})
 
 
 if __name__ == "__main__":
