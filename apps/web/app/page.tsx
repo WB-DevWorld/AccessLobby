@@ -58,6 +58,24 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
             />
           </div>
         )}
+        {error === 'account_unavailable' && (
+          <div className="public-alert"><AvailabilityPanel
+            title="Your account could not be checked"
+            description="Sign-in reached the identity service, but AccessLobby could not confirm your account and organization relationships. Please try again later."
+          /></div>
+        )}
+        {error === 'account_restricted' && (
+          <div className="public-alert"><AvailabilityPanel
+            title="This account cannot continue"
+            description="AccessLobby could not make this identity available. Contact the account administrator for help."
+          /></div>
+        )}
+        {error === 'login_failed' && (
+          <div className="public-alert"><AvailabilityPanel
+            title="Sign-in could not be completed"
+            description="Please start sign-in again."
+          /></div>
+        )}
 
         <section className="public-hero">
           <div className="hero-copy">

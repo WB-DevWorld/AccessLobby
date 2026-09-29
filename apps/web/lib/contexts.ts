@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { identityApi } from '@/lib/current-identity';
 import { secureCookie, unseal } from '@/lib/oidc';
+import { parseAccountContexts } from '@/lib/account-landing';
 
 export type Membership = { type: 'organization'; id: string; name: string; role: 'owner' | 'administrator' | 'member' };
 export type Invitation = { id: string; organizationId: string; organizationName: string; role: 'administrator' | 'member'; expiresAt: string };
@@ -10,13 +11,14 @@ export type OrganizationDetail = { id: string; name: string; role: Membership['r
   invitations: { id: string; personId: string; role: Invitation['role']; expiresAt: string }[] };
 
 export const contextCookie = () => secureCookie() ? '__Host-al-context' : 'al-context';
-export async function getContexts(): Promise<Contexts | null> {
+export async function getContexts(expectedPersonId?: string): Promise<Contexts | null> {
   try {
     const response = await identityApi('/v1/contexts');
     if (!response.ok) return null;
-    const value = await response.json() as Contexts;
-    if (!value.person?.id || !Array.isArray(value.contexts) || !Array.isArray(value.invitations)) return null;
-    return value;
+    const value = await response.json() as unknown;
+    const personId = expectedPersonId ?? (typeof value === 'object' && value !== null && 'person' in value &&
+      typeof value.person === 'object' && value.person !== null && 'id' in value.person ? value.person.id : null);
+    return typeof personId === 'string' ? parseAccountContexts(value, personId) : null;
   } catch { return null; }
 }
 export async function getOrganization(id: string): Promise<OrganizationDetail | null> {

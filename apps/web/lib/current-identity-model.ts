@@ -6,6 +6,7 @@ export type CurrentPerson = Readonly<{
 export type CurrentIdentityResult =
   | Readonly<{ state: 'ready'; person: CurrentPerson }>
   | Readonly<{ state: 'signed-out' }>
+  | Readonly<{ state: 'restricted' }>
   | Readonly<{ state: 'unavailable' }>;
 
 type UnknownRecord = Record<string, unknown>;

@@ -81,6 +81,7 @@ export function AvailabilityPanel({
 
 export function AccountAccessState({ result }: { result: Exclude<CurrentIdentityResult, { state: 'ready' }> }) {
   const signedOut = result.state === 'signed-out';
+  const restricted = result.state === 'restricted';
   return (
     <div className="state-page">
       <SkipLink />
@@ -91,15 +92,17 @@ export function AccountAccessState({ result }: { result: Exclude<CurrentIdentity
       <main className="state-panel" id="main-content">
         <div className="state-icon" aria-hidden="true">{signedOut ? '→' : '!'}</div>
         <p className="eyebrow">Your AccessLobby account</p>
-        <h1>{signedOut ? 'Sign in to continue' : 'We cannot load your account right now'}</h1>
+        <h1>{signedOut ? 'Sign in to continue' : restricted ? 'This account cannot continue' : 'We cannot load your account right now'}</h1>
         <p>
           {signedOut
             ? 'Sign in to view your AccessLobby account and account controls.'
+            : restricted
+              ? 'AccessLobby cannot make this identity available. Contact the account administrator for help, or sign in as a different person.'
             : 'Your account information was not changed or replaced. Please try again when the service is available.'}
         </p>
         <div className="state-actions">
-          <Link className="button button-primary" href="/auth/login">
-            {signedOut ? 'Sign in' : 'Try again'}
+          <Link className="button button-primary" href={restricted ? '/auth/login?intent=switch' : '/auth/login'}>
+            {restricted ? 'Sign in as a different person' : signedOut ? 'Sign in' : 'Try again'}
           </Link>
           <Link className="button button-secondary" href="/">Return home</Link>
         </div>

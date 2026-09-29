@@ -42,6 +42,7 @@ class ApiController {
     const requestId = typeof req.headers['x-request-id'] === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(req.headers['x-request-id'])
       ? req.headers['x-request-id'] : randomUUID();
     res.setHeader('x-request-id', requestId);
+    res.setHeader('cache-control', 'no-store');
     const match = /^Bearer ([^\s]+)$/.exec(req.headers.authorization ?? '');
     if (!match) return res.status(401).json({ error: 'unauthorized', requestId });
     let actor;

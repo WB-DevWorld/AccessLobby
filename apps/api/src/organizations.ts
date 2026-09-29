@@ -25,9 +25,10 @@ export class OrganizationStore {
     finally { db.release(); }
   }
 
-  private async membership(db: PoolClient, orgId: string, personId: string, lock = false): Promise<OrganizationRole> {
+  private async membership(db: PoolClient, orgId: string, personId: string, lock: 'none' | 'share' | 'update' = 'none'): Promise<OrganizationRole> {
     // All writers lock the organization first, so owner changes and invitations serialize.
-    const org = await db.query('SELECT status FROM organizations WHERE id = $1' + (lock ? ' FOR UPDATE' : ''), [orgId]);
+    const org = await db.query('SELECT status FROM organizations WHERE id = $1' +
+      (lock === 'share' ? ' FOR SHARE' : lock === 'update' ? ' FOR UPDATE' : ''), [orgId]);
     if (org.rows[0]?.status !== 'active') return fail(404, 'organization_not_found');
     const member = await db.query<{ role: OrganizationRole }>(
       "SELECT role FROM organization_memberships WHERE organization_id = $1 AND person_id = $2 AND status = 'active'",
@@ -76,23 +77,24 @@ export class OrganizationStore {
   }
 
   async detail(personId: string, orgId: string) {
-    const db = await this.pool.connect();
-    try {
-      const role = await this.membership(db, orgId, personId);
+    return this.transaction(async db => {
+      // Writers lock this row FOR UPDATE before changing membership. Keep the
+      // share lock until roster and invitations are read so removal cannot race disclosure.
+      const role = await this.membership(db, orgId, personId, 'share');
       const org = await db.query<{ id: string; name: string }>('SELECT id, name FROM organizations WHERE id = $1', [orgId]);
       const members = await db.query<{ personId: string; role: OrganizationRole }>(
         "SELECT person_id AS \"personId\", role FROM organization_memberships WHERE organization_id = $1 AND status = 'active' ORDER BY joined_at, person_id", [orgId]);
       const invitations = role === 'member' ? [] : (await db.query(
         "SELECT id, invited_person_id AS \"personId\", role, expires_at AS \"expiresAt\" FROM organization_invitations WHERE organization_id = $1 AND status = 'pending' AND expires_at > now() ORDER BY created_at", [orgId])).rows;
       return { ...org.rows[0], role, members: members.rows, invitations };
-    } finally { db.release(); }
+    });
   }
 
   async invite(actor: string, orgId: string, target: unknown, role: unknown) {
     if (!validId(target) || !inviteRole(role)) return fail(400, 'invalid_invitation');
     if (actor === target) return fail(400, 'cannot_invite_self');
     return this.transaction(async db => {
-      const actorRole = await this.membership(db, orgId, actor, true);
+      const actorRole = await this.membership(db, orgId, actor, 'update');
       if (actorRole === 'member' || (role === 'administrator' && actorRole !== 'owner')) return fail(403, 'membership_permission_denied');
       const person = await db.query("SELECT 1 FROM persons WHERE id = $1 AND status = 'active'", [target]);
       if (!person.rows[0]) return fail(404, 'person_not_found');
@@ -136,7 +138,7 @@ export class OrganizationStore {
 
   async revoke(actor: string, orgId: string, invitationId: string) {
     return this.transaction(async db => {
-      const role = await this.membership(db, orgId, actor, true);
+      const role = await this.membership(db, orgId, actor, 'update');
       if (role === 'member') return fail(403, 'membership_permission_denied');
       const row = await db.query<{ invited_person_id: string; role: string }>(
         "SELECT invited_person_id, role FROM organization_invitations WHERE id = $1 AND organization_id = $2 AND status = 'pending' FOR UPDATE", [invitationId, orgId]);
@@ -151,7 +153,7 @@ export class OrganizationStore {
   async changeRole(actor: string, orgId: string, target: string, role: unknown) {
     if (!validId(target) || (role !== 'owner' && role !== 'administrator' && role !== 'member')) return fail(400, 'invalid_role');
     return this.transaction(async db => {
-      if (await this.membership(db, orgId, actor, true) !== 'owner') return fail(403, 'membership_permission_denied');
+      if (await this.membership(db, orgId, actor, 'update') !== 'owner') return fail(403, 'membership_permission_denied');
       const member = await db.query<{ role: OrganizationRole }>(
         "SELECT m.role FROM organization_memberships m JOIN persons p ON p.id = m.person_id AND p.status = 'active' WHERE m.organization_id = $1 AND m.person_id = $2 AND m.status = 'active'", [orgId, target]);
       if (!member.rows[0]) return fail(404, 'member_not_found');
@@ -170,7 +172,7 @@ export class OrganizationStore {
   async leaveOrRemove(actor: string, orgId: string, target: string) {
     if (!validId(target)) return fail(400, 'invalid_member');
     return this.transaction(async db => {
-      const actorRole = await this.membership(db, orgId, actor, true);
+      const actorRole = await this.membership(db, orgId, actor, 'update');
       const member = await db.query<{ role: OrganizationRole }>(
         "SELECT role FROM organization_memberships WHERE organization_id = $1 AND person_id = $2 AND status = 'active'", [orgId, target]);
       if (!member.rows[0]) return fail(404, 'member_not_found');
