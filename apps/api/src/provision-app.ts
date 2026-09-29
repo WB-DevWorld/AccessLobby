@@ -84,18 +84,20 @@ export async function reconcileClient(base: string, realm: string, token: string
   }
 }
 
-async function main() {
-  const [appId, mode, reviewReference] = process.argv.slice(2);
+interface ProvisionOptions {
+  issuer: string; token?: string; base?: string; fetcher?: typeof fetch;
+  lookupTxt?: (host: string) => Promise<string[][]>;
+}
+
+export async function provisionApp(pool: Pool, appId: string, mode: '--plan' | '--activate-first-party',
+  reviewReference: string | undefined, options: ProvisionOptions) {
   if (!validId(appId) || (mode !== '--plan' && mode !== '--activate-first-party')) {
     throw new Error('Usage: provision-app <application-uuid> --plan | --activate-first-party <review-reference>');
   }
-  const databaseUrl = process.env.DATABASE_URL;
-  const issuer = process.env.OIDC_ISSUER;
-  if (!databaseUrl || !issuer) throw new Error('DATABASE_URL and OIDC_ISSUER required');
+  const issuer = options.issuer;
   const issuerUrl = new URL(issuer);
   if (issuerUrl.pathname !== '/realms/accesslobby-first-party' || issuerUrl.search || issuerUrl.hash ||
       (issuerUrl.protocol !== 'https:' && issuerUrl.hostname !== 'localhost')) throw new Error('Unexpected issuer');
-  const pool = new Pool({ connectionString: databaseUrl, max: 1 });
   const db = await pool.connect();
   try {
     await db.query('BEGIN');
@@ -107,9 +109,8 @@ async function main() {
     }
     const wanted = representation(app);
     if (mode === '--plan') {
-      console.info(JSON.stringify({ applicationId: appId, issuer, client: wanted, state: 'plan-only' }, null, 2));
       await db.query('ROLLBACK');
-      return;
+      return { applicationId: appId, issuer, client: wanted, state: 'plan-only' as const };
     }
     if (!reviewReference || !/^[A-Za-z0-9._:/-]{4,120}$/.test(reviewReference)) {
       throw new Error('A recorded first-party review reference is required');
@@ -117,22 +118,39 @@ async function main() {
     const proofHostname = proofHost(app.redirect_uri);
     if (!app.origin_verified_at || app.origin_verified_host !== proofHostname ||
         !verifiableOrigin(app.redirect_uri) ||
-        !(await originProofPresent(proofHostname, app.origin_challenge))) {
+        !(await originProofPresent(proofHostname, app.origin_challenge, options.lookupTxt))) {
       throw new Error('Current DNS origin proof required before activation');
     }
-    const token = process.env.IAM_PROVISIONING_TOKEN;
+    const token = options.token;
     if (!token) throw new Error('IAM_PROVISIONING_TOKEN required on the private provisioning runner');
-    const base = internalBase(process.env.IAM_INTERNAL_URL ?? 'http://iam:8080');
-    await reconcileClient(base, 'accesslobby-first-party', token, wanted);
+    const base = internalBase(options.base ?? 'http://iam:8080');
+    await reconcileClient(base, 'accesslobby-first-party', token, wanted, options.fetcher);
     await db.query(`UPDATE applications SET status = 'active', trust_class = 'first_party', activated_at = now(), review_reference = $2
       WHERE id = $1`, [appId, reviewReference]);
     await db.query(`INSERT INTO application_events (application_id, action) VALUES ($1, 'application.activated')`, [appId]);
     await db.query('COMMIT');
-    console.info(JSON.stringify({ applicationId: appId, status: 'active', clientId: app.client_id }));
+    return { applicationId: appId, status: 'active' as const, clientId: app.client_id };
   } catch (error) {
     await db.query('ROLLBACK');
     throw error;
-  } finally { db.release(); await pool.end(); }
+  } finally { db.release(); }
+}
+
+async function main() {
+  const [appId, mode, reviewReference, extra] = process.argv.slice(2);
+  if (!validId(appId) || (mode !== '--plan' && mode !== '--activate-first-party') || extra ||
+      (mode === '--plan' && reviewReference)) {
+    throw new Error('Usage: provision-app <application-uuid> --plan | --activate-first-party <review-reference>');
+  }
+  const databaseUrl = process.env.DATABASE_URL;
+  const issuer = process.env.OIDC_ISSUER;
+  if (!databaseUrl || !issuer) throw new Error('DATABASE_URL and OIDC_ISSUER required');
+  const pool = new Pool({ connectionString: databaseUrl, max: 1 });
+  try {
+    console.info(JSON.stringify(await provisionApp(pool, appId, mode, reviewReference, {
+      issuer, token: process.env.IAM_PROVISIONING_TOKEN, base: process.env.IAM_INTERNAL_URL
+    }), null, 2));
+  } finally { await pool.end(); }
 }
 
 if (process.argv[1]?.endsWith('/provision-app.js') || process.argv[1]?.endsWith('/provision-app.ts')) {
