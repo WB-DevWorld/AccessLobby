@@ -33,6 +33,9 @@ test('personal identity, membership invitation, role transfer and isolation', { 
     await assert.rejects(store.changeRole(member, org.id, member, 'owner'), forbidden('membership_permission_denied'));
     await assert.rejects(store.detail(member, other.id), forbidden('organization_not_found'));
     await store.changeRole(owner, org.id, member, 'owner');
+    await pool.query("UPDATE persons SET status = 'suspended' WHERE id = $1", [member]);
+    await assert.rejects(store.leaveOrRemove(owner, org.id, owner), forbidden('last_owner'));
+    await pool.query("UPDATE persons SET status = 'active' WHERE id = $1", [member]);
     await store.leaveOrRemove(owner, org.id, owner);
     assert.equal((await store.list(owner)).contexts.length, 1);
     assert.equal((await store.detail(member, org.id)).members.length, 1);

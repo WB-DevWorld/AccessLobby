@@ -145,7 +145,7 @@ export class OrganizationStore {
     return this.transaction(async db => {
       if (await this.membership(db, orgId, actor, true) !== 'owner') return fail(403, 'membership_permission_denied');
       const member = await db.query<{ role: OrganizationRole }>(
-        "SELECT role FROM organization_memberships WHERE organization_id = $1 AND person_id = $2 AND status = 'active'", [orgId, target]);
+        "SELECT m.role FROM organization_memberships m JOIN persons p ON p.id = m.person_id AND p.status = 'active' WHERE m.organization_id = $1 AND m.person_id = $2 AND m.status = 'active'", [orgId, target]);
       if (!member.rows[0]) return fail(404, 'member_not_found');
       if (member.rows[0].role === 'owner' && role !== 'owner') await this.requireAnotherOwner(db, orgId, target);
       await db.query('UPDATE organization_memberships SET role = $3 WHERE organization_id = $1 AND person_id = $2', [orgId, target, role]);
@@ -155,7 +155,7 @@ export class OrganizationStore {
   }
 
   private async requireAnotherOwner(db: PoolClient, orgId: string, personId: string) {
-    const owners = await db.query("SELECT 1 FROM organization_memberships WHERE organization_id = $1 AND person_id <> $2 AND role = 'owner' AND status = 'active' LIMIT 1", [orgId, personId]);
+    const owners = await db.query("SELECT 1 FROM organization_memberships m JOIN persons p ON p.id = m.person_id AND p.status = 'active' WHERE m.organization_id = $1 AND m.person_id <> $2 AND m.role = 'owner' AND m.status = 'active' LIMIT 1", [orgId, personId]);
     if (!owners.rows[0]) return fail(409, 'last_owner');
   }
 
