@@ -1,0 +1,10 @@
+{
+  "sourceSha": "936aae12571346920923ed392731611eaa0ecf8a",
+  "images": {
+    "iam": "ghcr.io/wb-devworld/accesslobby-iam@sha256:3b9f60b71fefb3d003df98b5ff7f368c52923adf202cab8b7d49cc0b33c3214d",
+    "iam-gateway": "ghcr.io/wb-devworld/accesslobby-iam-gateway@sha256:568caee9586ac1add6bf514e03053a7f49f6c0a02683a22a1b319c29071f3846",
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:4f73038eac60cba1462c527201b7812f8081937e77e2717741320764670f7ffb",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:451bbad9c35669d7e803e366bf2243f8b306e1552fc206f3f228c0ac310edfa7",
+    "consumer": "ghcr.io/wb-devworld/accesslobby-reference-consumer@sha256:c3ffc90daff4eb2d02256372d9f4b766c27149205ea75fde141510fe60202844"
+  }
+}
