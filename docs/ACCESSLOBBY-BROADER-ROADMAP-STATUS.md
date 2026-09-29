@@ -67,6 +67,65 @@ Status is for the stated bounded workstream, not blanket production readiness. D
 
 **Reproducible workstream counts (50 rows):** 5 DONE; 19 PARTIAL; 14 DEFERRED; 10 OWNER DECISION REQUIRED; 1 BLOCKED; 1 NOT STARTED. These are scope/disposition counts, not an engineering percentage or production completion score. A larger final workstream such as “identity lifecycle” cannot be called DONE merely because its first table exists. No heuristic percentage is assigned.
 
+## Five independent evidence dimensions
+
+These rows refer to the workstream IDs above. **Y** means its bounded design or implementation is established, or the relevant evidence is present; **P** means only part is established; **N** means no qualifying implementation/evidence was found; **—** means no applicable automated qualification of that future/operator work was identified. CI qualifies the existing implementation, not every future feature in the workstream. Staging Y/P retains the public or OWNER-REPORTED evidence and exact `936aae1` revision limits from the current-state report. New onboarding rows remain N for live acceptance. Production is unverified throughout.
+
+| Workstream | Designed | Implemented | CI-qualified | Staging-verified | Production-verified |
+|---|---:|---:|---:|---:|---:|
+| B01 Human identity spine | Y | Y | Y | Y | N |
+| B02 Identity links | P | P | Y | P | N |
+| B03 Contact methods | P | N | — | N | N |
+| B04 Merge/closure | P | P | Y | N | N |
+| B05 Password engine path | Y | Y | Y | Y | N |
+| B06 Registration/recovery | P | P | Y | P | N |
+| B07 Verified email | P | P | P | N | N |
+| B08 MFA/passkeys | P | N | — | N | N |
+| B09 Sessions/sign-out | Y | Y | Y | P | N |
+| B10 Devices/security center | P | N | — | N | N |
+| B11 Step-up | P | N | — | N | N |
+| B12 Revocation | P | P | Y | P | N |
+| B13 Flat organizations | P | Y | Y | P | N |
+| B14 Membership roles | P | Y | Y | P | N |
+| B15 Invitations | P | P | Y | P | N |
+| B16 Acting contexts | P | Y | Y | P | N |
+| B17 Hierarchy | P | N | — | N | N |
+| B18 Controllers/delegated admin | P | N | — | N | N |
+| B19 Organizational recovery | P | N | — | N | N |
+| B20 Registry/discovery | P | P | Y | N | N |
+| B21 Admission/grants | P | P | Y | N | N |
+| B22 First-party onboarding | P | Y | Y | N | N |
+| B23 App suspension | P | Y | Y | N | N |
+| B24 Provisioning automation | P | P | Y | N | N |
+| B25 External publisher activation | P | N | — | N | N |
+| B26 Seats/bulk access | P | N | — | N | N |
+| B27 Entitlements/licenses | P | N | — | N | N |
+| B28 External identifiers | P | N | — | N | N |
+| B29 External claims/consent | P | N | — | N | N |
+| B30 Developer/operator UX | P | P | Y | N | N |
+| B31 Non-human principals | P | N | — | N | N |
+| B32 On-behalf-of delegation | P | N | — | N | N |
+| B33 Pilot realm boundary | P | Y | Y | Y | N |
+| B34 DigiVerse/TransVerse trust domains | P | N | — | N | N |
+| B35 Enterprise/private SSO/SAML/SCIM | P | N | — | N | N |
+| B36 Privacy/connected apps | P | N | — | N | N |
+| B37 Verification/ZeroTrust boundary | P | N | — | N | N |
+| B38 Identity/account experience | P | Y | Y | P | N |
+| B39 Mobile/accessibility/low bandwidth | P | P | P | P | N |
+| B40 Search/insights/analytics UX | P | N | — | N | N |
+| B41 Generic reference consumer | Y | Y | Y | P | N |
+| B42 POII adoption | P | N | — | N | N |
+| B43 DonLoft adoption | P | N | — | N | N |
+| B44 WordPress/WooCommerce/CETECH/POS | P | N | — | N | N |
+| B45 CI/immutable delivery foundation | Y | Y | Y | P | N |
+| B46 Public isolated staging baseline | Y | Y | Y | Y | N |
+| B47 Monitoring/upgrade process | P | P | P | P | N |
+| B48 Backups/recovery/rollback | P | P | — | P | N |
+| B49 Production | P | N | — | N | N |
+| B50 HA/DR | P | N | — | N | N |
+
+Partial foundations in a DEFERRED workstream do not make its deferred objective complete. For example, suspension exists without merge/closure, and an operator-triggered provisioner exists without a background provisioning lifecycle. A provisional policy can be implemented and tested while its broader design still needs ratification.
+
 ## Account/entity architecture reconciliation
 
 A role, context, relationship or peer-local persona is not another global login. Natural people authenticate as themselves; organizations do not own human passwords. Owner/admin/member are provisional AccessLobby membership powers, not legal proof or peer transaction roles.
@@ -151,4 +210,3 @@ A real pilot person now has a stable AccessLobby identity and can use personal a
 The next release contains a much better app-owner foundation: request an app, prove the hostname, obtain reviewed first-party activation, choose open or restricted entry and manage broad entry grants. The app still owns customer/staff permissions. A protected operator runs activation and suspension; ordinary owners never receive Keycloak realm admin access. This is implemented and tested in CI, not yet accepted live.
 
 The wider vision remains substantial: public account recovery/verification, security center/MFA/passkeys, organization hierarchy/recovery, external consent/privacy, non-human actors/federation, real ecosystem adapters and production operations. These should follow an accepted production identity baseline, except explicit security or selected-release gates required to qualify it. No broader feature should displace the [MVP critical path](ACCESSLOBBY-CURRENT-STATE-AUDIT.md#next-work-critical-path).
-
