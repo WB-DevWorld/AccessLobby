@@ -2,6 +2,10 @@
 
 This v0.1 process is application and language independent. The application is an OIDC relying party; AccessLobby owns the issuer configuration and durable identity API. The current IAM engine is Keycloak. No peer repository, shared database, private IAM API or AccessLobby source import is required. POII and DonLoft can use the same process when available.
 
+**Realm boundary:** a new peer normally registers as a client in the existing realm for its environment. Creating an AccessLobby organization or app never creates a new realm. See [ADR 008](adr/008-realm-boundaries-and-automation.md). The operator steps below are the current pilot process; self-service external application registration and dynamic app admission are not yet implemented. `GRANTED_PERSON_IDS` exists only in the disposable reference consumer.
+
+For a non-mutating topology check before preparing the client, write a private JSON request with `action`, `issuer`, `clientId`, `redirectUri` and `logoutUri` (optional `backchannelLogoutUri`), then run `python3 infra/scripts/plan-onboarding.py --request /path/to/request.json`. The resulting client representation is a plan, not an IAM or app-access grant.
+
 ## Operator registration
 
 1. Assign a unique lowercase client ID for this application and environment. Choose exact HTTPS callback and post-logout URLs on the application's own origin (localhost HTTP only for development). Record the AccessLobby environment's exact `OIDC_ISSUER`, API base URL and approved client ID. Do not reuse staging registrations in production.

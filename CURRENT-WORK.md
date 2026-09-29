@@ -1,5 +1,9 @@
 # Execution ledger — MVP-0
 
+## Realm and application onboarding boundary — current branch (2026-09-29)
+
+The owner asked for scalable app/user onboarding and whether ordinary actions should automatically create Keycloak realms. Source Pack DEC-003–009, CONFLICT-006, Q-001/005/015/019/027, ADR 002 and the integration contract were reconciled against Keycloak's current realm/client and registration documentation. [ADR 008](docs/adr/008-realm-boundaries-and-automation.md) maps person, organization, application and exceptional trust-domain actions. `infra/scripts/plan-onboarding.py` produces a non-mutating plan and reuses exact-URL/PKCE client validation; it cannot create an IAM realm, client, AccessLobby app grant or local peer permission. This deliberately exposes the remaining application admission and external privacy decisions before privileged provisioning is activated. Local `python3 -m unittest discover -s infra/scripts -p 'test_*.py' -q` passed 33 tests; a CLI application plan confirmed the existing realm and exact PKCE client representation; `git diff --check` passed. PR and CI evidence remain pending. This branch is not deployed.
+
 | Package | State | Evidence / next action |
 |---|---|---|
 | Source acceptance | COMPLETE | Source Pack DEC-001..008, Aug 7/Aug 30 evidence and native AccessLobby 1/2 checked; no material critical-path conflict. |
