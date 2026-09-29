@@ -4,7 +4,7 @@ AccessLobby is the independent identity product boundary for shared human sign-i
 
 Any compatible application can consume the same [OIDC and identity contract](docs/integration-contract-v0.1.md). Follow [consumer onboarding](docs/consumer-onboarding.md) to register a client and verify it. POII and DonLoft are intended adopters when available; their repositories are not dependencies of AccessLobby.
 
-**Current state:** MVP-0 implementation in progress. Staging deployment evidence is recorded, but production and real peer adoption are not claimed. See [CURRENT-WORK.md](CURRENT-WORK.md) and [LIVE-ENVIRONMENT-FACTS.md](LIVE-ENVIRONMENT-FACTS.md).
+**Current state (2026-09-29):** controlled staging identity and organization workflows work at the account-routing baseline. First-party app onboarding is merged, CI-qualified and published, but its candidate is not observed deployed. Production and named-peer adoption are not claimed. See the [current-state audit](docs/ACCESSLOBBY-CURRENT-STATE-AUDIT.md), [MVP reconciliation](docs/ACCESSLOBBY-MVP-RECONCILIATION.md), [broader roadmap](docs/ACCESSLOBBY-BROADER-ROADMAP-STATUS.md), [execution ledger](CURRENT-WORK.md) and [runtime evidence](LIVE-ENVIRONMENT-FACTS.md).
 
 ## Local start
 
@@ -24,4 +24,4 @@ Run `pnpm typecheck`, `pnpm test`, `pnpm build`. See [Integration Contract](docs
 
 ## Release status
 
-Production qualification requires a real peer and backup/restore evidence. The compose production file is a prepared deployment baseline, not evidence that hosting, DNS, secrets or a release exists. Promotion must use qualified image digests. See [deployment runbook](docs/runbooks/deployment.md).
+Production qualification requires a separately deployed compatible consumer and qualified monitoring, backup/restore and rollback evidence. POII/DonLoft adoption is a separate later milestone. The compose production file is a prepared deployment baseline, not evidence that hosting, DNS, secrets or a release exists. Promotion must use qualified image digests. See [deployment runbook](docs/runbooks/deployment.md).

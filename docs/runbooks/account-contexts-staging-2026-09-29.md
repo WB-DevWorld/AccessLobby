@@ -1,5 +1,7 @@
 # Account contexts staging handoff — 2026-09-29
 
+Current disposition: this earlier candidate is superseded by the later [account-routing baseline](account-routing-staging-2026-09-29.md), observed running with owner acceptance at `936aae1`. No separate live inventory for this `2d35213` candidate is inferred. Preserve its manifest/history; use the [onboarding candidate](app-onboarding-staging-handoff-2026-09-29.md) for next rollout. The original 10:47 UTC checkpoint below is historical.
+
 This is the immutable candidate for the first-party organization lifecycle (PR #37) and the read-only peer membership display (PR #38). It is **published, not deployed or accepted**. At 2026-09-29 10:47 UTC the public staging API still reported source `4debd6eaf154f82c82c20579c4fe08a89fb25c9e`. Keep the previous [branded IAM cutover record](auth-theme-staging-cutover-2026-09-28.md) and its manifest for comparison and rollback.
 
 Source `2d35213d69170f3b0058ce590445517b18656d7e` passed [main CI](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36557269966) and [Keycloak theme qualification](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36557269970). The guarded [application publisher](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36557445967) and [IAM publisher](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36557464508) succeeded. The [release manifest](../../infra/releases/staging-2026-09-29-account-contexts.json) records this set:

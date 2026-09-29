@@ -1,6 +1,6 @@
 # Identity Wave 1 acceptance criteria
 
-Tracking: issue #16
+Current acceptance tracking: issue #27 (live auth #6, lifecycle #25, IAM branding #29). Historical foundation/refinement assignments #16/#19 are superseded and closed; remaining assertions are preserved in these current issues.
 
 ## Shared shell
 

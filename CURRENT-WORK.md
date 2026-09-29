@@ -1,5 +1,11 @@
 # Execution ledger — MVP-0
 
+## Current audit baseline — 2026-09-29 UTC
+
+The [current-state audit](docs/ACCESSLOBBY-CURRENT-STATE-AUDIT.md), [MVP reconciliation](docs/ACCESSLOBBY-MVP-RECONCILIATION.md) and [broader roadmap](docs/ACCESSLOBBY-BROADER-ROADMAP-STATUS.md) reconcile private source intent, current GitHub, exact CI and operator/public runtime evidence. Strict effective MVP gates: 4/18 satisfied; all eight required software groups are present and CI-qualified, but production is unverified. The newer onboarding candidate remains published/unaccepted under #44; public staging still reports account-routing source `936aae1`. Older sections below are chronological checkpoints, not contradictory current status.
+
+The interrupted report drafts were recovered and completed. A new public preflight at 23:12 UTC passed 23/23, reconfirming API `936aae1`; current-main `05fa130` CI/theme and publication passed, and live GitHub still had zero open PRs and 13 open issues. The audit records 57 distinct retrieval/reconciliation objectives, including the five saturation checks. The status-documentation PR publishes these reports and corrects stale current statements while preserving historical checkpoints; it does not implement or deploy a feature.
+
 ## GitHub acceptance reconciliation — 2026-09-29 UTC
 
 Audit started at main `09e5b33222458071757b969c351d752600a047e1`, with zero open PRs and 14 open issues. Every issue body, comment and acceptance gate was checked against merged work, current CI, code and available staging evidence. Historical UI assignments #16 and #19 are superseded by the bounded current acceptance in #27 (with live auth in #6); they are closed as superseded, not fully accepted. Issues #2, #5, #6, #7, #8, #9, #10, #11, #12, #25, #27 and #29 have current evidence and remaining gates. New #44 bounds the first-party onboarding deployment/acceptance. The resulting backlog is 13 open issues; named peer adoption remains deferred, separately from platform readiness.

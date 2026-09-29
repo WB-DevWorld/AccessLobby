@@ -2,6 +2,10 @@
 
 Status: source reconstruction and code audit recorded **before the implementation changes in this branch** (2026-09-29). This is a map of intended distinctions, implemented behavior, and open decisions; it does not convert a proposal or a UI mock into a grant of authority. The source pack's decision and conflict registers, direct August 7 owner brief (`SRC-0026`), transfer-kit D-008/D-009, August 30 retrospective (`SRC-0048`), May 31 owner brief (`SRC-0032`), AccessLobby 1/2 excerpts, UI chat/images, MVP steps/history, and the repository's ADRs/contracts were checked. The August 30 retrospective and AccessLobby excerpts are secondary syntheses; `03_CONFIRMED_DECISIONS.md` and `15_UNRESOLVED_QUESTIONS.md` distinguish the owner-confirmed boundaries from their suggested details. UI examples are illustrative, not account data or permission policies.
 
+## Current overlay after PR42 and recovered operator evidence
+
+This document retains the pre-PR40 audit chronology below. PR42 subsequently implemented first-party app requests, DNS proof, private client activation and per-person entry grants; its new staging acceptance remains open under #44. Owner human/organization/peer results at `936aae1` are now recovered, but do not qualify the newer candidate. References below to no central grant engine or no staging observation describe that earlier checkpoint. Use the [current account/status matrix](ACCESSLOBBY-BROADER-ROADMAP-STATUS.md) and [exact-revision evidence](ACCESSLOBBY-CURRENT-STATE-AUDIT.md) for today's assessment.
+
 ## Terms and cardinalities
 
 | Object | Nature, owner, and relationships | Status of authority |

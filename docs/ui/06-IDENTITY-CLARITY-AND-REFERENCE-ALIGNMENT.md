@@ -49,10 +49,10 @@ The generated UI images are visual direction, not pixel-perfect specifications o
 
 The current implementation is **not yet an exact reproduction of all reference images**:
 
-- only the public surface and Identity Wave 1 routes are implemented;
+- public and Identity Wave1 routes, contexts, organizations and the first-party app-request/grant surface are implemented; the new app surface is not yet staging-accepted;
 - several reference cards depend on profile, contact, verification, recovery, connected-app, consent, trust, SEO, and analytics contracts that do not exist yet;
 - Keycloak still renders the authentication screens;
 - the reference consumer remains a conformance application rather than a full product UI;
-- Apps & Access, Trust, Insights, SEO/AISEO, and Analytics pages remain future work.
+- first-party Apps & Access foundations now exist; complete connected-app/consent/entitlement UX, Trust, Insights, SEO/AISEO and Analytics remain future or unresolved work.
 
 Future implementation should match the references closely where the product boundary and real data contract are approved, while retaining truthful unavailable states where capabilities are not implemented.
