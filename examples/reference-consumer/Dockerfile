@@ -8,6 +8,7 @@ RUN pnpm install --frozen-lockfile --filter @accesslobby/reference-consumer --pr
 COPY examples/reference-consumer/server.mjs examples/reference-consumer/policy.mjs \
   examples/reference-consumer/logout.mjs examples/reference-consumer/account-links.mjs \
   examples/reference-consumer/config.mjs examples/reference-consumer/diagnostics.mjs \
+  examples/reference-consumer/memberships.mjs \
   examples/reference-consumer/
 USER node
 WORKDIR /app/examples/reference-consumer

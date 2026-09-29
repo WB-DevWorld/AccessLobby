@@ -11,10 +11,12 @@ This catalogue translates the supplied AccessLobby sources into product boundari
 | Business/organization | AccessLobby shared entity and membership | Implemented in this change as an MVP-provisional flat organization. It is never a login credential or a substitute for a person. No legal verification is inferred from creating it. |
 | Organization role | AccessLobby membership | MVP-provisional `owner`, `administrator`, `member` for membership administration only. A person can have different roles in different organizations. |
 | Acting context | AccessLobby web account view | MVP-provisional sealed, one-hour selection tied to person ID, rechecked against active membership on every view. This is **not** an OIDC claim, peer authorization grant, or delegation token. |
-| Application account/admission | Each peer owns its local account/resource roles; AccessLobby may eventually own broad app grants | Existing `/v1/me` resolution and explicit peer linking remain unchanged. Organization membership alone admits no user to a peer. |
+| Application account/admission | Each peer owns its local account/resource roles; AccessLobby may eventually own broad app grants | Existing `/v1/me` resolution and explicit peer linking remain unchanged. A self-scoped membership projection can show context in a peer, but organization membership alone admits no user to a peer. |
 | Entitlement/license/payment | Specialist billing/commerce system, with future projection | No entitlement inferred from organization or role. |
 
 The first-party organization API requires a validated `accesslobby-api` token from `accesslobby-web`. Peer clients can continue to call `/v1/me`, but cannot call these management routes. The authenticated bearer subject, never a submitted actor ID, determines the person. Membership operations use database checks and audit events. A user cannot view another organization's roster, change a role outside their membership, or remove the last owner. An administrator can invite/remove members; only an owner can appoint or remove administrators and owners. These policy choices are **MVP-PROVISIONAL**, not a settled platform-wide role taxonomy.
+
+Allowlisted peers can also read `GET /v1/my-organizations`, which returns only the active human's active organization memberships. The reference app demonstrates selecting one as its own display context, checking live membership again before a selected-context resource request, and still requiring its independent local grant. It cannot use that response to administer an organization or infer app admission. See [ADR 007](adr/007-peer-membership-projection.md).
 
 ## Human workflows available in this change
 
@@ -27,7 +29,7 @@ The first-party organization API requires a validated `accesslobby-api` token fr
 | Existing person newly invited | Share their AccessLobby ID with an owner/admin through an independently trusted channel. No email-to-person guessing or automatic membership. | Invitations expire after seven days, can be revoked, and require an authenticated response from the intended person. |
 | New person intended for an organization | Register and resolve their person ID first, then share it with the inviter; invitation/acceptance follows the existing-person flow. | Email-address invitations, pre-registration reservations and mail delivery require verified-contact binding and abuse controls that are not defined yet. |
 
-The “current context” control in `/contexts` changes only the AccessLobby web view. It does not alter an OIDC token, authenticate an organization as a human, choose a peer account, or confer a right to perform a peer operation. A later peer context contract must verify the actor, active membership, app admission and peer-local permission at the point of use, with revocation and audit semantics.
+The “current context” control in `/contexts` changes only the AccessLobby web view. It does not alter an OIDC token, authenticate an organization as a human, choose a peer account, or confer a right to perform a peer operation. A peer may select its own display context using the self-scoped read-only projection, but a full context-aware authority contract still needs actor, active membership, app admission, peer-local permission, revocation and audit semantics.
 
 ## Other source-mentioned participants and their safe workflows
 

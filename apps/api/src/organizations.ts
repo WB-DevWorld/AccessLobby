@@ -55,6 +55,14 @@ export class OrganizationStore {
       ...memberships.rows.map(row => ({ type: 'organization' as const, ...row }))], invitations: invitations.rows };
   }
 
+  async activeMemberships(personId: string) {
+    const result = await this.pool.query<{ id: string; name: string; role: OrganizationRole }>(
+      "SELECT o.id, o.name, m.role FROM organization_memberships m JOIN organizations o ON o.id = m.organization_id WHERE m.person_id = $1 AND m.status = 'active' AND o.status = 'active' ORDER BY o.name, o.id",
+      [personId]
+    );
+    return result.rows;
+  }
+
   async create(personId: string, input: unknown) {
     const name = typeof input === 'string' ? input.trim() : '';
     if (name.length < 2 || name.length > 120 || /[\x00-\x1f\x7f]/.test(name)) return fail(400, 'invalid_organization_name');

@@ -1,0 +1,7 @@
+# ADR 007 — Self-scoped membership display in a peer
+
+Status: MVP-PROVISIONAL, 2026-09-29. The source asks a person to use several organizations and peer apps while keeping membership, app admission and resource permissions separate (DEC-004, Q-005/Q-019 and the August 7 account model). ADR 006 implemented first-party membership administration. This adds a narrowly scoped read-only projection for compatible interactive clients.
+
+`GET /v1/my-organizations` resolves the caller through the existing verified token and person mapping. It returns only that active person's memberships in active organizations, with ID, self-asserted name and broad administration role. No submitted person or organization ID changes the subject. Peers cannot read pending invitations or manage memberships. `/v1/me` and OIDC claims stay unchanged. The reference peer can select a membership for display and checks it again for its selected-context protected request; its separate local grant remains required. A failed live check denies the context-sensitive operation. Its short-lived bearer remains on the server, never in the browser cookie; it does not refresh the token.
+
+This is a membership fact, not an organization credential or app admission. Peers must design their own local account and resource policy. Cross-app grants, organization-on-behalf-of delegation, context-bound tokens, caching/revocation SLAs, role taxonomy and legal organization verification remain open owner decisions. Do not use the provisional role to infer a peer permission.

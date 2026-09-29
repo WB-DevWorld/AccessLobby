@@ -16,6 +16,8 @@ test('personal identity, membership invitation, role transfer and isolation', { 
     const org = await store.create(owner, 'Example cooperative');
     const other = await store.create(outsider, 'Different organization');
     assert.equal(org.role, 'owner');
+    assert.deepEqual(await store.activeMemberships(owner), [{ id: org.id, name: org.name, role: 'owner' }]);
+    assert.deepEqual(await store.activeMemberships(member), []);
     assert.equal((await store.list(owner)).contexts.length, 2);
     assert.equal((await store.list(member)).contexts.length, 1);
     await assert.rejects(store.detail(outsider, org.id), forbidden('organization_not_found'));
@@ -27,6 +29,7 @@ test('personal identity, membership invitation, role transfer and isolation', { 
     assert.equal((await store.list(member)).invitations[0]?.id, invite.id);
     await assert.rejects(store.respond(outsider, invite.id, true), forbidden('invitation_not_found'));
     await store.respond(member, invite.id, true);
+    assert.deepEqual(await store.activeMemberships(member), [{ id: org.id, name: org.name, role: 'member' }]);
     await assert.rejects(store.respond(member, invite.id, true), forbidden('invitation_not_found'));
     assert.equal((await store.list(member)).contexts.length, 2);
     await assert.rejects(store.invite(member, org.id, outsider, 'member'), forbidden('membership_permission_denied'));
@@ -37,6 +40,7 @@ test('personal identity, membership invitation, role transfer and isolation', { 
     await assert.rejects(store.leaveOrRemove(owner, org.id, owner), forbidden('last_owner'));
     await pool.query("UPDATE persons SET status = 'active' WHERE id = $1", [member]);
     await store.leaveOrRemove(owner, org.id, owner);
+    assert.deepEqual(await store.activeMemberships(owner), []);
     assert.equal((await store.list(owner)).contexts.length, 1);
     assert.equal((await store.detail(member, org.id)).members.length, 1);
     await assert.rejects(store.leaveOrRemove(member, org.id, member), forbidden('last_owner'));
@@ -74,5 +78,8 @@ test('invitation lifecycle, administrator limits and rejoining after removal', {
     const rejoin = await store.invite(owner, org.id, member, 'member');
     await store.respond(member, rejoin.id, true);
     assert.equal((await store.list(member)).contexts.length, 2);
+    await pool.query("UPDATE organizations SET status = 'suspended' WHERE id = $1", [org.id]);
+    assert.deepEqual(await store.activeMemberships(member), []);
+    assert.deepEqual(await store.activeMemberships(owner), []);
   } finally { await pool.end(); }
 });

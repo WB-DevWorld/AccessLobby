@@ -15,9 +15,13 @@ Use this matrix after the owner schedules controlled account testing. It is a **
 | W1 | Open AccessLobby login; enter a wrong password for the controlled user | Friendly error, no session, no technical realm heading or credential leak. |
 | W2 | Sign in correctly; open `/account` and `/identity` | Same real AccessLobby ID and status in both; Copy ID returns that ID; no fabricated profile data. |
 | W3 | Sign out of **this app only**, then sign in again | Local web session ends; issuer SSO may make re-entry quick; same AccessLobby ID returns. |
+| O1 | With a controlled owner account, create an organization and copy the owner's ID; invite a distinct active person by their exact AccessLobby ID | Creator becomes owner. Only the intended person's account shows the pending invitation. An unrelated person cannot view the organization. No email match or app access is inferred. |
+| O2 | The intended person declines one invitation, then accepts a new one; inspect both `/contexts` views | Declined invitation does not create membership. Accepted invitation adds that organization to the intended person's contexts; personal remains available. |
+| O3 | As owner, appoint another owner, then test administrator/member limits and remove a member | Last owner cannot leave or be demoted. An administrator may manage ordinary members but cannot grant owner/admin. Removed membership disappears on refresh. Record only categorical outcomes. |
 | C1 | Start consumer sign-in with the same user | A separate local account-choice state appears if no link exists; AccessLobby identity alone does not grant local resource access. |
 | C2 | Create a consumer-local account from the pending state | The app shows a separate local account ID and the same AccessLobby ID; `/private` denies with 403 until an explicit local grant. |
 | C3 | Repeat consumer sign-in | Existing local link resolves; no duplicate local account or email-based merge. |
+| C4 | After the new API/consumer images are running, choose an active organization in the consumer; then remove that membership from the first-party account | Consumer displays the membership but `/private` remains 403 without its own local grant. With a controlled local grant, selected-context `/private` succeeds only while membership remains active; removal or suspension denies. A membership API outage fails the selected-context request closed. Personal context requires an explicit reselection. |
 | L1 | With a distinct controlled legacy app account, prove its old sign-in and choose Connect AccessLobby | The link requires both live sessions and preserves the existing local ID. Skip as BLOCKED if the legacy fixture is unavailable. |
 | L2 | Attempt a conflicting link under controlled test accounts | The app rejects the conflict without changing either mapping. Do not use real customer accounts. |
 | N1 | Start new-user registration from AccessLobby, then from the consumer | Both entry paths open the branded registration form only when the feature gate is enabled. |
@@ -26,7 +30,7 @@ Use this matrix after the owner schedules controlled account testing. It is a **
 | S2 | Sign out of AccessLobby and supported apps from the web, then repeat from the consumer | The issuer session ends; participating clients clear matching local sessions through verified backchannel logout. A temporarily unavailable app may keep a local session until expiry; record actual behavior. |
 | E1 | Open malformed sign-in/callback requests without credentials | Branded, plain-language error; callback rejects missing/wrong state and code without creating a session. |
 
-For W2, C2, L1 and N2, record only whether IDs were stable, distinct or preserved; never copy the IDs into a public issue. Recheck `/v1/me` token rejection, suspended identity and concurrent first-login mapping through the existing API integration qualification rather than using a browser token in a shared report.
+For W2, O1–O3, C2–C4, L1 and N2, record only whether IDs were stable, distinct or preserved; never copy the IDs into a public issue. Recheck `/v1/me` token rejection, suspended identity and concurrent first-login mapping through the existing API integration qualification rather than using a browser token in a shared report. O1–O3 and C4 require migration 003 and matching API/web/consumer images; do not mark them passed from the older `4debd6e` staging health response.
 
 ## Layout and operational pass
 
