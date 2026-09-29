@@ -1,8 +1,8 @@
 # Cursor workspace handoff
 
-Status: **active operating guide for the AccessLobby UI stream**
+Status: **historical Wave1 handoff; operating principles retained, current acceptance in #27**
 
-Tracking: issue #16 and the dedicated Cursor refinement issue.
+Current acceptance tracking: #27, with live auth #6, lifecycle #25 and IAM branding #29. Historical #16/#19 are superseded/closed. Start new bounded work from current main; the old foundation branch/assignment below explains the historical workspace and must not replace current implementation.
 
 ## Where Cursor fits
 
@@ -38,7 +38,7 @@ Cursor must read, in this order:
 6. `.cursor/rules/identity.mdc`
 7. `.cursor/rules/frontend.mdc`
 8. all files in `docs/ui/`
-9. issue #16 and the current UI pull request
+9. issue #27 and the current bounded UI pull request
 
 The generated UI images are visual references. They do not override these files or the working authentication contracts.
 
@@ -127,12 +127,12 @@ Verify:
 
 ## Commit and PR discipline
 
-Use small coherent commits. A typical Cursor refinement PR should contain only presentation, responsive, accessibility, and directly related test changes. It must reference issue #16 and the bounded Cursor issue, state which routes and viewports were checked, and attach screenshot/browser evidence.
+Use small coherent commits. A typical Cursor refinement PR should contain only presentation, responsive, accessibility, and directly related test changes. It must reference issue #27 or the current bounded acceptance issue, state which routes and viewports were checked, and attach screenshot/browser evidence.
 
 ## Suggested Cursor agent prompt
 
 ```text
-Read AGENTS.md, PROJECT-CONSTITUTION.md, SOURCE-OF-TRUTH.md, OWNERSHIP.md, CURRENT-WORK.md, .cursor/rules/identity.mdc, .cursor/rules/frontend.mdc, all docs/ui files, issue #16, and the current UI pull request before editing.
+Read AGENTS.md, PROJECT-CONSTITUTION.md, SOURCE-OF-TRUTH.md, OWNERSHIP.md, CURRENT-WORK.md, .cursor/rules/identity.mdc, .cursor/rules/frontend.mdc, all docs/ui files, issue #27, and the current bounded UI pull request before editing.
 
 Refine the existing AccessLobby Identity Wave 1 frontend; do not recreate it. Focus on high-fidelity desktop/mobile visual quality, responsive behavior, accessibility, and browser verification for /, /account, /identity, and /recovery. Preserve all existing OIDC routes, server-only session/token handling, the current /v1/me contract, durable person identity, and peer-local authorization boundaries. Never replace unavailable data with generated success data or values copied from UI images. Do not edit auth, backend, migrations, realm configuration, root CI, deployment workflows, or shared dependencies without explicit review.
 

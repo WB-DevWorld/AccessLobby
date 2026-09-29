@@ -1,6 +1,16 @@
 # Live environment facts — through 2026-09-29 UTC
 
-## Verified in connected tools
+## Current reconciled observation — 2026-09-29 23:12 UTC
+
+- A fresh credential-free public preflight passed 23/23, including five consumer-home samples, consumer live/ready, branded login/registration forms and restricted IAM routes. API live/ready reports `936aae12571346920923ed392731611eaa0ecf8a`; this is the [account-routing baseline](infra/releases/staging-2026-09-29-account-routing.json). Public form rendering does not prove signup completion.
+- Owner evidence recovered from today's supplied staging history records a 12:41 UTC nine-service digest/network inventory with zero findings, a 12:42 UTC 23/23 public pass, and signed-in PASS reports for stable Copy ID, personal/organization routing, creation/invitations/roles, outsider denial, last-owner protection, two organizations, peer-local accounts and positive/negative grants, selected-membership removal and ownership transfer. These are OWNER-REPORTED exercised cases at `936aae1`; original screenshots were not re-inspected here. Invite decline/revoke/expiry, full legacy-link/lifecycle/logout/failure/browser matrices remain unverified.
+- PR42 feature source `aadfad381b3f43d8c93cce1ba84805aead4efb52` and PR43 handoff are merged/qualified/published. Their [five-image onboarding manifest](infra/releases/staging-2026-09-29-app-onboarding.json) is not observed running. Live migration004, DNS/IAM activation, new app-entry/suspension/outage acceptance is #44. Do not relabel older signed-in tests as this candidate's tests.
+- Live main ruleset 23998346 requires PR/`verify`/`iam-smoke`, prohibits force push/deletion and has no bypass, but requires zero approving reviews; #2 remains open. GitHub cleanup closed superseded16/19, updated all 12 retained issues and created44: 13 open issues.
+- September 25 manual IAM/identity backup and isolated-restore PASS evidence remains valid for that drill. Successful scheduled runs, complete policy scope, measured RPO/RTO, control-plane restore, rollback/alerts and production remain unqualified. See [the audit](docs/ACCESSLOBBY-CURRENT-STATE-AUDIT.md) for evidence and the critical path.
+
+The resumed audit repeated the public preflight at 23:12 UTC: all 23 checks passed and API live/ready still reported `936aae1`. Live GitHub remained at hygiene merge `05fa130` with zero open PRs and 13 open issues; that revision's CI/theme and both publishers passed. These results confirm the latest observable baseline, without inheriting signed-in acceptance for the newer candidate.
+
+## Historical verified checkpoints (retain original revision/date)
 
 - `WB-DevWorld/AccessLobby` is public. PR #1 passed final-head CI and merged as `354a100ca0535d19ff1cbef97b6ab00197f1a848`. The first API/web image publication from that commit predates the IAM gateway; staging uses the later matching artifacts below.
 - Main `99c91488f28a4cf87b90dfdabf8e668fd6b70a3c` includes the IAM gateway. The owner supplied a Dokploy deployment log showing successful pulls of the matching API `sha256:9c2021ecb6a20dd7a6d0a7c30708e4f56324ce00cfe71b883bafa5013d98df1e`, web `sha256:d39fc09eec19be0a478001463783f52a4ceea188756730f79c27927b01d74a1a`, and gateway `sha256:53e2f4b535c5a3fb282c064951f35a7804740b49bc1ee7e4060979fe0f7db489`. The deployment started all services. These are staging artifacts, not evidence of a production deployment.
@@ -36,6 +46,6 @@
 
 ## Remaining staging and release gates
 
-- Inspect the owner-reported deployment against the [current observed baseline](docs/runbooks/auth-theme-staging-cutover-2026-09-28.md) through the protected operator channel, then use the [account routing handoff](docs/runbooks/account-routing-staging-2026-09-29.md) for the next candidate. Confirm actual running images and the reconciled realm; then test new-user verification, existing-account link, both logout scopes and the personal/owner/member/peer context and routing workflows. Investigate the consumer health-route 404s and callback variability with private runtime/proxy evidence. Record the exact browser viewport checks and signed-in outcomes. Public branded auth pages already passed a credential-free check on the older revision.
+- Use the [onboarding handoff](docs/runbooks/app-onboarding-staging-handoff-2026-09-29.md) after establishing a safe backup/schema rollback baseline. Roll out migration004 and the pinned images, inventory actual digests, then run #44 app acceptance and the remaining #5/#6/#12/#25/#27/#29 core/lifecycle/browser cases on that same revision. Historical consumer health404s are no longer current; investigate prior502/timeouts/callback variability with bounded private logs and monitoring.
 - Confirm complete bucket/object ACL and user-policy scope, first successful scheduled backups and actual lifecycle expiration for versioned objects. Record a safe rollback rehearsal and staging monitoring observations before production review.
 - Production remains a distinct issuer/domain, environment and release decision. POII and DonLoft adoption resumes when their implementations are available.

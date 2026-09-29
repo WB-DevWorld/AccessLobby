@@ -2,7 +2,7 @@
 
 Status: **active implementation authority for the UI stream**
 
-Tracking: issue #16 — Build UI foundation and Identity Wave 1
+Current tracking: #27 browser/reference acceptance, #6 live auth, #25 lifecycle and #29 IAM branding. Historical #16/#19 assignments are superseded/closed. See the [current-state audit](../ACCESSLOBBY-CURRENT-STATE-AUDIT.md).
 
 ## Purpose
 
@@ -10,7 +10,10 @@ This pack converts the approved AccessLobby direction and generated desktop/mobi
 
 It does not redefine AccessLobby architecture. It does not make every element shown in the visual concepts a live product capability.
 
-## Current starting point
+## Original Wave1 starting point (historical)
+
+The present implementation also includes contexts, organizations and first-party app-request/grant routes. The newer app slice remains staging-unaccepted. The original starting point below explains the foundation, not today's route inventory.
+
 
 The current web application is intentionally thin:
 
@@ -46,7 +49,7 @@ They require separate product, ownership and data-contract review before product
 
 For the UI stream, use the following order:
 
-1. Current owner instructions and issue #16.
+1. Current owner instructions and the current issues listed above.
 2. Repository constitution, source-of-truth, ownership and current-work files.
 3. Existing authentication/API contracts and runtime behavior.
 4. This UI implementation pack.
@@ -57,7 +60,7 @@ Visual references never override working authentication, security boundaries, tr
 
 ## Delivery model
 
-- Work on `feat/ui-foundation` or a worktree based on it.
+- Use a bounded branch/worktree from current main. The historical `feat/ui-foundation` assignment is complete/superseded; do not restart from an old branch.
 - Keep the UI stream isolated from concurrent IAM/backend/operations changes.
 - Open a reviewed PR before merging.
 - Preserve the existing authentication contract.

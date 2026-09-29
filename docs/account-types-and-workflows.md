@@ -11,14 +11,16 @@ This catalogue translates the supplied AccessLobby sources into product boundari
 | Business/organization | AccessLobby shared entity and membership | Implemented in this change as an MVP-provisional flat organization. It is never a login credential or a substitute for a person. No legal verification is inferred from creating it. |
 | Organization role | AccessLobby membership | MVP-provisional `owner`, `administrator`, `member` for membership administration only. A person can have different roles in different organizations. |
 | Acting context | AccessLobby web account view | MVP-provisional sealed, one-hour selection tied to person ID, rechecked against active membership on every view. This is **not** an OIDC claim, peer authorization grant, or delegation token. |
-| Application account/admission | Each peer owns its local account/resource roles; AccessLobby may eventually own broad app grants | Existing `/v1/me` resolution and explicit peer linking remain unchanged. A self-scoped membership projection can show context in a peer, but organization membership alone admits no user to a peer. |
+| Application account/admission | Each peer owns its local account/resource roles; AccessLobby owns the provisional first-party broad-entry registry/grants | PR42 implements per-person open/restricted entry independently of visibility and membership. It is CI-qualified, not yet staging-accepted. Existing `/v1/me` and explicit peer links remain unchanged; membership alone admits no user. |
 | Entitlement/license/payment | Specialist billing/commerce system, with future projection | No entitlement inferred from organization or role. |
 
 The first-party organization API requires a validated `accesslobby-api` token from `accesslobby-web`. Peer clients can continue to call `/v1/me`, but cannot call these management routes. The authenticated bearer subject, never a submitted actor ID, determines the person. Membership operations use database checks and audit events. A user cannot view another organization's roster, change a role outside their membership, or remove the last owner. An administrator can invite/remove members; only an owner can appoint or remove administrators and owners. These policy choices are **MVP-PROVISIONAL**, not a settled platform-wide role taxonomy.
 
 Allowlisted peers can also read `GET /v1/my-organizations`, which returns only the active human's active organization memberships. The reference app demonstrates selecting one as its own display context, checking live membership again before a selected-context resource request, and still requiring its independent local grant. It cannot use that response to administer an organization or infer app admission. See [ADR 007](adr/007-peer-membership-projection.md).
 
-## Human workflows available in this change
+Current state after PR42: first-party app owners can request/prove a hostname and manage provisional entry grants; protected reviewed activation/suspension remain operator-triggered. External publishers, organization seats and delegation are not implemented. See [the broader account matrix](ACCESSLOBBY-BROADER-ROADMAP-STATUS.md) and [#44 acceptance](runbooks/app-onboarding-staging-acceptance.md).
+
+## Human workflows implemented
 
 | Participant | Entry and continuing workflow | Exit and limits |
 |---|---|---|

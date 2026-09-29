@@ -1,5 +1,11 @@
 # Account routing staging handoff — 2026-09-29
 
+## Later evidence: current baseline
+
+Owner inventory at 12:41 UTC reported this manifest's nine services with zero findings; the 12:42 UTC public pass was 23/23 at source `936aae1`. Owner signed-in account/organization/peer-local checks were reported passing. The audit's 21:56 UTC public pass again observed this API source. These results qualify only the exercised cases; full failure/logout/browser acceptance remains open. The next candidate is the [first-party onboarding handoff](app-onboarding-staging-handoff-2026-09-29.md), tracked by #44. See [the current audit](../ACCESSLOBBY-CURRENT-STATE-AUDIT.md).
+
+## Original 12:12 UTC handoff checkpoint
+
 This candidate contains the first-party personal/organization account resolution and routing from [PR #40](https://github.com/WB-DevWorld/AccessLobby/pull/40), plus the earlier organization and peer-membership changes from PRs #37–38. It is **published, not observed running or accepted in staging**. At 12:12 UTC the credential-free public `/health/live` still reported `4debd6eaf154f82c82c20579c4fe08a89fb25c9e`. The older [context candidate](account-contexts-staging-2026-09-29.md) was also published; no evidence establishes that it was deployed. Record actual running digests before choosing a rollback target.
 
 Source `936aae12571346920923ed392731611eaa0ecf8a` passed [main CI](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36563931515) (including PostgreSQL migration/integration tests), [Keycloak theme qualification](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36563931526), [application publisher](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36564110361) and [IAM publisher](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36564122600). Their published digest outputs are pinned in the [release manifest](../../infra/releases/staging-2026-09-29-account-routing.json):
