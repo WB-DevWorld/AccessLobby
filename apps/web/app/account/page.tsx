@@ -106,6 +106,7 @@ export default async function Account() {
           <div className="action-list">
             <ArrowLink href="/identity">Review your identity profile</ArrowLink>
             <ArrowLink href="/contexts">Personal and organization contexts</ArrowLink>
+            <ArrowLink href="/apps">Apps and access</ArrowLink>
             <ArrowLink href="/auth/login?intent=switch">Sign in as a different person</ArrowLink>
             <ArrowLink href="/recovery">Review recovery status</ArrowLink>
             <ArrowLink href="#sign-out">Choose how to sign out</ArrowLink>

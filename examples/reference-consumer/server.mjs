@@ -5,9 +5,10 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { mayViewPrivate } from './policy.mjs';
 import { verifyLogoutToken, removeSessions } from './logout.mjs';
 import { AccountLinks } from './account-links.mjs';
-import { publicRegistrationEnabled } from './config.mjs';
+import { appEntryRequired, publicRegistrationEnabled } from './config.mjs';
 import { traceRequest } from './diagnostics.mjs';
 import { loadMemberships, selectedMembership } from './memberships.mjs';
+import { AppEntryError, loadAppEntry } from './app-entry.mjs';
 
 const required = name => {
   const value = process.env[name];
@@ -23,6 +24,7 @@ const port = Number(process.env.PORT || '4000');
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT must be an integer from 1 to 65535');
 const grants = new Set((process.env.GRANTED_PERSON_IDS || '').split(',').filter(Boolean));
 const registrationEnabled = publicRegistrationEnabled();
+const entryRequired = appEntryRequired();
 const secure = new URL(origin).protocol === 'https:';
 const flowName = secure ? '__Host-ref-flow' : 'ref-flow';
 const sessionName = secure ? '__Host-ref-session' : 'ref-session';
@@ -103,6 +105,18 @@ const formBody = async (request, limit = 1024) => {
   return new URLSearchParams(Buffer.concat(chunks).toString());
 };
 const clearAuthCookies = () => [cookie(flowName, '', 0), cookie(sessionName, '', 0), cookie(pendingName, '', 0)];
+async function checkAppEntry(response, session) {
+  if (!entryRequired) return true;
+  try { await loadAppEntry(api, session, clientId); return true; }
+  catch (error) {
+    const denied = error instanceof AppEntryError && error.status === 403;
+    sendPage(response, denied ? 403 : 503, {
+      title: denied ? 'Entry to this app is unavailable' : 'App entry check unavailable',
+      message: denied ? 'Your access to this app has not been granted or has ended.' : 'The app cannot check entry now. Please try again later.',
+    });
+    return false;
+  }
+}
 
 async function discover() {
   const response = await fetch(`${issuer}/.well-known/openid-configuration`, { signal: AbortSignal.timeout(5000) });
@@ -252,6 +266,7 @@ async function handle(request, response) {
       expires: Date.now() + Math.min(3600, tokens.expires_in || 3600) * 1000,
       accessToken: tokens.access_token,
     };
+    if (!await checkAppEntry(response, authenticated)) return;
     let localUserId;
     if (pendingFlow.intent === 'link') {
       const stillLegacy = legacySessions.get(jar[legacyName]);
@@ -313,6 +328,7 @@ async function handle(request, response) {
   if (path.pathname === '/join' && request.method === 'POST') {
     if (request.headers.origin !== origin) return sendPage(response, 403, { title: 'Request rejected', message: 'Please use the form on this app to continue.' });
     if (!activePending) return sendPage(response, 401, { title: 'Account setup expired', message: 'Sign in again to continue.' });
+    if (!await checkAppEntry(response, activePending)) return;
     let localUserId;
     try { localUserId = links.join(activePending.issuer, activePending.subject, activePending.personId); }
     catch { return sendPage(response, 409, { title: 'This app account already exists', message: 'Return home and sign in again.' }); }
@@ -397,6 +413,7 @@ async function handle(request, response) {
       message: 'Sign in before opening this protected page.',
       content: '<div class="actions"><a class="button button-primary" href="/login">Sign in</a><a class="button" href="/">Return home</a></div>',
     });
+    if (!await checkAppEntry(response, active)) return;
     if (!mayViewPrivate(active.personId, grants)) return sendPage(response, 403, {
       title: 'This app has not given you access',
       message: 'AccessLobby confirmed who you are, but this app still controls access to this protected resource.',

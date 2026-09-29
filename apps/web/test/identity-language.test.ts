@@ -20,7 +20,7 @@ test('identity and app-local account boundaries remain explicit', () => {
   assert.match(account, /Each app may keep its own local account/);
   assert.match(identity, /Apps keep their own accounts/);
   assert.match(shell, /label: 'Identity'/);
-  assert.match(shell, /label: 'Apps & Access'/);
+  assert.match(shell, /label: 'Apps', href: '\/apps'/);
   assert.match(shell, /AccessLobby Identity/);
 });
 

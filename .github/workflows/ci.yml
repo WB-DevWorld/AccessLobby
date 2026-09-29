@@ -150,6 +150,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
       - name: Build branded IAM image
         run: docker build -f infra/keycloak/Dockerfile -t accesslobby-iam:ci .
       - name: Render local realm and start IAM
@@ -255,6 +258,21 @@ jobs:
           grep -q 'Create your AccessLobby account' /tmp/register-login
           ! grep -q 'ACCESSLOBBY-FIRST-PARTY' /tmp/register-login
           test "$bad" = 400
+      - name: Exercise private app client helpers against Keycloak
+        env:
+          CI: 'true'
+        run: |
+          npm install -g pnpm@11.19.0
+          pnpm install --frozen-lockfile --filter @accesslobby/api
+          pnpm --filter @accesslobby/api build
+          IAM_SMOKE_TOKEN=$(curl --fail --silent --show-error \
+            -d grant_type=password -d client_id=admin-cli \
+            -d username=ci-admin -d password=ci-admin-password \
+            http://127.0.0.1:8080/realms/master/protocol/openid-connect/token \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+          export IAM_SMOKE_TOKEN
+          node apps/api/test/iam-live-smoke.mjs
+          unset IAM_SMOKE_TOKEN
       - name: Verify public IAM gateway path and proxy headers
         run: |
           docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .

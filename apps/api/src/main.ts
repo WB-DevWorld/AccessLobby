@@ -4,15 +4,17 @@ import { NestFactory } from '@nestjs/core';
 import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { config } from './config.js';
-import { discovery, tokenVerifier, type VerifyToken } from './auth.js';
+import { discovery, tokenVerifier, type AuthenticatedSubject, type VerifyToken } from './auth.js';
 import { PostgresIdentityStore, type IdentityStore } from './identity.js';
 import { logoutVerifier, SessionRevocations } from './logout.js';
 import { OrganizationError, OrganizationStore, validId } from './organizations.js';
+import { ApplicationError, ApplicationStore, ClientRegistryUnavailable } from './applications.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
 const jwksUri = await discovery(settings.issuer);
-const verify = tokenVerifier(settings, jwksUri);
+const applications = new ApplicationStore(pool, settings.allowedClients);
+const verify = tokenVerifier(settings, jwksUri, clientId => applications.allowedClient(clientId));
 const verifyLogout = logoutVerifier(settings.issuer, jwksUri, 'accesslobby-web');
 const store = new PostgresIdentityStore(pool);
 const revocations = new SessionRevocations(pool);
@@ -38,7 +40,8 @@ class ApiController {
       ({ contract: 'accesslobby.identity.v0.1', person: { id, status: 'active' }, requestId }));
   }
 
-  private async withPerson(req: any, res: any, work: (id: string, requestId: string) => Promise<unknown>, firstParty = false) {
+  private async withPerson(req: any, res: any,
+    work: (id: string, requestId: string, actor: AuthenticatedSubject) => Promise<unknown>, firstParty = false) {
     const requestId = typeof req.headers['x-request-id'] === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(req.headers['x-request-id'])
       ? req.headers['x-request-id'] : randomUUID();
     res.setHeader('x-request-id', requestId);
@@ -48,6 +51,7 @@ class ApiController {
     let actor;
     try { actor = await this.verifyToken(match[1]!); }
     catch (error) {
+      if (error instanceof ClientRegistryUnavailable) return res.status(503).json({ error: 'identity_unavailable', requestId });
       console.warn(JSON.stringify({ event: 'identity.rejected', requestId, kind: error instanceof Error ? error.name : 'Error' }));
       return res.status(401).json({ error: 'unauthorized', requestId });
     }
@@ -59,11 +63,12 @@ class ApiController {
       }
       const person = await this.identities.resolve(actor);
       if (person.status !== 'active') return res.status(403).json({ error: 'identity_suspended', requestId });
-      const result = await work(person.id, requestId);
+      const result = await work(person.id, requestId, actor);
       console.info(JSON.stringify({ event: 'identity.resolved', requestId, client: actor.client }));
       return res.json(result);
     } catch (error) {
       if (error instanceof OrganizationError) return res.status(error.status).json({ error: error.code, requestId });
+      if (error instanceof ApplicationError) return res.status(error.status).json({ error: error.code, requestId });
       console.error(JSON.stringify({ event: 'identity.unavailable', requestId }));
       return res.status(503).json({ error: 'identity_unavailable', requestId });
     }
@@ -83,6 +88,45 @@ class ApiController {
       organizations: await organizations.activeMemberships(id),
       requestId,
     }));
+  }
+
+  @Post('v1/applications')
+  requestApplication(@Req() req: any, @Res() res: any, @Body() body: any) {
+    return this.withPerson(req, res, id => applications.request(id, body), true);
+  }
+
+  @Get('v1/applications/mine')
+  myApplications(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, async id => ({ contract: 'accesslobby.applications.v0.1',
+      applications: await applications.mine(id) }), true);
+  }
+
+  @Post('v1/applications/:applicationId/verify-origin')
+  verifyApplicationOrigin(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    return this.withPerson(req, res, id => applications.verifyOrigin(id, appId), true);
+  }
+
+  @Get('v1/applications/visible')
+  visibleApplications(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, async id => ({ contract: 'accesslobby.applications.v0.1',
+      applications: await applications.visible(id) }), true);
+  }
+
+  @Get('v1/application-entry')
+  applicationEntry(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, async (id, requestId, actor) => ({
+      contract: 'accesslobby.app-entry.v0.1', ...await applications.entry(id, actor.client), requestId,
+    }));
+  }
+
+  @Post('v1/applications/:applicationId/grants')
+  grantApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => applications.grant(id, appId, body?.personId, body?.expiresAt), true);
+  }
+
+  @Delete('v1/applications/:applicationId/grants/:personId')
+  revokeApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Param('personId') personId: string) {
+    return this.withPerson(req, res, id => applications.revoke(id, appId, personId), true);
   }
 
   @Post('v1/organizations')

@@ -4,7 +4,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { BrandMark, SkipLink, StatusBadge } from '@/components/ui';
 import { formatIdentityStatus } from '@/lib/current-identity-model';
 
-type ActiveSection = 'overview' | 'identity' | 'contexts' | 'recovery';
+type ActiveSection = 'overview' | 'identity' | 'contexts' | 'apps' | 'recovery';
 
 type AppShellProps = {
   active: ActiveSection;
@@ -19,12 +19,12 @@ const enabledNavigation = [
   { key: 'overview', label: 'Overview', href: '/account', icon: 'home' },
   { key: 'identity', label: 'Identity', href: '/identity', icon: 'person' },
   { key: 'contexts', label: 'Contexts', href: '/contexts', icon: 'apps' },
+  { key: 'apps', label: 'Apps', href: '/apps', icon: 'apps' },
   { key: 'recovery', label: 'Recovery', href: '/recovery', icon: 'recovery' },
 ] as const;
 
 const plannedNavigation = [
   { label: 'Security', icon: 'shield' },
-  { label: 'Apps & Access', icon: 'apps' },
   { label: 'Privacy', icon: 'privacy' },
 ] as const;
 

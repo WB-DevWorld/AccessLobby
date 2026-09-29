@@ -9,6 +9,7 @@ import { SignJWT, exportJWK, generateKeyPair } from 'jose';
 
 const personId = '76257b81-2222-4444-aaaa-638fa68c529c';
 const orgId = '19d98b15-3333-4444-bbbb-7dad53c3fc97';
+const appId = 'a578d4dc-4444-4444-8888-0231d5902d14';
 const listen = async server => {
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
@@ -22,7 +23,7 @@ const responseJson = (response, body, status = 200) => {
 test('peer selection checks live membership while resource access still needs its own grant', async () => {
   const { privateKey, publicKey } = await generateKeyPair('RS256', { extractable: true });
   const jwk = { ...await exportJWK(publicKey), kid: 'test-key', alg: 'RS256', use: 'sig' };
-  let upstreamOrigin, nonce, membership = true, available = true;
+  let upstreamOrigin, nonce, membership = true, available = true, entry = 'denied';
   const upstream = createServer(async (request, response) => {
     const path = new URL(request.url, upstreamOrigin).pathname;
     const issuer = `${upstreamOrigin}/realms/accesslobby-first-party`;
@@ -42,6 +43,9 @@ test('peer selection checks live membership while resource access still needs it
       return responseJson(response, { id_token, access_token, expires_in: 600 });
     }
     if (path === '/v1/me') return responseJson(response, { contract: 'accesslobby.identity.v0.1', person: { id: personId, status: 'active' } });
+    if (path === '/v1/application-entry') return entry === 'allowed'
+      ? responseJson(response, { contract: 'accesslobby.app-entry.v0.1', applicationId: appId, clientId: 'reference-consumer', admitted: true })
+      : responseJson(response, { error: 'application_entry_denied' }, entry === 'denied' ? 403 : 503);
     if (path === '/v1/my-organizations') return available
       ? responseJson(response, { contract: 'accesslobby.memberships.v0.1', person: { id: personId },
         organizations: membership ? [{ id: orgId, name: '<Example team>', role: 'member' }] : [] })
@@ -57,7 +61,7 @@ test('peer selection checks live membership while resource access still needs it
     cwd: fileURLToPath(new URL('..', import.meta.url)),
     env: { ...process.env, PORT: String(port), CONSUMER_ORIGIN: origin,
       OIDC_ISSUER: `${upstreamOrigin}/realms/accesslobby-first-party`, OIDC_CLIENT_ID: 'reference-consumer',
-      ACCESSLOBBY_API_URL: upstreamOrigin, GRANTED_PERSON_IDS: personId },
+      ACCESSLOBBY_API_URL: upstreamOrigin, GRANTED_PERSON_IDS: personId, APP_ENTRY_REQUIRED: 'true' },
     stdio: 'ignore',
   });
   try {
@@ -65,17 +69,29 @@ test('peer selection checks live membership while resource access still needs it
       try { if ((await fetch(`${origin}/health/live`)).ok) break; }
       catch { if (child.exitCode !== null) throw new Error('Consumer exited'); await delay(50); }
     }
-    const login = await fetch(`${origin}/login`, { redirect: 'manual' });
-    assert.equal(login.status, 303);
-    const authorization = new URL(login.headers.get('location'));
-    nonce = authorization.searchParams.get('nonce');
-    const flowCookie = login.headers.getSetCookie()[0].split(';')[0];
-    const callback = await fetch(`${origin}/callback?state=${authorization.searchParams.get('state')}&code=mock-code`, {
-      headers: { cookie: flowCookie }, redirect: 'manual',
-    });
+    const callbackForLogin = async () => {
+      const login = await fetch(`${origin}/login`, { redirect: 'manual' });
+      assert.equal(login.status, 303);
+      const authorization = new URL(login.headers.get('location'));
+      nonce = authorization.searchParams.get('nonce');
+      const flowCookie = login.headers.getSetCookie()[0].split(';')[0];
+      return fetch(`${origin}/callback?state=${authorization.searchParams.get('state')}&code=mock-code`, {
+        headers: { cookie: flowCookie }, redirect: 'manual',
+      });
+    };
+    assert.equal((await callbackForLogin()).status, 403);
+    entry = 'unavailable';
+    assert.equal((await callbackForLogin()).status, 503);
+    entry = 'allowed';
+    const callback = await callbackForLogin();
     assert.equal(callback.status, 303);
     assert.equal(callback.headers.get('location'), '/account-choice');
     const pendingCookie = callback.headers.getSetCookie().find(value => value.startsWith('ref-pending=')).split(';')[0];
+    entry = 'denied';
+    const blockedJoin = await fetch(`${origin}/join`, { method: 'POST', redirect: 'manual',
+      headers: { cookie: pendingCookie, origin } });
+    assert.equal(blockedJoin.status, 403);
+    entry = 'allowed';
     const join = await fetch(`${origin}/join`, { method: 'POST', redirect: 'manual',
       headers: { cookie: pendingCookie, origin } });
     assert.equal(join.status, 303);
@@ -91,6 +107,11 @@ test('peer selection checks live membership while resource access still needs it
     assert.equal((await choose('00000000-0000-0000-0000-000000000000')).status, 403);
     assert.equal((await choose(orgId)).status, 303);
     assert.equal((await get('/private')).status, 200);
+    entry = 'denied';
+    assert.equal((await get('/private')).status, 403); // Local grant alone cannot admit the person.
+    entry = 'unavailable';
+    assert.equal((await get('/private')).status, 503);
+    entry = 'allowed';
     membership = false;
     assert.equal((await get('/private')).status, 403);
     available = false;
