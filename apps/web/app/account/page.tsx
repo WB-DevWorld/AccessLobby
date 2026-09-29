@@ -11,6 +11,7 @@ import {
 } from '@/components/ui';
 import { getCurrentIdentity } from '@/lib/current-identity';
 import { formatIdentityStatus } from '@/lib/current-identity-model';
+import { getContexts, selectedContext } from '@/lib/contexts';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +21,15 @@ export default async function Account() {
   if (identity.state !== 'ready') return <AccountAccessState result={identity} />;
 
   const status = formatIdentityStatus(identity.person.status);
+  const contexts = await getContexts(identity.person.id);
+  const organizations = contexts?.contexts.filter(context => context.type === 'organization') ?? [];
+  const selected = contexts ? await selectedContext(identity.person.id, contexts.contexts) : null;
 
   return (
     <AppShell
       active="overview"
       title="Your AccessLobby account"
-      description="See your identity status, stable AccessLobby ID, and sign-out choices."
+      description="See your personal identity, organization relationships, and sign-out choices."
       personStatus={identity.person.status}
       actions={<Link className="button button-secondary button-compact" href="/identity">View identity</Link>}
     >
@@ -65,6 +69,28 @@ export default async function Account() {
       </section>
 
       <section className="dashboard-grid">
+        <SurfaceCard title="Your working contexts" className="dashboard-span-two">
+          {!contexts ? <AvailabilityPanel title="Organization relationships are unavailable"
+            description="Your identity is active, but we could not check your memberships or invitations. Try again before acting for an organization." /> : <>
+            <p>Your personal context is available. {selected
+              ? 'You have also selected an organization for this AccessLobby account view.'
+              : 'No organization is selected in this AccessLobby account view.'}</p>
+            {organizations.length > 0 && <ul className="context-list">
+              {organizations.map(org => <li key={org.id}>
+                <strong>{org.name}</strong> · {org.role}{selected === org.id ? ' · Selected here' : ''}
+                <p><Link className="text-link" href={`/organizations/${org.id}`}>
+                  {org.role === 'member' ? 'View organization members' : 'Manage organization membership'}
+                </Link></p>
+              </li>)}
+            </ul>}
+            {contexts.invitations.length > 0 && <p><Link className="text-link" href="/contexts">
+              Review {contexts.invitations.length} pending organization invitation{contexts.invitations.length === 1 ? '' : 's'}
+            </Link></p>}
+            <p><Link className="text-link" href="/contexts">Choose personal or organization context</Link></p>
+            <p className="hero-note">Membership administration is separate from entry and permissions inside each connected app.</p>
+          </>}
+        </SurfaceCard>
+
         <SurfaceCard title="Account at a glance" className="dashboard-span-two">
           <dl className="data-list">
             <DataRow label="AccessLobby ID" mono>{identity.person.id}</DataRow>
@@ -80,6 +106,7 @@ export default async function Account() {
           <div className="action-list">
             <ArrowLink href="/identity">Review your identity profile</ArrowLink>
             <ArrowLink href="/contexts">Personal and organization contexts</ArrowLink>
+            <ArrowLink href="/auth/login?intent=switch">Sign in as a different person</ArrowLink>
             <ArrowLink href="/recovery">Review recovery status</ArrowLink>
             <ArrowLink href="#sign-out">Choose how to sign out</ArrowLink>
           </div>
@@ -90,6 +117,7 @@ export default async function Account() {
             <li>Sign in securely with AccessLobby</li>
             <li>Return to the same AccessLobby identity</li>
             <li>View and copy your stable AccessLobby ID</li>
+            <li>Review your organization roles and pending invitations</li>
             <li>Choose whether to sign out of this app or the shared sign-in session</li>
           </ul>
         </SurfaceCard>

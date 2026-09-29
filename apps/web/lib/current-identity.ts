@@ -18,9 +18,10 @@ export async function getCurrentIdentity(): Promise<CurrentIdentityResult> {
       signal: AbortSignal.timeout(IDENTITY_TIMEOUT_MS),
     });
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       return { state: 'signed-out' };
     }
+    if (response.status === 403) return { state: 'restricted' };
 
     if (!response.ok) return { state: 'unavailable' };
 

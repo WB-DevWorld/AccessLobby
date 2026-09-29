@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export default async function ContextPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const identity = await getCurrentIdentity();
   if (identity.state !== 'ready') return <AccountAccessState result={identity} />;
-  const data = await getContexts();
+  const data = await getContexts(identity.person.id);
   const error = contextError((await searchParams).error);
   const active = data ? await selectedContext(identity.person.id, data.contexts) : null;
 
