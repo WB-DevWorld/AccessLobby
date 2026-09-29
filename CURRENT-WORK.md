@@ -1,5 +1,9 @@
 # Execution ledger — MVP-0
 
+## External publisher decision boundary — proposal (2026-09-29)
+
+The owner emphasized high-volume third-party use. The [decision proposal](docs/external-app-contract-decision.md) maps DEC-001/003/005/009/010 and Q-001/005/011/015/019/027 to a provisional pairwise-subject, minimal-claims, consent and app-scoped API contract. It identifies a concrete identity-duplication hazard: the current identity store keys `(issuer, token.sub)`, so enabling a Keycloak pairwise mapper for an external client without an internal link strategy could create another person row for the same human. It also notes that pseudonymizing `/v1/me` alone would leave token, userinfo and membership exposures. No external activation or realm change was implemented; owner decisions are listed before code.
+
 ## Disposable Keycloak client smoke — draft PR #42 (2026-09-29)
 
 The connected GitHub installation exposes no POII or DonLoft repository, so this turn continues the independent onboarding path. CI now prepares the API's private client helpers and uses the disposable Keycloak container to register a new exact first-party client, retry the same registration, reject a mismatched backchannel endpoint, disable/read back that client and confirm the disabled client cannot pass reconciliation. This is a controlled CI-only IAM Admin API exercise using test credentials; it neither runs the DB-backed activation CLI nor operates on staging. The PostgreSQL integration tests cover registry admission and suspension separately. No realm creation, staging deployment, real publisher review or external activation occurred. CI outcome for this revision is pending at writing.

@@ -2,7 +2,7 @@
 
 This v0.1 process is application and language independent. The application is an OIDC relying party; AccessLobby owns the issuer configuration and durable identity API. The current IAM engine is Keycloak. No peer repository, shared database, private IAM API or AccessLobby source import is required. POII and DonLoft can use the same process when available.
 
-**Realm boundary:** a new peer normally registers as a client in the existing realm for its environment. Creating an AccessLobby organization or app never creates a new realm. See [ADR 008](adr/008-realm-boundaries-and-automation.md). The operator steps below remain the current pilot process. A draft first-party app registry, request page and entry-grant API are implemented on the onboarding branch, but are not deployed or adopted by pilot peers. Self-service external activation and pairwise identifiers are not implemented. `GRANTED_PERSON_IDS` exists only in the disposable reference consumer.
+**Realm boundary:** a new peer normally registers as a client in the existing realm for its environment. Creating an AccessLobby organization or app never creates a new realm. See [ADR 008](adr/008-realm-boundaries-and-automation.md). The operator steps below remain the current pilot process. A draft first-party app registry, request page and entry-grant API are implemented on the onboarding branch, but are not deployed or adopted by pilot peers. Self-service external activation and pairwise identifiers are not implemented; their [decision proposal](external-app-contract-decision.md) records the choices still required. `GRANTED_PERSON_IDS` exists only in the disposable reference consumer.
 
 ## Draft first-party app request and admission path
 
