@@ -28,6 +28,11 @@ test('cryptographic verification rejects wrong issuer, audience, expiry and sign
         .setAudience(claims.audience ?? settings.audience).setIssuedAt()
         .setExpirationTime(claims.expiry ?? '5m').sign(claims.key ?? privateKey);
     assert.equal((await verify(await sign())).subject, 'subject');
+    const dynamic = tokenVerifier({ ...settings, allowedClients: [] }, `http://127.0.0.1:${address.port}/jwks`,
+      async clientId => clientId === 'pilot');
+    assert.equal((await dynamic(await sign())).client, 'pilot');
+    const suspended = tokenVerifier(settings, `http://127.0.0.1:${address.port}/jwks`, async () => false);
+    await assert.rejects(suspended(await sign()));
     for (const token of [await sign({ issuer: 'https://other.example' }),
       await sign({ audience: 'unrelated' }), await sign({ expiry: Math.floor(Date.now() / 1000) - 120 }),
       await sign({ key: other.privateKey }), 'malformed']) {

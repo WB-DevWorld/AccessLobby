@@ -16,22 +16,26 @@ export async function discovery(issuer: string) {
   return document.jwks_uri;
 }
 
-export function tokenVerifier(settings: Config, jwksUri: string): VerifyToken {
+export function tokenVerifier(settings: Config, jwksUri: string,
+  allowedClient?: (clientId: string) => Promise<boolean>): VerifyToken {
   const keys = createRemoteJWKSet(new URL(jwksUri));
   return async token => {
     const { payload } = await jwtVerify(token, keys, {
       issuer: settings.issuer, audience: settings.audience,
       algorithms: ['RS256'], clockTolerance: 5
     });
-    return validateClaims(payload, settings);
+    const client = payload.azp;
+    const allowed = typeof client === 'string' && allowedClient
+      ? await allowedClient(client) : undefined;
+    return validateClaims(payload, settings, allowed);
   };
 }
 
-export function validateClaims(payload: JWTPayload, settings: Config): AuthenticatedSubject {
+export function validateClaims(payload: JWTPayload, settings: Config, allowed?: boolean): AuthenticatedSubject {
   const client = payload.azp;
   if (typeof payload.sub !== 'string' || !payload.sub ||
       payload.iss !== settings.issuer || typeof client !== 'string' ||
-      !settings.allowedClients.includes(client)) {
+      !(allowed ?? settings.allowedClients.includes(client))) {
     throw new Error('Invalid subject or client');
   }
   return { issuer: payload.iss, subject: payload.sub, client,
