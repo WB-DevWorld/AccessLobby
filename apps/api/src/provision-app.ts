@@ -2,9 +2,11 @@
 import { Pool } from 'pg';
 import { exactApplicationUrl } from './applications.js';
 import { validId } from './organizations.js';
+import { originProofPresent, proofHost } from './origin-proof.js';
 
 interface AppRow { id: string; client_id: string; name: string; redirect_uri: string; logout_uri: string;
-  status: string; trust_class: string; owner_active: boolean }
+  status: string; trust_class: string; owner_active: boolean; origin_challenge: string;
+  origin_verified_at: Date | null; origin_verified_host: string | null }
 interface ClientRep { clientId: string; name?: string; enabled: boolean; protocol: string; publicClient: boolean;
   standardFlowEnabled: boolean; implicitFlowEnabled: boolean; directAccessGrantsEnabled: boolean;
   serviceAccountsEnabled: boolean; redirectUris: string[]; webOrigins: string[];
@@ -104,7 +106,13 @@ async function main() {
       return;
     }
     if (!reviewReference || !/^[A-Za-z0-9._:/-]{4,120}$/.test(reviewReference)) {
-      throw new Error('A recorded first-party and origin-control review reference is required');
+      throw new Error('A recorded first-party review reference is required');
+    }
+    const proofHostname = proofHost(app.redirect_uri);
+    if (!app.origin_verified_at || app.origin_verified_host !== proofHostname ||
+        !app.redirect_uri.startsWith('https:') ||
+        !(await originProofPresent(proofHostname, app.origin_challenge))) {
+      throw new Error('Current DNS origin proof required before activation');
     }
     const token = process.env.IAM_PROVISIONING_TOKEN;
     if (!token) throw new Error('IAM_PROVISIONING_TOKEN required on the private provisioning runner');

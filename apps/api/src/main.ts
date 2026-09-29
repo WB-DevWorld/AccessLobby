@@ -101,6 +101,11 @@ class ApiController {
       applications: await applications.mine(id) }), true);
   }
 
+  @Post('v1/applications/:applicationId/verify-origin')
+  verifyApplicationOrigin(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    return this.withPerson(req, res, id => applications.verifyOrigin(id, appId), true);
+  }
+
   @Get('v1/applications/visible')
   visibleApplications(@Req() req: any, @Res() res: any) {
     return this.withPerson(req, res, async id => ({ contract: 'accesslobby.applications.v0.1',

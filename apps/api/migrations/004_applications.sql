@@ -12,7 +12,10 @@ CREATE TABLE IF NOT EXISTS applications (
   created_at timestamptz NOT NULL DEFAULT now(),
   activated_at timestamptz,
   review_reference text,
-  CHECK (status <> 'active' OR (trust_class = 'first_party' AND activated_at IS NOT NULL))
+  origin_challenge text NOT NULL,
+  origin_verified_at timestamptz,
+  origin_verified_host text,
+  CHECK (status <> 'active' OR (trust_class = 'first_party' AND activated_at IS NOT NULL AND origin_verified_at IS NOT NULL))
 );
 CREATE INDEX IF NOT EXISTS applications_owner_idx ON applications (owner_person_id, created_at);
 CREATE INDEX IF NOT EXISTS applications_visible_idx ON applications (status, trust_class, visibility);

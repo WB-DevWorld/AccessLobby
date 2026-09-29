@@ -5,7 +5,8 @@ import { getCurrentIdentity, identityApi } from '@/lib/current-identity';
 export const dynamic = 'force-dynamic';
 
 type App = { id: string; clientId: string; name: string; status?: string;
-  visibility: 'discoverable' | 'hidden'; admission: 'authenticated_open' | 'grant_required' };
+  visibility: 'discoverable' | 'hidden'; admission: 'authenticated_open' | 'grant_required';
+  originVerificationHost?: string; originVerificationValue?: string; originVerifiedAt?: string | null };
 
 async function list(path: string): Promise<App[] | null> {
   try {
@@ -19,6 +20,11 @@ async function list(path: string): Promise<App[] | null> {
 
 const notices: Record<string, string> = {
   requested: 'Application request saved. It is inactive until its domain and first-party status are reviewed and its OIDC client is verified.',
+  verified: 'Callback domain proof verified. The application still needs a first-party review before activation.',
+  origin_proof_missing: 'The exact DNS TXT record has not appeared yet. Check the value and try again after DNS propagation.',
+  origin_verification_unavailable: 'DNS verification is unavailable. Please try again.',
+  application_verification_unavailable: 'This application can no longer be verified in its current state.',
+  public_domain_required: 'Domain proof requires a public HTTPS callback hostname.',
   granted: 'App entry granted. The app still controls its own resources and roles.',
   revoked: 'App entry revoked. Existing sessions inside that app follow its own expiry and recheck policy.',
   invalid_application_url: 'Use an exact HTTPS URL for the callback and logout on the same origin.',
@@ -79,6 +85,13 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
           <div className="context-grid">{mine.map(app => <SurfaceCard title={app.name} key={app.id}>
             <p>Client ID: <code>{app.clientId}</code></p>
             <p>Status: <strong>{app.status === 'active' ? 'Active' : app.status === 'suspended' ? 'Suspended' : 'Requested'}</strong>. Entry: {app.admission === 'grant_required' ? 'Grant required' : 'Authenticated open'}.</p>
+            {app.status === 'requested' && app.originVerificationHost && app.originVerificationValue && <>
+              <p>Publish this DNS TXT record to prove control of the callback hostname:</p>
+              <p><code>{app.originVerificationHost}</code> → <code>{app.originVerificationValue}</code></p>
+              <p>Domain proof: <strong>{app.originVerifiedAt ? 'Verified' : 'Waiting for verification'}</strong>. A first-party review is still required.</p>
+              <form action="/apps/action" method="post"><input type="hidden" name="applicationId" value={app.id} />
+                <button className="button button-secondary" name="intent" value="verify" type="submit">Verify DNS record</button></form>
+            </>}
             {app.status === 'active' && app.admission === 'grant_required' && <>
               <p>Grant or revoke broad entry using an existing person’s AccessLobby ID. This does not assign a role inside the app.</p>
               <form className="context-form" action="/apps/action" method="post">

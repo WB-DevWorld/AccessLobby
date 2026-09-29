@@ -1,6 +1,7 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { validId } from './organizations.js';
+import { originProofPresent, proofHost, proofValue } from './origin-proof.js';
 
 export class ApplicationError extends Error {
   constructor(public readonly status: number, public readonly code: string) { super(code); }
@@ -23,7 +24,8 @@ interface RequestInput { clientId?: unknown; name?: unknown; redirectUri?: unkno
   visibility?: unknown; admission?: unknown }
 
 export class ApplicationStore {
-  constructor(private readonly pool: Pool, private readonly legacyClients: string[]) {}
+  constructor(private readonly pool: Pool, private readonly legacyClients: string[],
+    private readonly lookupTxt?: (host: string) => Promise<string[][]>) {}
 
   private async transaction<T>(work: (db: PoolClient) => Promise<T>): Promise<T> {
     const db = await this.pool.connect();
@@ -59,22 +61,48 @@ export class ApplicationStore {
         "SELECT count(*) FROM applications WHERE owner_person_id = $1 AND status = 'requested'", [personId]);
       if (Number(pending.rows[0]?.count ?? 0) >= 10) return fail(429, 'too_many_application_requests');
       const id = randomUUID();
+      const challenge = randomBytes(32).toString('base64url');
       try {
-        await db.query('INSERT INTO applications (id, client_id, name, owner_person_id, redirect_uri, logout_uri, visibility, admission) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
-          [id, clientId, name, personId, redirectUri, logoutUri, input.visibility, input.admission]);
+        await db.query('INSERT INTO applications (id, client_id, name, owner_person_id, redirect_uri, logout_uri, visibility, admission, origin_challenge) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+          [id, clientId, name, personId, redirectUri, logoutUri, input.visibility, input.admission, challenge]);
       } catch (error) {
         if ((error as { code?: string }).code === '23505') return fail(409, 'client_id_taken');
         throw error;
       }
       await this.event(db, id, personId, 'application.requested');
-      return { id, clientId, name, visibility: input.visibility, admission: input.admission, status: 'requested' };
+      return { id, clientId, name, visibility: input.visibility, admission: input.admission, status: 'requested',
+        originVerificationHost: proofHost(redirectUri), originVerificationValue: proofValue(challenge) };
     });
   }
 
   async mine(personId: string) {
     const result = await this.pool.query(
-      'SELECT id, client_id AS "clientId", name, visibility, admission, status, created_at AS "createdAt" FROM applications WHERE owner_person_id = $1 ORDER BY created_at DESC, id', [personId]);
-    return result.rows;
+      `SELECT id, client_id AS "clientId", name, visibility, admission, status, created_at AS "createdAt",
+        redirect_uri AS "redirectUri", origin_challenge AS "originChallenge", origin_verified_at AS "originVerifiedAt"
+        FROM applications WHERE owner_person_id = $1 ORDER BY created_at DESC, id`, [personId]);
+    return result.rows.map(({ redirectUri, originChallenge, ...row }) => ({ ...row,
+      originVerificationHost: proofHost(redirectUri), originVerificationValue: proofValue(originChallenge) }));
+  }
+
+  async verifyOrigin(actor: string, appId: string) {
+    if (!validId(appId)) return fail(400, 'invalid_id');
+    return this.transaction(async db => {
+      const result = await db.query<{ owner_person_id: string; status: string; redirect_uri: string; origin_challenge: string }>(
+        'SELECT owner_person_id, status, redirect_uri, origin_challenge FROM applications WHERE id = $1 FOR UPDATE', [appId]);
+      const app = result.rows[0];
+      if (!app || app.owner_person_id !== actor) return fail(404, 'application_not_found');
+      if (app.status !== 'requested') return fail(409, 'application_verification_unavailable');
+      const host = proofHost(app.redirect_uri);
+      if (!app.redirect_uri.startsWith('https:') ||
+          ['localhost', '127.0.0.1'].includes(new URL(app.redirect_uri).hostname)) return fail(409, 'public_domain_required');
+      let found: boolean;
+      try { found = await originProofPresent(host, app.origin_challenge, this.lookupTxt); }
+      catch { return fail(503, 'origin_verification_unavailable'); }
+      if (!found) return fail(409, 'origin_proof_missing');
+      await db.query('UPDATE applications SET origin_verified_at = now(), origin_verified_host = $2 WHERE id = $1', [appId, host]);
+      await this.event(db, appId, actor, 'application.origin_verified');
+      return { applicationId: appId, originVerified: true, originVerificationHost: host };
+    });
   }
 
   async visible(personId: string) {
