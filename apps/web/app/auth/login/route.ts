@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isPublicRegistrationEnabled } from '@/lib/features';
-import { callbackUrl, challenge, clearCookie, clientId, discover, flowCookie, origin, seal, secureCookie, sessionCookie } from '@/lib/oidc';
-import { contextCookie } from '@/lib/contexts';
+import { callbackUrl, challenge, clientId, discover, flowCookie, origin, seal, secureCookie } from '@/lib/oidc';
 
 export async function GET(request: Request) {
   const intent = new URL(request.url).searchParams.get('intent');
@@ -36,10 +35,6 @@ export async function GET(request: Request) {
       path: '/',
       maxAge: 300,
     });
-    if (intent === 'switch') {
-      clearCookie(response, sessionCookie());
-      clearCookie(response, contextCookie());
-    }
     return response;
   } catch {
     return NextResponse.redirect(new URL('/?error=issuer_unavailable', origin()));
