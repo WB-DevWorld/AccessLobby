@@ -73,6 +73,17 @@ class ApiController {
     return this.withPerson(req, res, id => organizations.list(id), true);
   }
 
+  @Get('v1/my-organizations')
+  myOrganizations(@Req() req: any, @Res() res: any) {
+    res.setHeader('cache-control', 'no-store');
+    return this.withPerson(req, res, async (id, requestId) => ({
+      contract: 'accesslobby.memberships.v0.1',
+      person: { id },
+      organizations: await organizations.activeMemberships(id),
+      requestId,
+    }));
+  }
+
   @Post('v1/organizations')
   createOrganization(@Req() req: any, @Res() res: any, @Body() body: any) {
     return this.withPerson(req, res, id => organizations.create(id, body?.name), true);

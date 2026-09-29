@@ -7,6 +7,7 @@ import { verifyLogoutToken, removeSessions } from './logout.mjs';
 import { AccountLinks } from './account-links.mjs';
 import { publicRegistrationEnabled } from './config.mjs';
 import { traceRequest } from './diagnostics.mjs';
+import { loadMemberships, selectedMembership } from './memberships.mjs';
 
 const required = name => {
   const value = process.env[name];
@@ -131,6 +132,8 @@ function createConsumerSession(person, localUserId) {
     subject: person.subject,
     sid: person.sid,
     expires: person.expires,
+    accessToken: person.accessToken, // Server memory only; the cookie holds an opaque session key.
+    selectedOrganizationId: null,
   });
   return id;
 }
@@ -247,6 +250,7 @@ async function handle(request, response) {
       subject: identity.sub,
       sid: identity.sid,
       expires: Date.now() + Math.min(3600, tokens.expires_in || 3600) * 1000,
+      accessToken: tokens.access_token,
     };
     let localUserId;
     if (pendingFlow.intent === 'link') {
@@ -364,6 +368,29 @@ async function handle(request, response) {
 
   const session = sessions.get(jar[sessionName]);
   const active = session && session.expires > Date.now() ? session : null;
+  if (path.pathname === '/context' && request.method === 'POST') {
+    if (!active) return sendPage(response, 401, { title: 'Sign in required', message: 'Sign in before choosing a context.' });
+    if (request.headers.origin !== origin) return sendPage(response, 403, { title: 'Request rejected', message: 'Please use the form on this app to continue.' });
+    const fields = await formBody(request);
+    if (!fields) return sendPage(response, 413, { title: 'Form too large', message: 'Please return and try again.' });
+    const selection = fields.get('organizationId');
+    if (selection === 'personal') {
+      active.selectedOrganizationId = null;
+      return redirect(response, '/');
+    }
+    let organizations;
+    try { organizations = await loadMemberships(api, active); }
+    catch { return sendPage(response, 503, {
+      title: 'Membership check unavailable',
+      message: 'The organization context could not be checked. Please try again later.',
+    }); }
+    if (!organizations.some(org => org.id === selection)) return sendPage(response, 403, {
+      title: 'Organization membership unavailable',
+      message: 'You cannot use this organization context. Return home to choose an active membership.',
+    });
+    active.selectedOrganizationId = selection;
+    return redirect(response, '/');
+  }
   if (path.pathname === '/private') {
     if (!active) return sendPage(response, 401, {
       title: 'Sign in required',
@@ -375,7 +402,19 @@ async function handle(request, response) {
       message: 'AccessLobby confirmed who you are, but this app still controls access to this protected resource.',
       content: '<div class="actions"><a class="button" href="/">Return home</a></div>',
     });
-    return sendPage(response, 200, { title: 'Protected resource', message: 'This app granted access to its protected resource.' });
+    if (active.selectedOrganizationId) {
+      let organizations;
+      try { organizations = await loadMemberships(api, active); }
+      catch { return sendPage(response, 503, { title: 'Membership check unavailable', message: 'Return to the app and try again later, or choose your personal context.' }); }
+      if (!selectedMembership(active, organizations)) return sendPage(response, 403, {
+        title: 'Organization membership ended',
+        message: 'This organization context is no longer active. Return home and choose your personal context.',
+      });
+    }
+    return sendPage(response, 200, {
+      title: 'Protected resource',
+      message: 'This app granted access to its protected resource. Its local grant is independent of the selected AccessLobby context.',
+    });
   }
 
   if (path.pathname !== '/') return sendPage(response, 404, {
@@ -389,6 +428,18 @@ async function handle(request, response) {
     : '';
 
   if (active) {
+    let organizations;
+    try { organizations = await loadMemberships(api, active); }
+    catch { organizations = null; }
+    const selected = organizations && selectedMembership(active, organizations);
+    const contextChoices = organizations === null
+      ? '<p class="muted">Organization memberships are unavailable right now. You can still choose your personal context.</p>'
+      : `<p class="muted">${active.selectedOrganizationId && !selected ? 'The selected organization membership has ended. Choose your personal context.' : 'Choose which membership to display in this app.'}</p>
+         `;
+    const contextForm = `<form method="post" action="/context" class="actions">
+      <button name="organizationId" value="personal" type="submit">For yourself${!active.selectedOrganizationId ? ' (selected)' : ''}</button>
+      ${organizations?.map(org => `<button name="organizationId" value="${html(org.id)}" type="submit">${html(org.name)} (${html(org.role)})${selected?.id === org.id ? ' — selected' : ''}</button>`).join('') || ''}
+    </form>`;
     return sendPage(response, 200, {
       title: 'Reference app account',
       eyebrow: 'Signed in',
@@ -406,6 +457,7 @@ async function handle(request, response) {
           </div>
           <p class="identifier-note">Your AccessLobby ID identifies you across supported apps. This app keeps a separate local account for its own data and permissions.</p>
         </div>
+        <div class="panel"><h2>Display context</h2>${contextChoices}${contextForm}<p class="muted">Your membership identifies a relationship with an organization. This app still decides who can enter and what they can do.</p></div>
         <div class="actions"><a class="button" href="/private">Open protected test page</a></div>
         <h2>How would you like to sign out?</h2>
         <p class="muted">Signing out of this app keeps the shared AccessLobby session active. Signing out of AccessLobby and supported apps ends the shared sign-in session, but an app may retain a separate local session until it processes the sign-out.</p>
