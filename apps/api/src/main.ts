@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Controller, Get, Inject, Module, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Module, Param, Patch, Post, Req, Res } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
@@ -7,6 +7,7 @@ import { config } from './config.js';
 import { discovery, tokenVerifier, type VerifyToken } from './auth.js';
 import { PostgresIdentityStore, type IdentityStore } from './identity.js';
 import { logoutVerifier, SessionRevocations } from './logout.js';
+import { OrganizationError, OrganizationStore, validId } from './organizations.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
@@ -15,6 +16,7 @@ const verify = tokenVerifier(settings, jwksUri);
 const verifyLogout = logoutVerifier(settings.issuer, jwksUri, 'accesslobby-web');
 const store = new PostgresIdentityStore(pool);
 const revocations = new SessionRevocations(pool);
+const organizations = new OrganizationStore(pool);
 
 @Controller()
 class ApiController {
@@ -32,6 +34,11 @@ class ApiController {
 
   @Get('v1/me')
   async me(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, async (id, requestId) =>
+      ({ contract: 'accesslobby.identity.v0.1', person: { id, status: 'active' }, requestId }));
+  }
+
+  private async withPerson(req: any, res: any, work: (id: string, requestId: string) => Promise<unknown>, firstParty = false) {
     const requestId = typeof req.headers['x-request-id'] === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(req.headers['x-request-id'])
       ? req.headers['x-request-id'] : randomUUID();
     res.setHeader('x-request-id', requestId);
@@ -43,6 +50,7 @@ class ApiController {
       console.warn(JSON.stringify({ event: 'identity.rejected', requestId, kind: error instanceof Error ? error.name : 'Error' }));
       return res.status(401).json({ error: 'unauthorized', requestId });
     }
+    if (firstParty && actor.client !== 'accesslobby-web') return res.status(403).json({ error: 'first_party_only', requestId });
     try {
       if (actor.client === 'accesslobby-web' && !actor.sid) return res.status(401).json({ error: 'missing_session', requestId });
       if (actor.sid && await revocations.isRevoked(actor.issuer, actor.sid)) {
@@ -50,12 +58,64 @@ class ApiController {
       }
       const person = await this.identities.resolve(actor);
       if (person.status !== 'active') return res.status(403).json({ error: 'identity_suspended', requestId });
+      const result = await work(person.id, requestId);
       console.info(JSON.stringify({ event: 'identity.resolved', requestId, client: actor.client }));
-      return res.json({ contract: 'accesslobby.identity.v0.1', person: { id: person.id, status: person.status }, requestId });
-    } catch {
+      return res.json(result);
+    } catch (error) {
+      if (error instanceof OrganizationError) return res.status(error.status).json({ error: error.code, requestId });
       console.error(JSON.stringify({ event: 'identity.unavailable', requestId }));
       return res.status(503).json({ error: 'identity_unavailable', requestId });
     }
+  }
+
+  @Get('v1/contexts')
+  contexts(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, id => organizations.list(id), true);
+  }
+
+  @Post('v1/organizations')
+  createOrganization(@Req() req: any, @Res() res: any, @Body() body: any) {
+    return this.withPerson(req, res, id => organizations.create(id, body?.name), true);
+  }
+
+  @Get('v1/organizations/:organizationId')
+  organization(@Req() req: any, @Res() res: any, @Param('organizationId') orgId: string) {
+    return this.withPerson(req, res, id => organizations.detail(id, this.id(orgId)), true);
+  }
+
+  @Post('v1/organizations/:organizationId/invitations')
+  invite(@Req() req: any, @Res() res: any, @Param('organizationId') orgId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => organizations.invite(id, this.id(orgId), body?.personId, body?.role), true);
+  }
+
+  @Post('v1/invitations/:invitationId/respond')
+  respond(@Req() req: any, @Res() res: any, @Param('invitationId') invitationId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => organizations.respond(id, this.id(invitationId), this.response(body?.decision)), true);
+  }
+
+  @Delete('v1/organizations/:organizationId/invitations/:invitationId')
+  revokeInvitation(@Req() req: any, @Res() res: any, @Param('organizationId') orgId: string, @Param('invitationId') invitationId: string) {
+    return this.withPerson(req, res, id => organizations.revoke(id, this.id(orgId), this.id(invitationId)), true);
+  }
+
+  @Patch('v1/organizations/:organizationId/members/:personId')
+  updateMember(@Req() req: any, @Res() res: any, @Param('organizationId') orgId: string, @Param('personId') personId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => organizations.changeRole(id, this.id(orgId), this.id(personId), body?.role), true);
+  }
+
+  @Delete('v1/organizations/:organizationId/members/:personId')
+  removeMember(@Req() req: any, @Res() res: any, @Param('organizationId') orgId: string, @Param('personId') personId: string) {
+    return this.withPerson(req, res, id => organizations.leaveOrRemove(id, this.id(orgId), this.id(personId)), true);
+  }
+
+  private id(value: string) {
+    if (!validId(value)) throw new OrganizationError(400, 'invalid_id');
+    return value;
+  }
+
+  private response(value: unknown) {
+    if (value !== 'accept' && value !== 'decline') throw new OrganizationError(400, 'invalid_decision');
+    return value === 'accept';
   }
 
   @Post('v1/backchannel-logout')

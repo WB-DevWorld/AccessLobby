@@ -16,6 +16,14 @@
 
 Decision states: SOURCE-CONFIRMED boundaries in constitution; MVP-PROVISIONAL choices in ADRs; DEFERRED items in MVP spec; OWNER-BLOCKED facts in live environment file. Exact SHA, CI, image digests and deployment evidence must be appended as they occur. **Production MVP is not complete.**
 
+## Account actors and organization contexts — branch preparation (2026-09-29)
+
+The owner asked for every source-mentioned account type and its workflows after the first staging cutover. [The source-traced catalogue](docs/account-types-and-workflows.md) distinguishes a human, personal/organization context, broad membership role, peer-local persona, guest, household, external entity and non-human actor. [ADR 006](docs/adr/006-personal-and-organization-contexts.md) records the deliberately provisional flat organization and exact-ID invitation policy. No historical UI mock's score, verification status, app permission or device count was imported as data.
+
+This branch adds migration 003, first-party organization creation, owner/administrator/member membership, seven-day invitations targeted to an existing active person ID, accept/decline/revoke, owner role transfer, removal/leave, audit events, and personal/organization account screens. A sealed UI context cookie is rechecked against active membership; it is not peer authorization. The existing `/v1/me` v0.1 response is unchanged. API management routes reject clients other than `accesslobby-web`.
+
+Local evidence: API and web TypeScript typechecks passed; both builds passed (Next dynamic routes include `/contexts`, `/contexts/action`, `/organizations/[id]`). API tests passed 3 with 4 DB-dependent tests skipped because no local `TEST_DATABASE_URL`; web tests passed 10. CI PostgreSQL migration and integration tests, full CI, image publication, staging deployment and interactive acceptance are **pending**. Earlier local `pnpm install --offline` lacked cached package metadata; dependencies were copied from the existing same-lockfile worktree for local builds. No new account workflow has been observed on staging.
+
 ## Peer SSO expansion — merged, staging qualification open (2026-09-27)
 
 Owner decision: every connected peer lets a user start registration there, permits an existing account to be linked after proving both sign-ins, and asks on sign-out whether to end this app's session or the shared browser SSO session. This resolves the product choice in Source Pack Q-008 and advances Q-009/Q-010; [ADR 005](docs/adr/005-peer-join-link-and-logout-choice.md) records the provisional mechanics and limits.

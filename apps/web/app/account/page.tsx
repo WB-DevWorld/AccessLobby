@@ -79,6 +79,7 @@ export default async function Account() {
         <SurfaceCard title="Quick actions">
           <div className="action-list">
             <ArrowLink href="/identity">Review your identity profile</ArrowLink>
+            <ArrowLink href="/contexts">Personal and organization contexts</ArrowLink>
             <ArrowLink href="/recovery">Review recovery status</ArrowLink>
             <ArrowLink href="#sign-out">Choose how to sign out</ArrowLink>
           </div>
