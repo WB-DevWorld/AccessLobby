@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { clearCookie, exchange, flowCookie, origin, secureCookie, seal, sessionCookie, unseal } from '@/lib/oidc';
+import { contextCookie } from '@/lib/contexts';
 export async function GET(request: NextRequest) {
   const jar = await cookies();
   const flow = jar.get(flowCookie())?.value;
@@ -9,6 +10,7 @@ export async function GET(request: NextRequest) {
   const failure = () => {
     const response = NextResponse.redirect(new URL('/?error=login_failed', origin()));
     clearCookie(response, flowCookie());
+    clearCookie(response, contextCookie());
     return response;
   };
   if (!flow || !state || !code || request.nextUrl.searchParams.has('error')) return failure();

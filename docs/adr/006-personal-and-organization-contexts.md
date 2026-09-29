@@ -1,0 +1,7 @@
+# ADR 006 — First-party personal and organization contexts
+
+Status: MVP-PROVISIONAL implementation, 2026-09-29. The owner expanded the post-MVP-0 scope to create account types and workflows. Direct source DEC-004/D-009 establishes individual-before-organization; exact roles, invitation delivery, organization verification, delegation and context claims remain open.
+
+Implement flat organizations, active/ended membership, owner/administrator/member membership administration, invitations addressed to existing stable person IDs and a context selector. Use the existing human sign-in. Persist every change in the identity database with an actor/target event. Serialize organization changes with a row lock, prevent removal/demotion of the final owner, and enforce authorization on the server. Require `accesslobby-web` for the new API. The UI cookie is sealed to the person and checked against live membership; it grants no peer access. Keep `/v1/me` v0.1 unchanged.
+
+Consequences: a new person must sign up first and convey their ID out of band; there is no email invitation, company verification, context token or peer authorization in this iteration. Organization names may be self-asserted and should not be shown as verified. A selected organization is a first-party account-view preference. Migration 003 is additive and its audit/history rows should be retained; rollback the application binary rather than dropping the tables after real data is written. Revisit roles, retention, notification, abuse controls and external actor policy before a broad public launch.

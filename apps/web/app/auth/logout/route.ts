@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clearCookie, clientId, discover, flowCookie, origin, sessionCookie } from '@/lib/oidc';
+import { contextCookie } from '@/lib/contexts';
 export async function POST(request: NextRequest) {
   if (request.headers.get('origin') !== origin()) return new NextResponse('Origin rejected', { status: 403 });
   const form = await request.formData();
@@ -17,5 +18,6 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.redirect(destination, 303);
   clearCookie(response, sessionCookie());
   clearCookie(response, flowCookie());
+  clearCookie(response, contextCookie());
   return response;
 }
