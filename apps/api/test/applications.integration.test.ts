@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { Pool } from 'pg';
 import { ApplicationError, ApplicationStore, exactApplicationUrl } from '../src/applications.js';
-import { originProofPresent, proofHost, proofValue } from '../src/origin-proof.js';
+import { originProofPresent, proofHost, proofValue, verifiableOrigin } from '../src/origin-proof.js';
 
 const fails = (code: string) => (error: unknown) => error instanceof ApplicationError && error.code === code;
 
@@ -18,6 +18,9 @@ test('application URLs must be exact and same-origin', () => {
 test('DNS proof requires one exact TXT answer, allowing chunks in that answer', async () => {
   const expected = proofValue('challenge');
   assert.equal(proofHost('https://portal.example.test:8443/callback'), '_accesslobby-verify.portal.example.test');
+  assert.equal(verifiableOrigin('https://portal.example.test/callback'), true);
+  assert.equal(verifiableOrigin('https://127.0.0.1/callback'), false);
+  assert.equal(verifiableOrigin('https://[::1]/callback'), false);
   assert.equal(await originProofPresent('host', 'challenge', async () => [[expected.slice(0, 12), expected.slice(12)]]), true);
   assert.equal(await originProofPresent('host', 'challenge', async () => [[expected.slice(0, 12)], [expected.slice(12)]]), false);
   assert.equal(await originProofPresent('host', 'challenge', async () => [[proofValue('other')]]), false);

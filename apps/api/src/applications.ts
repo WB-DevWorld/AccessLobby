@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { validId } from './organizations.js';
-import { originProofPresent, proofHost, proofValue } from './origin-proof.js';
+import { originProofPresent, proofHost, proofValue, verifiableOrigin } from './origin-proof.js';
 
 export class ApplicationError extends Error {
   constructor(public readonly status: number, public readonly code: string) { super(code); }
@@ -93,8 +93,7 @@ export class ApplicationStore {
       if (!app || app.owner_person_id !== actor) return fail(404, 'application_not_found');
       if (app.status !== 'requested') return fail(409, 'application_verification_unavailable');
       const host = proofHost(app.redirect_uri);
-      if (!app.redirect_uri.startsWith('https:') ||
-          ['localhost', '127.0.0.1'].includes(new URL(app.redirect_uri).hostname)) return fail(409, 'public_domain_required');
+      if (!verifiableOrigin(app.redirect_uri)) return fail(409, 'public_domain_required');
       let found: boolean;
       try { found = await originProofPresent(host, app.origin_challenge, this.lookupTxt); }
       catch { return fail(503, 'origin_verification_unavailable'); }

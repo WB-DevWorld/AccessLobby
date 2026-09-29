@@ -2,7 +2,7 @@
 import { Pool } from 'pg';
 import { exactApplicationUrl } from './applications.js';
 import { validId } from './organizations.js';
-import { originProofPresent, proofHost } from './origin-proof.js';
+import { originProofPresent, proofHost, verifiableOrigin } from './origin-proof.js';
 
 interface AppRow { id: string; client_id: string; name: string; redirect_uri: string; logout_uri: string;
   status: string; trust_class: string; owner_active: boolean; origin_challenge: string;
@@ -110,7 +110,7 @@ async function main() {
     }
     const proofHostname = proofHost(app.redirect_uri);
     if (!app.origin_verified_at || app.origin_verified_host !== proofHostname ||
-        !app.redirect_uri.startsWith('https:') ||
+        !verifiableOrigin(app.redirect_uri) ||
         !(await originProofPresent(proofHostname, app.origin_challenge))) {
       throw new Error('Current DNS origin proof required before activation');
     }
