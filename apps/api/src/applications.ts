@@ -20,7 +20,7 @@ export function exactApplicationUrl(value: unknown): string {
   return value;
 }
 
-interface RequestInput { clientId?: unknown; name?: unknown; redirectUri?: unknown; logoutUri?: unknown;
+interface RequestInput { clientId?: unknown; name?: unknown; redirectUri?: unknown; logoutUri?: unknown; backchannelLogoutUri?: unknown;
   visibility?: unknown; admission?: unknown }
 
 export class ApplicationStore {
@@ -52,6 +52,9 @@ export class ApplicationStore {
     const redirectUri = exactApplicationUrl(input.redirectUri);
     const logoutUri = exactApplicationUrl(input.logoutUri);
     if (new URL(redirectUri).origin !== new URL(logoutUri).origin) return fail(400, 'application_origin_mismatch');
+    const backchannelLogoutUri = input.backchannelLogoutUri === undefined || input.backchannelLogoutUri === null || input.backchannelLogoutUri === ''
+      ? null : exactApplicationUrl(input.backchannelLogoutUri);
+    if (backchannelLogoutUri && new URL(redirectUri).origin !== new URL(backchannelLogoutUri).origin) return fail(400, 'application_origin_mismatch');
     if (input.visibility !== 'discoverable' && input.visibility !== 'hidden') return fail(400, 'invalid_visibility');
     if (input.admission !== 'authenticated_open' && input.admission !== 'grant_required') return fail(400, 'invalid_admission');
     return this.transaction(async db => {
@@ -63,14 +66,14 @@ export class ApplicationStore {
       const id = randomUUID();
       const challenge = randomBytes(32).toString('base64url');
       try {
-        await db.query('INSERT INTO applications (id, client_id, name, owner_person_id, redirect_uri, logout_uri, visibility, admission, origin_challenge) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
-          [id, clientId, name, personId, redirectUri, logoutUri, input.visibility, input.admission, challenge]);
+        await db.query('INSERT INTO applications (id, client_id, name, owner_person_id, redirect_uri, logout_uri, backchannel_logout_uri, visibility, admission, origin_challenge) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
+          [id, clientId, name, personId, redirectUri, logoutUri, backchannelLogoutUri, input.visibility, input.admission, challenge]);
       } catch (error) {
         if ((error as { code?: string }).code === '23505') return fail(409, 'client_id_taken');
         throw error;
       }
       await this.event(db, id, personId, 'application.requested');
-      return { id, clientId, name, visibility: input.visibility, admission: input.admission, status: 'requested',
+      return { id, clientId, name, visibility: input.visibility, admission: input.admission, status: 'requested', backchannelLogoutUri,
         originVerificationHost: proofHost(redirectUri), originVerificationValue: proofValue(challenge) };
     });
   }
@@ -78,7 +81,8 @@ export class ApplicationStore {
   async mine(personId: string) {
     const result = await this.pool.query(
       `SELECT id, client_id AS "clientId", name, visibility, admission, status, created_at AS "createdAt",
-        redirect_uri AS "redirectUri", origin_challenge AS "originChallenge", origin_verified_at AS "originVerifiedAt"
+        redirect_uri AS "redirectUri", backchannel_logout_uri AS "backchannelLogoutUri",
+        origin_challenge AS "originChallenge", origin_verified_at AS "originVerifiedAt"
         FROM applications WHERE owner_person_id = $1 ORDER BY created_at DESC, id`, [personId]);
     return result.rows.map(({ redirectUri, originChallenge, ...row }) => ({ ...row,
       originVerificationHost: proofHost(redirectUri), originVerificationValue: proofValue(originChallenge) }));

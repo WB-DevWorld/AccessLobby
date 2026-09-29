@@ -37,7 +37,8 @@ test('requested app cannot serve tokens or admit people before controlled activa
   try {
     for (const id of [owner, customer, outsider]) await pool.query("INSERT INTO persons(id,status) VALUES ($1,'active')", [id]);
     const input = { clientId, name: 'Pilot portal', redirectUri: 'https://portal.example.test/callback',
-      logoutUri: 'https://portal.example.test/', visibility: 'hidden', admission: 'grant_required' };
+      logoutUri: 'https://portal.example.test/', backchannelLogoutUri: 'https://portal.example.test/backchannel-logout',
+      visibility: 'hidden', admission: 'grant_required' };
     const app = await apps.request(owner, input);
     appChallenge = app.originVerificationValue.slice('accesslobby-verify='.length);
     assert.equal(app.status, 'requested');
@@ -51,10 +52,13 @@ test('requested app cannot serve tokens or admit people before controlled activa
     await assert.rejects(apps.request(owner, input), fails('client_id_taken'));
     await assert.rejects(apps.request(owner, { ...input, clientId: 'reference-consumer' }), fails('invalid_client_id'));
     await assert.rejects(apps.request(owner, { ...input, clientId: `other-${randomUUID()}`, logoutUri: 'https://other.example.test/' }), fails('application_origin_mismatch'));
+    await assert.rejects(apps.request(owner, { ...input, clientId: `other-${randomUUID()}`, backchannelLogoutUri: 'https://other.example.test/logout' }), fails('application_origin_mismatch'));
+    await assert.rejects(apps.request(owner, { ...input, clientId: `other-${randomUUID()}`, backchannelLogoutUri: 'https://portal.example.test/logout?token=bad' }), fails('invalid_application_url'));
     await assert.rejects(apps.entry(customer, clientId), fails('application_unavailable'));
     await assert.rejects(apps.grant(owner, app.id, customer, undefined), fails('application_grants_unavailable'));
     assert.deepEqual(await apps.visible(customer), []);
     assert.equal((await apps.mine(owner)).length, 1);
+    assert.equal((await apps.mine(owner))[0].backchannelLogoutUri, input.backchannelLogoutUri);
     assert.ok((await apps.mine(owner))[0].originVerifiedAt);
     assert.deepEqual(await apps.mine(outsider), []);
 

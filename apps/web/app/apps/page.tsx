@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic';
 
 type App = { id: string; clientId: string; name: string; status?: string;
   visibility: 'discoverable' | 'hidden'; admission: 'authenticated_open' | 'grant_required';
-  originVerificationHost?: string; originVerificationValue?: string; originVerifiedAt?: string | null };
+  originVerificationHost?: string; originVerificationValue?: string; originVerifiedAt?: string | null;
+  backchannelLogoutUri?: string | null };
 
 async function list(path: string): Promise<App[] | null> {
   try {
@@ -68,6 +69,9 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
           <label htmlFor="app-client">Client ID</label><input id="app-client" name="clientId" required pattern="[a-z0-9_-]+" maxLength={80} />
           <label htmlFor="app-callback">Exact HTTPS callback URL</label><input id="app-callback" name="redirectUri" type="url" required />
           <label htmlFor="app-logout">Exact HTTPS logout return URL</label><input id="app-logout" name="logoutUri" type="url" required />
+          <label htmlFor="app-backchannel">Backchannel logout URL (optional)</label>
+          <input id="app-backchannel" name="backchannelLogoutUri" type="url" />
+          <p>Register this only after the app verifies signed logout tokens. It must be on the callback origin.</p>
           <label htmlFor="app-visibility">Visibility</label><select id="app-visibility" name="visibility">
             <option value="discoverable">Discoverable</option><option value="hidden">Hidden until granted</option>
           </select>
@@ -85,6 +89,7 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
           <div className="context-grid">{mine.map(app => <SurfaceCard title={app.name} key={app.id}>
             <p>Client ID: <code>{app.clientId}</code></p>
             <p>Status: <strong>{app.status === 'active' ? 'Active' : app.status === 'suspended' ? 'Suspended' : 'Requested'}</strong>. Entry: {app.admission === 'grant_required' ? 'Grant required' : 'Authenticated open'}.</p>
+            <p>Backchannel logout: {app.backchannelLogoutUri ? <code>{app.backchannelLogoutUri}</code> : 'Not registered'}</p>
             {app.status === 'requested' && app.originVerificationHost && app.originVerificationValue && <>
               <p>Publish this DNS TXT record to prove control of the callback hostname:</p>
               <p><code>{app.originVerificationHost}</code> → <code>{app.originVerificationValue}</code></p>

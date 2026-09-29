@@ -4,7 +4,7 @@ import { exactApplicationUrl } from './applications.js';
 import { validId } from './organizations.js';
 import { originProofPresent, proofHost, verifiableOrigin } from './origin-proof.js';
 
-interface AppRow { id: string; client_id: string; name: string; redirect_uri: string; logout_uri: string;
+interface AppRow { id: string; client_id: string; name: string; redirect_uri: string; logout_uri: string; backchannel_logout_uri: string | null;
   status: string; trust_class: string; owner_active: boolean; origin_challenge: string;
   origin_verified_at: Date | null; origin_verified_host: string | null }
 interface ClientRep { clientId: string; name?: string; enabled: boolean; protocol: string; publicClient: boolean;
@@ -17,11 +17,14 @@ export function representation(row: AppRow): ClientRep {
   const redirect = exactApplicationUrl(row.redirect_uri);
   const logout = exactApplicationUrl(row.logout_uri);
   if (new URL(redirect).origin !== new URL(logout).origin) throw new Error('Stored application origin mismatch');
+  const backchannel = row.backchannel_logout_uri ? exactApplicationUrl(row.backchannel_logout_uri) : null;
+  if (backchannel && new URL(redirect).origin !== new URL(backchannel).origin) throw new Error('Stored backchannel origin mismatch');
   return {
     clientId: row.client_id, name: row.name, enabled: true, protocol: 'openid-connect', publicClient: true,
     standardFlowEnabled: true, implicitFlowEnabled: false, directAccessGrantsEnabled: false,
     serviceAccountsEnabled: false, redirectUris: [redirect], webOrigins: [new URL(redirect).origin],
-    attributes: { 'pkce.code.challenge.method': 'S256', 'post.logout.redirect.uris': logout },
+    attributes: { 'pkce.code.challenge.method': 'S256', 'post.logout.redirect.uris': logout,
+      ...(backchannel ? { 'backchannel.logout.url': backchannel, 'backchannel.logout.session.required': 'true' } : {}) },
     protocolMappers: [{ name: 'accesslobby-api-audience', protocol: 'openid-connect', protocolMapper: 'oidc-audience-mapper',
       config: { 'included.client.audience': 'accesslobby-api', 'access.token.claim': 'true', 'id.token.claim': 'false' } }]
   };
@@ -36,12 +39,14 @@ export function matchesClient(actual: ClientRep, desired: ClientRep, mappers: Cl
     sameList(actual.redirectUris, desired.redirectUris) && sameList(actual.webOrigins, desired.webOrigins) &&
     actual.attributes?.['pkce.code.challenge.method'] === 'S256' &&
     actual.attributes?.['post.logout.redirect.uris'] === desired.attributes['post.logout.redirect.uris'] &&
+    (actual.attributes?.['backchannel.logout.url'] ?? '') === (desired.attributes['backchannel.logout.url'] ?? '') &&
+    (!desired.attributes['backchannel.logout.url'] || actual.attributes?.['backchannel.logout.session.required'] === 'true') &&
     mapper?.protocolMapper === 'oidc-audience-mapper' &&
     mapper.config?.['included.client.audience'] === 'accesslobby-api' &&
     mapper.config?.['access.token.claim'] === 'true' && mapper.config?.['id.token.claim'] === 'false';
 }
 
-function internalBase(value: string): string {
+export function internalBase(value: string): string {
   const url = new URL(value);
   if (url.protocol !== 'http:' || !['iam', 'localhost', '127.0.0.1'].includes(url.hostname) ||
       url.port !== '8080' || url.pathname !== '/' || url.search || url.hash || url.username || url.password) {
@@ -50,10 +55,11 @@ function internalBase(value: string): string {
   return url.origin;
 }
 
-async function reconcileClient(base: string, realm: string, token: string, wanted: ClientRep) {
+export async function reconcileClient(base: string, realm: string, token: string, wanted: ClientRep,
+  fetcher: typeof fetch = fetch) {
   const endpoint = `${base}/admin/realms/${encodeURIComponent(realm)}/clients`;
   const request = async (url: string, init: RequestInit = {}) => {
-    const response = await fetch(url, { ...init, headers: { authorization: `Bearer ${token}`,
+    const response = await fetcher(url, { ...init, headers: { authorization: `Bearer ${token}`,
       ...(init.body ? { 'content-type': 'application/json' } : {}) }, signal: AbortSignal.timeout(8000) });
     return response;
   };

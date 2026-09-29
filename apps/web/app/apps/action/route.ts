@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
   if (intent === 'request') {
     path = '/v1/applications';
     body = { name: field('name'), clientId: field('clientId'), redirectUri: field('redirectUri'),
-      logoutUri: field('logoutUri'), visibility: field('visibility'), admission: field('admission') };
+      logoutUri: field('logoutUri'), backchannelLogoutUri: field('backchannelLogoutUri'),
+      visibility: field('visibility'), admission: field('admission') };
   } else if (intent === 'verify' && uuid(appId)) {
     path = `/v1/applications/${appId}/verify-origin`;
   } else if ((intent === 'grant' || intent === 'revoke') && uuid(appId) && uuid(personId)) {
