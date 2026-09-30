@@ -1,0 +1,95 @@
+{
+  "checkedAt": "2026-09-30T21:23:37.632168+00:00",
+  "webOrigin": "https://accesslobby.realjanelove.com",
+  "expectedWebSha": "91e1a66167aa4a74dea44062e41849f8e8efb02c",
+  "evidenceScope": "public-http-only",
+  "checks": [
+    {
+      "name": "pwa.manifest",
+      "passed": false,
+      "reason": "invalid_or_unavailable_response",
+      "durationMs": 8010
+    },
+    {
+      "name": "pwa.worker",
+      "passed": true,
+      "status": 200,
+      "buildId": "91e1a66167aa4a74dea44062e41849f8e8efb02c",
+      "sourceSha256": "3db06e4ddb76804ded2e801c42f3f47271ca7edc211115a143e88ec5aa2dcb37",
+      "bytes": 2305,
+      "durationMs": 1542
+    },
+    {
+      "name": "pwa.offline_shell",
+      "passed": false,
+      "reason": "invalid_or_unavailable_response",
+      "durationMs": 8009
+    },
+    {
+      "name": "pwa.icon_192",
+      "passed": true,
+      "status": 200,
+      "width": 192,
+      "height": 192,
+      "bytes": 6064,
+      "durationMs": 1390
+    },
+    {
+      "name": "pwa.icon_512",
+      "passed": true,
+      "status": 200,
+      "width": 512,
+      "height": 512,
+      "bytes": 14224,
+      "durationMs": 6279
+    },
+    {
+      "name": "pwa.apple_touch_icon",
+      "passed": true,
+      "status": 200,
+      "width": 180,
+      "height": 180,
+      "bytes": 5675,
+      "durationMs": 6512
+    },
+    {
+      "name": "pwa.private_headers.account",
+      "passed": true,
+      "status": 200,
+      "durationMs": 7817
+    },
+    {
+      "name": "pwa.private_headers.identity",
+      "passed": true,
+      "status": 200,
+      "durationMs": 6758
+    },
+    {
+      "name": "pwa.private_headers.contexts",
+      "passed": true,
+      "status": 200,
+      "durationMs": 5823
+    },
+    {
+      "name": "pwa.private_headers.apps",
+      "passed": true,
+      "status": 200,
+      "durationMs": 7021
+    },
+    {
+      "name": "pwa.private_headers.recovery",
+      "passed": true,
+      "status": 200,
+      "durationMs": 7583
+    }
+  ],
+  "passed": false,
+  "notProven": [
+    "running-image-digest",
+    "browser-worker-control",
+    "installed-standalone",
+    "offline-cold-start",
+    "installed-auth-logout",
+    "installed-update-A-to-B"
+  ]
+}

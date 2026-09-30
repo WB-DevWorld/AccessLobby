@@ -2,6 +2,8 @@
 
 Relates to [#48](https://github.com/WB-DevWorld/AccessLobby/issues/48). Stable web origin: `https://accesslobby.realjanelove.com`.
 
+**Latest checkpoint, 21:30 UTC:** the owner completed physical Windows installation, installed sign-in/logout, offline reopening/Retry and the real installed A→B update with session/Dark preference retained. Both running web digests are verified. [Build B acceptance and exact evidence](build-b-acceptance.md) supersedes the earlier NOT RUN statements below; those statements are retained as dated history. Additional device and edge-case work is tracked in [#52](https://github.com/WB-DevWorld/AccessLobby/issues/52).
+
 ## Release identity
 
 The owner deployed source **4830d1b030237a77684e976c65311bac8ffe29c3** (Build A). Their public preflight started at **18:01:29 UTC**, passed **23/23**, and API live/ready returned the exact SHA. Their PWA HTTP gate passed **11/11**. The supplied Docker inventory reports running web/API/IAM/gateway, healthy databases and `migrate`/`iam-config` exited 0. Its image-name column does not prove an immutable digest.
