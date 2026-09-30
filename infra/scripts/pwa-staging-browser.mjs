@@ -93,20 +93,22 @@ async function viewports(page, surface, heading) {
 }
 
 async function appPage() {
-  const newPage = context.waitForEvent('page', { timeout: 30000 });
+  const newPage = context.waitForEvent('page', { timeout: 30000 }).catch(() => null);
   const target = await browserCdp.send('PWA.launch', { manifestId: `${origin}/` });
-  const createdPage = await newPage;
   const launchedWindow = await browserCdp.send('Browser.getWindowForTarget', { targetId: target.targetId });
-  let page;
   // Chrome can expose distinct tab and page targets for the same app window.
   // Match the real window, rather than assuming the two opaque target IDs are equal.
-  for (const candidate of new Set([createdPage, ...context.pages()])) {
-    const cdp = await context.newCDPSession(candidate);
-    const { targetInfo } = await cdp.send('Target.getTargetInfo');
-    const candidateWindow = await browserCdp.send('Browser.getWindowForTarget', { targetId: targetInfo.targetId });
-    await cdp.detach();
-    if (candidateWindow.windowId === launchedWindow.windowId) { page = candidate; break; }
-  }
+  const findPage = async candidates => {
+    for (const candidate of candidates) {
+      if (!candidate || candidate.isClosed()) continue;
+      const cdp = await context.newCDPSession(candidate);
+      const { targetInfo } = await cdp.send('Target.getTargetInfo');
+      const candidateWindow = await browserCdp.send('Browser.getWindowForTarget', { targetId: targetInfo.targetId });
+      await cdp.detach();
+      if (candidateWindow.windowId === launchedWindow.windowId) return candidate;
+    }
+  };
+  const page = await findPage(context.pages()) ?? await findPage([await newPage]);
   assert(page, 'Launched PWA window must have an attached page');
   await page.waitForURL(`${origin}/`, { waitUntil: 'domcontentloaded' });
   report.appLaunch = { windowMatches: true,
@@ -217,8 +219,13 @@ try {
     return { mode: 'standalone', installMethod: 'Chrome DevTools Protocol PWA domain' };
   });
   await check('installed.offline_profile_cold_launch', async () => {
+    await page.close();
+    // Prevent Chrome's session restoration from visiting the origin online before this test.
+    for (const remaining of context.pages()) await remaining.goto('about:blank');
     await context.close();
     await launch();
+    assert.equal(context.pages().some(page => page.url().startsWith(origin)), false,
+      'Cold launch must not warm AccessLobby online before going offline');
     await context.setOffline(true);
     page = await appPage();
     await page.getByRole('heading', { name: 'Connection required', exact: true }).waitFor();
