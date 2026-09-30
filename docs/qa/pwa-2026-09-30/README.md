@@ -35,3 +35,19 @@ The [signed-out screenshot](signed-out-account.jpg) shows the account page after
 `infra/scripts/pwa-staging-browser.mjs` and **PWA staging browser qualification** test the explicitly selected deployed SHA in a disposable Chromium desktop profile. JSON and public screenshots are workflow artifacts. Checks cover worker control/scope/release, manifest/installability, public cache allowlist, offline protected/auth navigation and rejected offline logout, reconnect, installation/standalone launch, profile cold launch offline, theme preservation, six-width public/offline reflow and first/repeat load under 150ms/64KiBps network emulation.
 
 No credentials, identity snapshots or online mutations are used. Test-profile cleanup is not user-browser recovery. It does not prove installed authenticated use, mobile/physical devices, real release update or peer logout propagation. At authoring, the remote run is **NOT RUN**; exact results are appended to issue #48 after execution.
+
+## Qualified deployed Build A — 19:31 UTC
+
+[Live staging browser run 36766195669](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36766195669) **PASS 11/11**, tester source `78473cf9e18cfba6c59b1a8be8c7d2cadb7a51f3`, deployed app source `4830d1b030237a77684e976c65311bac8ffe29c3`, Chromium **153.0.8010.12**, GitHub Ubuntu runner. [Permanent redacted JSON](automated-build-a.json) preserves the 24 public/offline viewport results and exact cache inventory. Artifact `11120886725` includes the screenshots.
+
+Installation and genuine standalone launch PASS. A fully closed app/browser profile reopened with web-origin DNS deliberately failing before browser startup; the installed **Connection required** shell PASS, cached neutral assets/theme persisted, manifest fetch actually failed while `navigator.onLine` remained **true**. Restoring transport and reopening installed AccessLobby online PASS. Tab offline protected/auth navigations, rejected offline logout and Retry after reconnect PASS. Same-window installed Retry after a real connection change remains NOT RUN; recovery here is a browser restart with transport restored.
+
+| Measured navigation | DOM content loaded | Browser-reported transfer | Conditions |
+| --- | --- | --- | --- |
+| First public load | 1,461ms | 153,824 bytes | 150ms emulated latency, 64KiB/s download |
+| Repeat public load | 168ms | 16,214 bytes | Same emulation, warmed static cache |
+| Installed profile cold launch | 84ms | 0 bytes | Actual DNS failure, persisted neutral shell |
+
+These are this virtual runner's browser measurements, not a physical device performance promise. Early test failures identified distinct Chrome tab/page target IDs and page-level offline emulation that did not block the installed worker's transport. The final test matches the real app window and validates actual network failure; no product runtime change was needed.
+
+The tester's [CI 36766195684](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36766195684) and [theme 36766195644](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36766195644) PASS. Installed authenticated login/logout, actual image digest, real release A→B and physical/mobile devices remain open on #48.

@@ -1,6 +1,6 @@
 # AccessLobby app checks — plain instructions
 
-The server checks are done. The owner deployed the first PWA version and reported **23/23 public checks** and **11/11 PWA file checks** passing on September 30. The first “file not found” error came from running the commands one folder too high; moving into `code` fixed it.
+The public server checks are done. The owner deployed the first PWA version and reported **23/23 public checks** and **11/11 PWA file checks** passing on September 30. The first “file not found” error came from running the commands one folder too high; moving into `code` fixed it.
 
 The **PWA staging browser qualification** GitHub workflow checks the background worker, cache, offline pages, installation in a temporary Linux Chromium profile and screen widths without account credentials. Sign-in in an installed window and the next-version update still need a device and a protected deployment.
 
