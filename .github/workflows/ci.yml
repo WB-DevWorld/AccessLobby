@@ -174,7 +174,18 @@ jobs:
           grep -q 'We could not complete sign-in' /tmp/bad-consumer-callback
   iam-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_USER: accesslobby
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: accesslobby_iam_lifecycle
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U accesslobby -d accesslobby_iam_lifecycle"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -288,10 +299,14 @@ jobs:
       - name: Exercise private app client helpers against Keycloak
         env:
           CI: 'true'
+          DATABASE_URL: postgres://accesslobby:test-only-password@127.0.0.1:5432/accesslobby_iam_lifecycle
+          IAM_LIFECYCLE_DATABASE_URL: postgres://accesslobby:test-only-password@127.0.0.1:5432/accesslobby_iam_lifecycle
         run: |
           npm install -g pnpm@11.19.0
-          pnpm install --frozen-lockfile --filter @accesslobby/api
+          pnpm install --frozen-lockfile
           pnpm --filter @accesslobby/api build
+          pnpm --filter @accesslobby/api migrate
+          pnpm exec playwright install --with-deps chromium
           IAM_SMOKE_TOKEN=$(curl --fail --silent --show-error \
             -d grant_type=password -d client_id=admin-cli \
             -d username=ci-admin -d password=ci-admin-password \
@@ -299,6 +314,7 @@ jobs:
             | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
           export IAM_SMOKE_TOKEN
           node apps/api/test/iam-live-smoke.mjs
+          node apps/api/test/app-onboarding-live-smoke.mjs
           unset IAM_SMOKE_TOKEN
       - name: Verify public IAM gateway path and proxy headers
         run: |
