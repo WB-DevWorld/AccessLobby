@@ -23,10 +23,11 @@ let browserCdp;
 let installed = false;
 let diagnosticPage;
 const phase = name => { report.phase = name; console.log(`PHASE ${name}`); };
-const launch = async () => {
+const launch = async (transportFailure = false) => {
   context = await chromium.launchPersistentContext(profile, {
     channel: 'chromium', headless: false, serviceWorkers: 'allow',
     viewport: { width: 1366, height: 900 },
+    args: transportFailure ? ['--host-resolver-rules=MAP accesslobby.realjanelove.com ~NOTFOUND'] : [],
   });
   context.setDefaultTimeout(30000);
   context.setDefaultNavigationTimeout(90000);
@@ -234,6 +235,21 @@ try {
     assert.equal(await page.evaluate(() => localStorage.getItem('accesslobby-theme')), 'light');
     return { mode: 'standalone', installMethod: 'Chrome DevTools Protocol PWA domain' };
   });
+  await check('installed.warm_offline_retry', async () => {
+    const network = await context.newCDPSession(page);
+    await network.send('Network.enable');
+    await network.send('Network.emulateNetworkConditions', {
+      offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
+    });
+    await page.goto(`${origin}/account`);
+    await page.getByRole('heading', { name: 'Connection required', exact: true }).waitFor();
+    await network.send('Network.emulateNetworkConditions', {
+      offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
+    });
+    await page.getByRole('link', { name: 'Retry connection', exact: true }).click();
+    await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
+    await network.detach();
+  });
   await check('installed.offline_profile_cold_launch', async () => {
     phase('cold.close_app');
     await page.close();
@@ -241,22 +257,33 @@ try {
     for (const remaining of context.pages()) await remaining.goto('about:blank');
     await context.close();
     phase('cold.start_browser');
-    await launch();
+    // Fail real transport before any app navigation; a context toggle can miss newly launched PWA targets.
+    // DNS failure intentionally leaves navigator.onLine true, exercising the POS transport lesson.
+    await launch(true);
     assert.equal(context.pages().some(page => page.url().startsWith(origin)), false,
       'Cold launch must not warm AccessLobby online before going offline');
-    await context.setOffline(true);
-    phase('cold.offline_enabled');
+    phase('cold.transport_failure_enabled');
     page = await appPage();
     phase('cold.wait_offline_shell');
     await page.getByRole('heading', { name: 'Connection required', exact: true }).waitFor();
+    const connectivity = await page.evaluate(async () => {
+      try { await fetch('/manifest.webmanifest', { cache: 'no-store' }); return { failed: false }; }
+      catch { return { failed: true, onlineHint: navigator.onLine }; }
+    });
+    assert.equal(connectivity.failed, true);
+    assert.equal(connectivity.onlineHint, true);
+    report.coldLaunchTransport = { fault: 'DNS unavailable before browser start', ...connectivity };
     await metrics(page, 'installed-profile-offline-cold-launch');
     await viewports(page, 'installed-offline', 'Connection required');
     assert.equal(await page.evaluate(() => localStorage.getItem('accesslobby-theme')), 'light');
     return cacheBoundary(page);
   });
-  await check('installed.reconnect_and_preference', async () => {
-    await context.setOffline(false);
-    await page.getByRole('link', { name: 'Retry connection', exact: true }).click();
+  await check('installed.transport_recovery_and_preference', async () => {
+    await page.close();
+    for (const remaining of context.pages()) await remaining.goto('about:blank');
+    await context.close();
+    await launch();
+    page = await appPage();
     await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
     assert.equal(await page.evaluate(() => localStorage.getItem('accesslobby-theme')), 'light');
   });
