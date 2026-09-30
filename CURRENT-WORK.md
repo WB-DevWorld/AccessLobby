@@ -1,5 +1,11 @@
 # Execution ledger — MVP-0
 
+## First-party onboarding staging rollout and isolated peer fixture — 2026-09-30 UTC
+
+The owner reports fresh IAM and identity database backups PASS, `migrate` and `iam-config` exit code 0, both databases healthy, existing pilot sign-in PASS and the reference consumer deployed. Public API `/health/live` reports `aadfad381b3f43d8c93cce1ba84805aead4efb52`. The isolated identity restore result was left blank; protected running-image inventory and signed-in app-entry acceptance remain open. The credential-free public preflight at 2026-09-30 08:55 UTC passed 23/23 checks against that exact SHA, including web/API/consumer health, issuer/JWKS, restricted IAM gateway paths and branded auth pages. This proves public reachability and API version, not the running digest inventory or signed-in admission.
+
+The current reference-consumer Compose file hardcoded `OIDC_CLIENT_ID=reference-consumer` and omitted `APP_ENTRY_REQUIRED`, although the server supports the opt-in and the #44 acceptance sequence calls for a second activated client. This branch keeps the legacy defaults but permits an isolated disposable peer to set an approved client ID and entry checking. CI renders and checks both Compose variants; no running Compose project, IAM client, DNS record, grant or realm is changed by the branch. This is partial progress on #44, not deployment or acceptance of the new fixture.
+
 ## Current audit baseline — 2026-09-29 UTC
 
 The [current-state audit](docs/ACCESSLOBBY-CURRENT-STATE-AUDIT.md), [MVP reconciliation](docs/ACCESSLOBBY-MVP-RECONCILIATION.md) and [broader roadmap](docs/ACCESSLOBBY-BROADER-ROADMAP-STATUS.md) reconcile private source intent, current GitHub, exact CI and operator/public runtime evidence. Strict effective MVP gates: 4/18 satisfied; all eight required software groups are present and CI-qualified, but production is unverified. The newer onboarding candidate remains published/unaccepted under #44; public staging still reports account-routing source `936aae1`. Older sections below are chronological checkpoints, not contradictory current status.
