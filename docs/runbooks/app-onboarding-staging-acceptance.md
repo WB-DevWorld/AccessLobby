@@ -1,6 +1,22 @@
 # First-party app onboarding: controlled staging pass
 
-This is the ordered acceptance pass for merged PR #42, pinned source `aadfad381b3f43d8c93cce1ba84805aead4efb52`, tracked by issue #44. Use the [published-image handoff](app-onboarding-staging-handoff-2026-09-29.md); current public staging still reports the older account-routing source. Use an owned staging hostname and a disposable first-party test peer; external publishers are out of scope until their identifier and consent contract exists. This runbook does not authorize production promotion. Record only app UUIDs, client IDs, status codes, commit and image digests in a private evidence log; never record tokens, DNS control credentials or personal data.
+This pass is tracked by [issue #44](https://github.com/WB-DevWorld/AccessLobby/issues/44). The onboarding implementation from PR #42 is already included in the accepted PWA Build B, `91e1a66167aa4a74dea44062e41849f8e8efb02c`. Public API and worker identity still report B at the September 30 follow-up. The older `aadfad3…` rollout in the [September 29 handoff](app-onboarding-staging-handoff-2026-09-29.md) is history; do not deploy it over current staging. Confirm the actual running source and digests before starting, using the [Build B acceptance record](../qa/pwa-2026-09-30/build-b-acceptance.md) as the last qualified baseline. A later published release is not proof of a later deployment.
+
+The goal is to connect one approved test app, prove who can enter it, then safely suspend it. Use a separate test app and an owned staging hostname. Leave the working pilot consumer on its existing client and settings. External publishers and production promotion are outside this pass. Keep app IDs, client IDs and detailed operator output private; publish only status codes, source/image identities, timestamps and categorical results. Never record tokens, DNS credentials or personal data.
+
+## What must be ready first
+
+- An owner-approved test hostname with an exact HTTPS callback URL, plus access to publish its DNS TXT record.
+- Two controlled test accounts and a reviewer who can independently approve the app as first party.
+- Protected access to the staging operator runner and a verified identity-database recovery baseline.
+
+These are operator inputs, not values the assistant may invent. If one is missing, record the affected step as BLOCKED. Public health checks and PWA installation do not replace it.
+
+## What CI checks
+
+`apps/api/test/app-onboarding-live-smoke.mjs` runs only against a dedicated disposable CI database and loopback IAM. Two temporary users sign in through real Authorization Code + PKCE flows. The test checks nonce/JWKS validation, stable person resolution across clients, HTTP app requests, private activation with actual IAM readback, both admission policies, grants/expiry/revoke, hidden visibility, owner and suspended-person denial, organization/app/resource separation, registry-first suspension, old-token rejection, IAM disable/retry and consumer entry failure when API transport stops. Callback pages, DNS answers and the review reference are fixtures. Grant expiry is forced in the disposable database. The consumer entry/policy modules are tested directly; a full deployed peer, live DNS/review, backchannel propagation, installed authentication and staging recovery still require their separate acceptance steps.
+
+## Staging steps
 
 1. **Establish the baseline.** Record the running web/API/IAM digests and API source SHA. Back up and restore-check the identity database according to the existing staging procedure. Confirm the new API image and migration 004 are approved together. Roll out the migration before the API and web images; confirm readiness and existing pilot sign-in after deployment. Do not enable `APP_ENTRY_REQUIRED` for the legacy reference consumer yet.
 2. **Request without IAM mutation.** From a first-party account, request a disposable client in `/apps` with exact HTTPS callback/logout URLs, optional implemented backchannel endpoint, and `authenticated_open`. Confirm `requested/unreviewed`, a unique DNS TXT challenge, no new Keycloak client and `403 application_unavailable` on a token for that client if one already exists. Confirm a second person cannot see the owner's request or verify its hostname.
