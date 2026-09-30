@@ -116,6 +116,7 @@ services:
       WEB_BASE_URL: ${WEB_BASE_URL:?}
       OIDC_ISSUER: ${OIDC_ISSUER:?}
       OIDC_CLIENT_ID: accesslobby-web
+      GIT_SHA: ${GIT_SHA:?}
       SESSION_SECRET: ${SESSION_SECRET:?}
       API_INTERNAL_URL: http://api:3001
       PUBLIC_REGISTRATION_ENABLED: ${PUBLIC_REGISTRATION_ENABLED:-false}
