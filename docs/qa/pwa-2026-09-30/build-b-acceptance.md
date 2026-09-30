@@ -45,9 +45,19 @@ Source B's [main CI](https://github.com/WB-DevWorld/AccessLobby/actions/runs/367
 | Existing web/API/IAM/consumer/auth contract | PASS | [Permanent JSON](public-build-b.json), start 21:23:38 UTC, 23/23, exact B API live/ready. |
 | PWA response contracts | PASS | [Initial report](pwa-http-build-b.json), start 21:23:37 UTC, 9/11; manifest and offline HTML hit eight-second bounds. [One targeted retry](pwa-http-build-b-retry.json), start 21:26:02 UTC, 2/2 with a 25-second bound and the same manifest/offline content checks, 5,650ms/5,675ms. |
 | Served B worker identity/scope/headers | PASS | Exact SHA above; JavaScript, web root scope, no-store/no-cache/must-revalidate; worker bytes hash above. |
-| Credential-free deployed B Chromium install/control/offline/cache/reflow | NOT RUN | This evidence branch selects B as the workflow's explicit default. Append its exact tester SHA/run/browser/report after completion. |
+| Credential-free deployed B Chromium install/control/offline/cache/reflow | PASS | [Run 36780922951](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36780922951), tester `44d570c55603a5327e322ed551c4d370d766409b`, deployed B, Chromium `153.0.8010.12`, start 21:42:18 UTC. [Permanent report](automated-build-b.json): 11/11 checks and 24/24 six-width tab/installed public/offline cases. Artifact `11127616746`. |
 
 The initial PWA report remains `passed: false`; it is not rewritten as a single clean 11/11 run. All 11 contracts have passing responses across the recorded run and bounded retry. Request times include this workspace's network path and are not physical-device performance measurements.
+
+The B browser run proves real Chromium installation/standalone launch, web-origin controller/scope, exact served worker identity, replaceable-only Cache Storage, protected/auth offline navigation, rejected offline logout, reconnect and persistent-profile offline cold launch. The cold launch fails DNS before browser startup and confirms request failure even while `navigator.onLine` is true. Restoring transport and reopening the same installed profile preserves the test preference. This is credential-free virtual Linux evidence; physical owner sign-in/logout/A→B remain the independent rows above. The report's `notProven` entries are preserved, not erased by other evidence.
+
+| Virtual runner measurement | DOM content loaded | Browser-reported transfer | Conditions |
+| --- | --- | --- | --- |
+| First public load | 1,249ms | 153,825 bytes | 150ms emulated latency, 64KiB/s download |
+| Repeat public load | 151ms | 16,214 bytes | Same emulation, warmed static cache |
+| Installed offline profile cold launch | 64ms | 0 bytes | DNS failure before browser startup, persistent neutral cache |
+
+Tester source `44d570…` [CI 36780922997](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36780922997) and [theme 36780922952](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36780922952) PASS. Final evidence/merge source and its normal required checks remain distinct from these recorded test and deployed-artifact revisions.
 
 ## Remaining qualification
 
