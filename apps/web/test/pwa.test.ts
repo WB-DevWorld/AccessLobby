@@ -40,6 +40,7 @@ test('updates wait for an explicit message and critical account flows cannot req
     '/organizations/id', '/apps']) assert.equal(safeUpdateBoundary(route, false), false);
   assert.equal(safeUpdateBoundary('/', true), false);
   assert.equal(safeUpdateBoundary('/', false), true);
+  assert.equal(safeUpdateBoundary('/future-route', false), false);
 });
 
 test('worker precaches only a neutral shell, never stores private routes or API responses', async () => {

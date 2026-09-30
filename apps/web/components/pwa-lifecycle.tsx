@@ -13,20 +13,32 @@ export function PwaLifecycle() {
   const [deferred, setDeferred] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [activationMessage, setActivationMessage] = useState('');
   const registration = useRef<ServiceWorkerRegistration | null>(null);
   const activating = useRef(false);
+  const dirtyRef = useRef(false);
+  const pendingActivation = useRef<{ port: MessagePort; timer: number } | null>(null);
   const lastCheck = useRef(0);
   const safe = safeUpdateBoundary(pathname, dirty);
   const safeRef = useRef(safe);
   safeRef.current = safe;
 
-  useEffect(() => { setDirty(false); setDeferred(false); }, [pathname]);
   useEffect(() => {
+    dirtyRef.current = false;
+    setDirty(false); setDeferred(false); setActivationMessage('');
+  }, [pathname]);
+  useEffect(() => {
+    const holdUpdate = () => {
+      dirtyRef.current = true;
+      safeRef.current = false;
+      setDirty(true);
+    };
     const markDirty = (event: Event) => {
-      if (event.target instanceof Element && event.target.closest('form')) setDirty(true);
+      if (event.target instanceof Element && event.target.closest('form')) holdUpdate();
     };
     const markSubmitting = (event: Event) => {
-      if (event.target instanceof HTMLFormElement) setDirty(true);
+      if (event.target instanceof HTMLFormElement) holdUpdate();
     };
     document.addEventListener('input', markDirty, true);
     document.addEventListener('change', markDirty, true);
@@ -43,8 +55,27 @@ export function PwaLifecycle() {
     let cancelled = false;
     let channel: BroadcastChannel | null = null;
     const onControllerChange = () => {
-      if (activating.current && safeRef.current) window.location.reload();
+      const requested = activating.current;
       activating.current = false;
+      if (pendingActivation.current) {
+        window.clearTimeout(pendingActivation.current.timer);
+        pendingActivation.current.port.close();
+        pendingActivation.current = null;
+      }
+      setWaiting(false); setUpdating(false); setActivationMessage('');
+      if (requested && safeRef.current && safeUpdateBoundary(window.location.pathname, dirtyRef.current)) {
+        window.location.reload();
+      }
+    };
+    const onSafetyCheck = (event: MessageEvent) => {
+      if (event.data?.type !== 'ACCESSLOBBY_CHECK_UPDATE_SAFETY' ||
+          !(event.source instanceof ServiceWorker) ||
+          event.source.scriptURL !== new URL('/sw.js', window.location.origin).href) return;
+      const port = event.ports[0];
+      port?.postMessage({
+        safe: safeRef.current && safeUpdateBoundary(window.location.pathname, dirtyRef.current),
+      });
+      port?.close();
     };
     const showWaiting = (worker?: ServiceWorker | null, announce = true) => {
       if (!cancelled && worker && navigator.serviceWorker.controller) {
@@ -70,6 +101,7 @@ export function PwaLifecycle() {
       };
     }
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+    navigator.serviceWorker.addEventListener('message', onSafetyCheck);
     document.addEventListener('visibilitychange', onResume);
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onReconnect);
@@ -91,6 +123,13 @@ export function PwaLifecycle() {
       window.clearInterval(timer);
       channel?.close();
       navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      navigator.serviceWorker.removeEventListener('message', onSafetyCheck);
+      if (pendingActivation.current) {
+        window.clearTimeout(pendingActivation.current.timer);
+        pendingActivation.current.port.close();
+        pendingActivation.current = null;
+      }
+      activating.current = false;
       document.removeEventListener('visibilitychange', onResume);
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('online', onReconnect);
@@ -103,11 +142,29 @@ export function PwaLifecycle() {
     <span>A newer version of AccessLobby is available.</span>
     {safe ? <button type="button" onClick={() => {
       const worker = registration.current?.waiting;
-      if (!worker || !safeRef.current) return;
+      if (!worker || activating.current || !safeRef.current ||
+          !safeUpdateBoundary(window.location.pathname, dirtyRef.current)) return;
       activating.current = true;
-      worker.postMessage({ type: 'ACCESSLOBBY_ACTIVATE' });
-    }}>Update now</button> : <span>Finish this account step, then return home to update.</span>}
-    <button type="button" onClick={() => setDeferred(true)}>Later</button>
+      setUpdating(true); setActivationMessage('');
+      const channel = new MessageChannel();
+      const finish = (message: string) => {
+        if (pendingActivation.current?.port !== channel.port1) return;
+        window.clearTimeout(pendingActivation.current.timer);
+        channel.port1.close(); pendingActivation.current = null;
+        activating.current = false; setUpdating(false); setActivationMessage(message);
+      };
+      const timer = window.setTimeout(() => finish('The update did not finish. Try again when all AccessLobby windows are ready.'), 5000);
+      pendingActivation.current = { port: channel.port1, timer };
+      channel.port1.onmessage = (event) => {
+        if (event.data?.type !== 'ACCESSLOBBY_ACTIVATION_RESULT') return;
+        if (event.data.status === 'blocked') finish('Finish or close other AccessLobby windows, then try Update now again.');
+        else if (event.data.status === 'failed') finish('The update did not finish. Please try again.');
+      };
+      try { worker.postMessage({ type: 'ACCESSLOBBY_ACTIVATE', protocol: 2 }, [channel.port2]); }
+      catch { finish('The update did not finish. Please try again.'); }
+    }} disabled={updating}>{updating ? 'Checking windows…' : 'Update now'}</button> : <span>Finish this account step, then return home to update.</span>}
+    <button type="button" onClick={() => setDeferred(true)} disabled={updating}>Later</button>
+    {activationMessage && <span>{activationMessage}</span>}
     {error && <span>Update check will retry when the connection returns.</span>}
   </aside>;
 }
