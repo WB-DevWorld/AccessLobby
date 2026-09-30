@@ -50,14 +50,28 @@ async function login(clientId, redirectUri, username) {
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
-    // A reserved callback fixture captures the code; no external peer/DNS is contacted.
-    await context.route(`${new URL(redirectUri).origin}/**`, route => route.fulfill({ body: 'CI callback' }));
+    let callback;
+    // Capture IAM's actual redirect before Chromium follows it. Routing only the
+    // destination does not intercept a redirect chain's later requests.
+    await context.route(url => url.origin === new URL(issuer).origin && url.pathname.endsWith('/login-actions/authenticate'), async route => {
+      if (route.request().method() !== 'POST') return route.continue();
+      const response = await route.fetch({ maxRedirects: 0, timeout: 8000 });
+      const location = response.headers().location;
+      if (location) {
+        const next = new URL(location, issuer);
+        if (next.origin === new URL(redirectUri).origin && next.pathname === new URL(redirectUri).pathname) {
+          assert.ok([302, 303].includes(response.status()), 'IAM callback must be a redirect');
+          callback = next;
+          return route.fulfill({ status: 200, contentType: 'text/html', body: '<p>CI callback captured</p>' });
+        }
+      }
+      return route.fulfill({ response });
+    });
     await page.goto(auth.href);
     await page.locator('input[name="username"]').fill(username);
     await page.locator('input[name="password"]').fill(password);
-    await Promise.all([page.waitForURL(url => url.origin === new URL(redirectUri).origin && url.pathname === new URL(redirectUri).pathname),
-      page.locator('#kc-login').click()]);
-    const callback = new URL(page.url());
+    await page.locator('#kc-login').click();
+    assert.ok(callback, 'IAM must redirect to the exact registered callback');
     assert.equal(callback.searchParams.get('state'), state);
     assert.ok(callback.searchParams.get('code'), 'Authorization code required');
     const exchange = await fetch(`${issuer}/protocol/openid-connect/token`, { method: 'POST',
