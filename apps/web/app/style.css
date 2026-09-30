@@ -470,3 +470,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .context-list form { margin-top: .6rem; }
 .context-list code, .hero-note code { overflow-wrap: anywhere; }
 .context-alert { padding: .85rem 1rem; color: var(--text); background: var(--warning-soft); border: 1px solid var(--warning-border); border-radius: .6rem; }
+
+.pwa-update { position: fixed; z-index: 50; inset: auto 1rem 1rem auto; display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; width: min(26rem, calc(100vw - 2rem)); padding: 1rem; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: .8rem; box-shadow: var(--shadow-lg); }
+.pwa-update strong { width: 100%; }
+.pwa-update span { line-height: 1.4; }
+.pwa-update button { min-height: 44px; padding: .55rem .85rem; border: 1px solid var(--primary); border-radius: .6rem; background: var(--primary); color: var(--button-text); cursor: pointer; font: inherit; font-weight: 700; }
+.pwa-update button:last-of-type { background: var(--surface); color: var(--primary); }
+.pwa-update button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }

@@ -37,6 +37,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - name: Install Chromium for installed-PWA smoke
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify production PWA offline and update lifecycle
+        run: node infra/scripts/pwa-browser-smoke.mjs
       - name: Validate Dokploy Compose configuration
         env:
           IAM_DB_PASSWORD: ci-iam-password
