@@ -98,9 +98,11 @@ async function appPage() {
   const page = await newPage;
   const cdp = await context.newCDPSession(page);
   const { targetInfo } = await cdp.send('Target.getTargetInfo');
+  await page.waitForURL(`${origin}/`, { waitUntil: 'domcontentloaded' });
+  report.appLaunch = { targetMatches: targetInfo.targetId === target.targetId,
+    standalone: await page.evaluate(() => matchMedia('(display-mode: standalone)').matches) };
   assert.equal(targetInfo.targetId, target.targetId);
-  await page.waitForLoadState('domcontentloaded');
-  assert.equal(await page.evaluate(() => matchMedia('(display-mode: standalone)').matches), true);
+  await page.waitForFunction(() => matchMedia('(display-mode: standalone)').matches, null, { timeout: 15000 });
   return page;
 }
 
@@ -201,6 +203,7 @@ try {
     await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
     await viewports(page, 'installed-home', 'One AccessLobby identity');
     await page.getByRole('button', { name: 'Color theme: system. Activate to switch theme.', exact: true }).click();
+    await page.getByRole('button', { name: 'Color theme: light. Activate to switch theme.', exact: true }).waitFor();
     assert.equal(await page.evaluate(() => localStorage.getItem('accesslobby-theme')), 'light');
     return { mode: 'standalone', installMethod: 'Chrome DevTools Protocol PWA domain' };
   });
@@ -235,5 +238,7 @@ try {
   await context?.close();
   await rm(profile, { recursive: true, force: true });
   await writeFile(resolve(artifactDir, 'report.json'), JSON.stringify(report, null, 2) + '\n');
+  console.log(JSON.stringify({ metrics: report.metrics, viewports: report.viewports.length,
+    appLaunch: report.appLaunch }));
   console.log(`PWA_STAGING_BROWSER_${report.status} deployed=${sha} browser=${report.browser ?? 'unavailable'}`);
 }
