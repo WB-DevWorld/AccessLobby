@@ -5,9 +5,10 @@ services:
     environment:
       CONSUMER_ORIGIN: ${CONSUMER_ORIGIN:?}
       OIDC_ISSUER: ${OIDC_ISSUER:?}
-      OIDC_CLIENT_ID: reference-consumer
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-reference-consumer}
       ACCESSLOBBY_API_URL: ${ACCESSLOBBY_API_URL:?}
       PORT: "4000"
+      APP_ENTRY_REQUIRED: ${APP_ENTRY_REQUIRED:-false}
       GRANTED_PERSON_IDS: ${GRANTED_PERSON_IDS:-}
       PUBLIC_REGISTRATION_ENABLED: ${PUBLIC_REGISTRATION_ENABLED:-false}
     expose:

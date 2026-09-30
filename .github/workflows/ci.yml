@@ -88,6 +88,29 @@ jobs:
           assert str(iam_config['IAM_RESET_PASSWORD_ENABLED']).lower() == 'false'
           print('Branded IAM reconciles privately; web binds all interfaces; source Compose has no shared network or host ports')
           PY
+          export CONSUMER_IMAGE=ghcr.io/example/reference-consumer@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          export CONSUMER_ORIGIN=https://consumer.example.test
+          export ACCESSLOBBY_API_URL=https://api.example.test
+          docker compose -f compose.consumer.dokploy.yaml config --format json > /tmp/accesslobby-consumer-legacy.json
+          OIDC_CLIENT_ID=staging-open-fixture APP_ENTRY_REQUIRED=true \
+            docker compose -f compose.consumer.dokploy.yaml config --format json > /tmp/accesslobby-consumer-entry.json
+          python3 - <<'PY'
+          import json
+          for path, expected_client, expected_entry in (
+              ('/tmp/accesslobby-consumer-legacy.json', 'reference-consumer', 'false'),
+              ('/tmp/accesslobby-consumer-entry.json', 'staging-open-fixture', 'true'),
+          ):
+              with open(path) as source:
+                  config = json.load(source)
+              assert set(config['services']) == {'consumer'}
+              consumer = config['services']['consumer']
+              assert not consumer.get('ports'), 'Consumer must not publish a host port'
+              env = consumer['environment']
+              assert env['OIDC_CLIENT_ID'] == expected_client
+              assert str(env['APP_ENTRY_REQUIRED']).lower() == expected_entry
+              assert env['GRANTED_PERSON_IDS'] == ''
+          print('Consumer Compose preserves the legacy default and permits an isolated app-entry fixture')
+          PY
       - name: Check forbidden source material and secrets
         run: |
           forbidden=$(git ls-files | grep -Ei '(^|/)(project_sources|evidence|generated)/|\.env($|\.)|\.dump$|source.pack|conversation.archive' | grep -Ev '(^|/)\.env\.example$' || true)
