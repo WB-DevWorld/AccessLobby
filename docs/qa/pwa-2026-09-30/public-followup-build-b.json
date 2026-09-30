@@ -1,0 +1,159 @@
+{
+  "checkedAt": "2026-09-30T22:27:22.519656+00:00",
+  "expectedSha": "91e1a66167aa4a74dea44062e41849f8e8efb02c",
+  "checks": [
+    {
+      "name": "web.home",
+      "passed": true,
+      "status": 200,
+      "durationMs": 9011
+    },
+    {
+      "name": "api.live",
+      "passed": true,
+      "status": 200,
+      "version": "91e1a66167aa4a74dea44062e41849f8e8efb02c",
+      "durationMs": 8212
+    },
+    {
+      "name": "api.ready",
+      "passed": true,
+      "status": 200,
+      "version": "91e1a66167aa4a74dea44062e41849f8e8efb02c",
+      "durationMs": 5816
+    },
+    {
+      "name": "api.unauthenticated_me",
+      "passed": true,
+      "status": 401,
+      "durationMs": 5701
+    },
+    {
+      "name": "issuer.discovery",
+      "passed": true,
+      "status": 200,
+      "issuerMatched": true,
+      "durationMs": 12122
+    },
+    {
+      "name": "issuer.jwks",
+      "passed": true,
+      "status": 200,
+      "keyCount": 2,
+      "durationMs": 6105
+    },
+    {
+      "name": "gateway.denies_root",
+      "passed": true,
+      "status": 404,
+      "durationMs": 6573
+    },
+    {
+      "name": "gateway.denies_admin",
+      "passed": true,
+      "status": 404,
+      "durationMs": 5508
+    },
+    {
+      "name": "gateway.denies_master",
+      "passed": true,
+      "status": 404,
+      "durationMs": 7009
+    },
+    {
+      "name": "gateway.denies_metrics",
+      "passed": true,
+      "status": 404,
+      "durationMs": 10521
+    },
+    {
+      "name": "gateway.denies_health",
+      "passed": true,
+      "status": 404,
+      "durationMs": 6793
+    },
+    {
+      "name": "consumer.home",
+      "passed": true,
+      "requestId": "FPXUsUxAaWbvS7iWuwPuythQ",
+      "status": 200,
+      "durationMs": 6135
+    },
+    {
+      "name": "consumer.home.sample_2",
+      "passed": true,
+      "requestId": "pCFOs6YbOCdu2wkFF0rR-Fng",
+      "status": 200,
+      "durationMs": 7624
+    },
+    {
+      "name": "consumer.home.sample_3",
+      "passed": true,
+      "requestId": "T14gZGvEiGnkEAkrQ6QOVYyv",
+      "status": 200,
+      "durationMs": 5947
+    },
+    {
+      "name": "consumer.home.sample_4",
+      "passed": true,
+      "requestId": "OYPsM_99Z0snCekH6iS35ICP",
+      "status": 200,
+      "durationMs": 5141
+    },
+    {
+      "name": "consumer.home.sample_5",
+      "passed": true,
+      "requestId": "ZaaJoHCp1lVlrU9AvqNWMkZ9",
+      "status": 200,
+      "durationMs": 7256
+    },
+    {
+      "name": "consumer.live",
+      "passed": true,
+      "requestId": "A5C-ZyqGLF74YWZ90Qb5YKW-",
+      "status": 200,
+      "durationMs": 5425
+    },
+    {
+      "name": "consumer.ready",
+      "passed": true,
+      "requestId": "3P8aewZ3MX-h9KFeDSjW_AkC",
+      "status": 200,
+      "durationMs": 5985
+    },
+    {
+      "name": "consumer.private_unauthenticated",
+      "passed": true,
+      "status": 401,
+      "durationMs": 5004
+    },
+    {
+      "name": "consumer.rejects_bad_callback",
+      "passed": true,
+      "status": 400,
+      "durationMs": 5811
+    },
+    {
+      "name": "auth.login_theme",
+      "passed": true,
+      "status": 200,
+      "branded": true,
+      "durationMs": 6125
+    },
+    {
+      "name": "auth.registration_theme",
+      "passed": true,
+      "status": 200,
+      "branded": true,
+      "durationMs": 6343
+    },
+    {
+      "name": "auth.rejects_bad_redirect",
+      "passed": true,
+      "status": 400,
+      "branded": true,
+      "durationMs": 6621
+    }
+  ],
+  "passed": true
+}

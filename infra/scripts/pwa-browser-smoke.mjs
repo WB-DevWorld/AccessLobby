@@ -93,10 +93,69 @@ try {
   await page.getByText('Update ready').waitFor({ timeout: 15000 });
   assert.equal(await page.getByRole('button', { name: 'Update now' }).count(), 0);
   await page.goto(origin);
+
+  const peer = await context.newPage();
+  await peer.goto(`${origin}/account`);
+  await peer.getByText('Update ready', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Update now', exact: true }).click();
+  await page.getByText('Finish or close other AccessLobby windows, then try Update now again.', { exact: true }).waitFor();
+  assert(await page.evaluate(async () => Boolean((await navigator.serviceWorker.getRegistration()).waiting)));
+  await peer.getByRole('heading', { name: 'Sign in to continue', exact: true }).waitFor();
+
+  async function editFixtureForm(target) {
+    // A temporary browser-only fixture exercises the app's real global dirty-form guard.
+    await target.evaluate(() => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.setAttribute('aria-label', 'Update guard fixture');
+      form.append(input); document.body.append(form);
+    });
+    await target.getByRole('textbox', { name: 'Update guard fixture' }).fill('unfinished');
+  }
+  await peer.goto(origin);
+  await peer.getByRole('button', { name: 'Update now', exact: true }).waitFor();
+  await editFixtureForm(peer);
+  await peer.getByText('Finish this account step, then return home to update.', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Update now', exact: true }).click();
+  await page.getByText('Finish or close other AccessLobby windows, then try Update now again.', { exact: true }).waitFor();
+  assert.equal(await peer.getByRole('textbox', { name: 'Update guard fixture' }).inputValue(), 'unfinished');
+
+  await editFixtureForm(page);
+  await page.getByText('Finish this account step, then return home to update.', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Update now', exact: true }).count(), 0);
+  // Explicit user reload ends the fixture edits; an update must never do this on their behalf.
+  await page.reload(); await peer.reload();
+  await page.getByRole('button', { name: 'Update now', exact: true }).waitFor();
+  await peer.getByRole('button', { name: 'Update now', exact: true }).waitFor();
+
+  const inert = await context.newPage();
+  await inert.addInitScript(() => {
+    // Simulate a stalled window without changing service-worker network/caching behavior.
+    navigator.serviceWorker.addEventListener('message', event => {
+      if (event.data?.type === 'ACCESSLOBBY_CHECK_UPDATE_SAFETY') event.stopImmediatePropagation();
+    }, true);
+  });
+  await inert.goto(origin);
+  await inert.getByRole('button', { name: 'Update now', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Update now', exact: true }).click();
+  await page.getByText('Finish or close other AccessLobby windows, then try Update now again.', { exact: true }).waitFor();
+  assert(await page.evaluate(async () => Boolean((await navigator.serviceWorker.getRegistration()).waiting)));
+  await inert.close();
+
+  await context.addCookies([{ name: 'pwa-smoke-state', value: 'preserved', url: origin, httpOnly: true }]);
+  await page.evaluate(() => localStorage.setItem('accesslobby-theme', 'dark'));
+  await peer.evaluate(() => { window.pwaSmokeDocument = 'unchanged'; });
+  const priorPeerController = await peer.evaluateHandle(() => navigator.serviceWorker.controller);
   await page.getByRole('button', { name: 'Update now' }).click();
-  await page.waitForFunction(async () => (await caches.keys()).some(name => name.endsWith('b'.repeat(40))), null, { timeout: 15000 });
+  await peer.waitForFunction(previous => navigator.serviceWorker.controller !== previous, priorPeerController, { timeout: 15000 });
   await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
-  console.log('PWA_BROWSER_SMOKE_PASS manifest worker offline protected-route update-A-to-B');
+  await page.waitForFunction(async () => !(await navigator.serviceWorker.getRegistration()).waiting, null, { timeout: 15000 });
+  assert.equal(await peer.evaluate(() => window.pwaSmokeDocument), 'unchanged', 'other window must not reload');
+  await peer.getByText('Update ready', { exact: true }).waitFor({ state: 'hidden' });
+  assert.equal(await page.evaluate(() => localStorage.getItem('accesslobby-theme')), 'dark');
+  assert((await context.cookies()).some(cookie => cookie.name === 'pwa-smoke-state' && cookie.value === 'preserved' && cookie.httpOnly));
+  await priorPeerController.dispose();
+  console.log('PWA_BROWSER_SMOKE_PASS manifest worker offline protected-route update-A-to-B critical-peer dirty-forms unresponsive-peer retry peer-no-reload state-preserved');
 } finally {
   await browser?.close();
   await stop(server);

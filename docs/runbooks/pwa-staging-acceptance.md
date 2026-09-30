@@ -15,4 +15,13 @@ For the owner, use [the plain-language device steps](pwa-owner-check.md). The cr
 7. Recheck existing pilot sign-in, API readiness, issuer/JWKS and IAM gateway deny paths. Record errors and bounded logs. Roll back the web image digest if needed; do not restore a database to roll back a web PWA image. A worker already installed on a device may persist, so verify forward repair at the same origin before declaring rollback recovered.
 8. Repeat install, offline launch and auth/logout on Android Chrome and iOS Safari Add to Home Screen if devices are available. Otherwise record `NOT RUN` for those platforms. Record widths 360, 390, 412, 768, 1366 and 1440 CSS pixels for important tab/standalone surfaces as applicable.
 
+## Next multi-window update regression (#52)
+
+Run this only after the guard's exact qualified artifact is deployed; existing Build B has the earlier coordinator. Keep the desktop A→B results as history, not evidence for new code.
+
+1. Open installed AccessLobby at home and a second AccessLobby window at My account. Discover the waiting update in the first window. Click Update now: it must stay waiting while the other account step is open. With the new coordinator, the message tells you to finish or close other AccessLobby windows.
+2. Finish the second step and return that window home, or close it. Click Update now again in the first window. Only that first window may refresh. The second must keep its document and clear the obsolete update prompt.
+3. On a later qualified update, leave an approved disposable form unfinished in another window without submitting a security mutation. Update must wait and preserve the input. Deliberately finish/discard that draft or close its window before retrying.
+4. Record exact old/new source and web digests, worker/controller identity, browser/OS/version, UTC time, session/theme result and categorical PASS/FAIL. A legacy Build B home window uses the documented first-upgrade URL gate; current protocol-2 clients block an unresponsive or retained legacy window until refreshed deliberately or closed. Never clear browser storage to make this test pass.
+
 The app is PWA implementation-qualified only after CI; staging acceptance and device coverage must be recorded separately on issue #48. Build A→B on the real stable origin requires two qualified revisions and cannot be inferred from the CI smoke's local same-origin server restart.
