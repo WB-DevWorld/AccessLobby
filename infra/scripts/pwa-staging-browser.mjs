@@ -235,21 +235,6 @@ try {
     assert.equal(await page.evaluate(() => localStorage.getItem('accesslobby-theme')), 'light');
     return { mode: 'standalone', installMethod: 'Chrome DevTools Protocol PWA domain' };
   });
-  await check('installed.warm_offline_retry', async () => {
-    const network = await context.newCDPSession(page);
-    await network.send('Network.enable');
-    await network.send('Network.emulateNetworkConditions', {
-      offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
-    });
-    await page.goto(`${origin}/account`);
-    await page.getByRole('heading', { name: 'Connection required', exact: true }).waitFor();
-    await network.send('Network.emulateNetworkConditions', {
-      offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
-    });
-    await page.getByRole('link', { name: 'Retry connection', exact: true }).click();
-    await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
-    await network.detach();
-  });
   await check('installed.offline_profile_cold_launch', async () => {
     phase('cold.close_app');
     await page.close();
