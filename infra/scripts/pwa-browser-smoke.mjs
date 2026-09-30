@@ -84,7 +84,7 @@ try {
   await page.getByRole('heading', { name: 'Connection required' }).waitFor();
   await context.setOffline(false);
   await page.getByRole('link', { name: 'Retry connection' }).click();
-  await page.getByText('One AccessLobby identity').waitFor();
+  await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
 
   await stop(server);
   server = await start('b'.repeat(40));
@@ -95,7 +95,7 @@ try {
   await page.goto(origin);
   await page.getByRole('button', { name: 'Update now' }).click();
   await page.waitForFunction(async () => (await caches.keys()).some(name => name.endsWith('b'.repeat(40))), null, { timeout: 15000 });
-  await page.getByText('One AccessLobby identity').waitFor();
+  await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
   console.log('PWA_BROWSER_SMOKE_PASS manifest worker offline protected-route update-A-to-B');
 } finally {
   await browser?.close();
