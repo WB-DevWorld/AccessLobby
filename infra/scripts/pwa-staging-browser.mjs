@@ -21,6 +21,8 @@ const report = {
 let context;
 let browserCdp;
 let installed = false;
+let diagnosticPage;
+const phase = name => { report.phase = name; console.log(`PHASE ${name}`); };
 const launch = async () => {
   context = await chromium.launchPersistentContext(profile, {
     channel: 'chromium', headless: false, serviceWorkers: 'allow',
@@ -42,7 +44,15 @@ async function check(name, action) {
   } catch (error) {
     // Do not emit exception text, HTTP bodies, URLs with OIDC parameters or browser storage values.
     report.checks.push({ name, status: 'FAIL', durationMs: Date.now() - started,
-      errorType: error.constructor.name });
+      errorType: error.constructor.name, phase: report.phase,
+      sourceLine: error.stack?.match(/pwa-staging-browser\.mjs:(\d+):\d+/)?.[1] });
+    if (diagnosticPage && !diagnosticPage.isClosed()) {
+      await diagnosticPage.screenshot({ path: resolve(artifactDir, 'failure.png') }).catch(() => {});
+      report.failurePage = await diagnosticPage.evaluate(() => ({
+        origin: location.origin, path: location.pathname, onlineHint: navigator.onLine,
+        controlled: Boolean(navigator.serviceWorker?.controller),
+      })).catch(() => ({ observation: 'unavailable' }));
+    }
     console.log(`${name}: FAIL (${error.constructor.name})`);
     throw error;
   }
@@ -93,8 +103,10 @@ async function viewports(page, surface, heading) {
 }
 
 async function appPage() {
+  phase('app.request_launch');
   const newPage = context.waitForEvent('page', { timeout: 30000 }).catch(() => null);
   const target = await browserCdp.send('PWA.launch', { manifestId: `${origin}/` });
+  phase('app.launch_returned');
   const launchedWindow = await browserCdp.send('Browser.getWindowForTarget', { targetId: target.targetId });
   // Chrome can expose distinct tab and page targets for the same app window.
   // Match the real window, rather than assuming the two opaque target IDs are equal.
@@ -110,16 +122,20 @@ async function appPage() {
   };
   const page = await findPage(context.pages()) ?? await findPage([await newPage]);
   assert(page, 'Launched PWA window must have an attached page');
+  diagnosticPage = page;
+  phase('app.page_attached');
   await page.waitForURL(`${origin}/`, { waitUntil: 'domcontentloaded' });
   report.appLaunch = { windowMatches: true,
     standalone: await page.evaluate(() => matchMedia('(display-mode: standalone)').matches) };
   await page.waitForFunction(() => matchMedia('(display-mode: standalone)').matches, null, { timeout: 15000 });
+  phase('app.standalone_ready');
   return page;
 }
 
 try {
   await launch();
   let page = context.pages()[0] ?? await context.newPage();
+  diagnosticPage = page;
   const network = await context.newCDPSession(page);
   await network.send('Network.enable');
   // One measured constrained-network first load, followed by a repeat using the warmed worker.
@@ -219,15 +235,19 @@ try {
     return { mode: 'standalone', installMethod: 'Chrome DevTools Protocol PWA domain' };
   });
   await check('installed.offline_profile_cold_launch', async () => {
+    phase('cold.close_app');
     await page.close();
     // Prevent Chrome's session restoration from visiting the origin online before this test.
     for (const remaining of context.pages()) await remaining.goto('about:blank');
     await context.close();
+    phase('cold.start_browser');
     await launch();
     assert.equal(context.pages().some(page => page.url().startsWith(origin)), false,
       'Cold launch must not warm AccessLobby online before going offline');
     await context.setOffline(true);
+    phase('cold.offline_enabled');
     page = await appPage();
+    phase('cold.wait_offline_shell');
     await page.getByRole('heading', { name: 'Connection required', exact: true }).waitFor();
     await metrics(page, 'installed-profile-offline-cold-launch');
     await viewports(page, 'installed-offline', 'Connection required');
@@ -255,6 +275,6 @@ try {
   await rm(profile, { recursive: true, force: true });
   await writeFile(resolve(artifactDir, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ metrics: report.metrics, viewports: report.viewports.length,
-    appLaunch: report.appLaunch }));
+    appLaunch: report.appLaunch, phase: report.phase, failurePage: report.failurePage }));
   console.log(`PWA_STAGING_BROWSER_${report.status} deployed=${sha} browser=${report.browser ?? 'unavailable'}`);
 }
