@@ -1,0 +1,50 @@
+name: PWA staging browser qualification
+on:
+  pull_request:
+    paths:
+      - .github/workflows/pwa-staging-browser.yml
+      - infra/scripts/pwa-staging-browser.mjs
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/pwa-staging-browser.yml
+      - infra/scripts/pwa-staging-browser.mjs
+  workflow_dispatch:
+    inputs:
+      expected_web_sha:
+        description: Full source SHA of the web image currently deployed to staging
+        required: true
+        default: 4830d1b030237a77684e976c65311bac8ffe29c3
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: public-pwa-staging-browser
+  cancel-in-progress: false
+jobs:
+  public-pwa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPECTED_WEB_SHA: ${{ inputs.expected_web_sha || '4830d1b030237a77684e976c65311bac8ffe29c3' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install locked browser-test dependencies
+        run: |
+          npm install -g pnpm@11.19.0
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Test the deployed PWA in a disposable Chromium desktop profile
+        env:
+          PWA_REPORT_DIR: ${{ runner.temp }}/accesslobby-pwa-browser
+        run: xvfb-run -a node infra/scripts/pwa-staging-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-pwa-staging-browser
+          path: ${{ runner.temp }}/accesslobby-pwa-browser
+          if-no-files-found: warn
+          retention-days: 7

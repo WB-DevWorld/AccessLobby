@@ -1,0 +1,307 @@
+{
+  "checkedAt": "2026-09-30T19:31:31.419Z",
+  "origin": "https://accesslobby.realjanelove.com",
+  "expectedWebSha": "4830d1b030237a77684e976c65311bac8ffe29c3",
+  "runner": "linux",
+  "checks": [
+    {
+      "name": "public.first_load",
+      "status": "PASS",
+      "durationMs": 3158
+    },
+    {
+      "name": "worker.control_and_release",
+      "status": "PASS",
+      "durationMs": 922,
+      "scope": "https://accesslobby.realjanelove.com/",
+      "controller": "https://accesslobby.realjanelove.com/sw.js",
+      "updateViaCache": "none"
+    },
+    {
+      "name": "public.repeat_load",
+      "status": "PASS",
+      "durationMs": 245,
+      "cacheNames": [
+        "accesslobby-static-4830d1b030237a77684e976c65311bac8ffe29c3"
+      ],
+      "paths": [
+        "/offline.html",
+        "/icons/icon-192.png",
+        "/icons/icon-512.png",
+        "/_next/static/chunks/3mojaqgu892gk.css",
+        "/_next/static/chunks/3443m0b387pjp.js",
+        "/_next/static/chunks/1tgstn9rjsff0.js",
+        "/_next/static/chunks/turbopack-1o_wzr2bbk2cn.js",
+        "/_next/static/chunks/3n870rfyq8jup.js",
+        "/_next/static/chunks/3vm3bb_dtd4n9.js",
+        "/_next/static/chunks/3f_f9lukie6qy.js",
+        "/_next/static/chunks/2x7p_k5dwdsvc.js"
+      ]
+    },
+    {
+      "name": "chromium.manifest_and_installability",
+      "status": "PASS",
+      "durationMs": 238,
+      "manifestUrl": "https://accesslobby.realjanelove.com/manifest.webmanifest",
+      "installabilityErrors": []
+    },
+    {
+      "name": "tab.responsive_public_shell",
+      "status": "PASS",
+      "durationMs": 830
+    },
+    {
+      "name": "tab.protected_pages_network_only",
+      "status": "PASS",
+      "durationMs": 1082,
+      "cacheNames": [
+        "accesslobby-static-4830d1b030237a77684e976c65311bac8ffe29c3"
+      ],
+      "paths": [
+        "/offline.html",
+        "/icons/icon-192.png",
+        "/icons/icon-512.png",
+        "/_next/static/chunks/3mojaqgu892gk.css",
+        "/_next/static/chunks/3443m0b387pjp.js",
+        "/_next/static/chunks/1tgstn9rjsff0.js",
+        "/_next/static/chunks/turbopack-1o_wzr2bbk2cn.js",
+        "/_next/static/chunks/3n870rfyq8jup.js",
+        "/_next/static/chunks/3vm3bb_dtd4n9.js",
+        "/_next/static/chunks/3f_f9lukie6qy.js",
+        "/_next/static/chunks/2x7p_k5dwdsvc.js",
+        "/_next/static/chunks/30c4rl2q_9lw6.js"
+      ]
+    },
+    {
+      "name": "tab.offline_protected_and_auth_shell",
+      "status": "PASS",
+      "durationMs": 747,
+      "cacheNames": [
+        "accesslobby-static-4830d1b030237a77684e976c65311bac8ffe29c3"
+      ],
+      "paths": [
+        "/offline.html",
+        "/icons/icon-192.png",
+        "/icons/icon-512.png",
+        "/_next/static/chunks/3mojaqgu892gk.css",
+        "/_next/static/chunks/3443m0b387pjp.js",
+        "/_next/static/chunks/1tgstn9rjsff0.js",
+        "/_next/static/chunks/turbopack-1o_wzr2bbk2cn.js",
+        "/_next/static/chunks/3n870rfyq8jup.js",
+        "/_next/static/chunks/3vm3bb_dtd4n9.js",
+        "/_next/static/chunks/3f_f9lukie6qy.js",
+        "/_next/static/chunks/2x7p_k5dwdsvc.js",
+        "/_next/static/chunks/30c4rl2q_9lw6.js"
+      ]
+    },
+    {
+      "name": "tab.reconnect",
+      "status": "PASS",
+      "durationMs": 213
+    },
+    {
+      "name": "chromium.install_and_standalone_launch",
+      "status": "PASS",
+      "durationMs": 2163,
+      "mode": "standalone",
+      "installMethod": "Chrome DevTools Protocol PWA domain"
+    },
+    {
+      "name": "installed.offline_profile_cold_launch",
+      "status": "PASS",
+      "durationMs": 1180,
+      "cacheNames": [
+        "accesslobby-static-4830d1b030237a77684e976c65311bac8ffe29c3"
+      ],
+      "paths": [
+        "/offline.html",
+        "/icons/icon-192.png",
+        "/icons/icon-512.png",
+        "/_next/static/chunks/3mojaqgu892gk.css",
+        "/_next/static/chunks/3443m0b387pjp.js",
+        "/_next/static/chunks/1tgstn9rjsff0.js",
+        "/_next/static/chunks/turbopack-1o_wzr2bbk2cn.js",
+        "/_next/static/chunks/3n870rfyq8jup.js",
+        "/_next/static/chunks/3vm3bb_dtd4n9.js",
+        "/_next/static/chunks/3f_f9lukie6qy.js",
+        "/_next/static/chunks/2x7p_k5dwdsvc.js",
+        "/_next/static/chunks/30c4rl2q_9lw6.js"
+      ]
+    },
+    {
+      "name": "installed.transport_recovery_and_preference",
+      "status": "PASS",
+      "durationMs": 1155
+    }
+  ],
+  "metrics": [
+    {
+      "name": "first-load-150ms-64KiBps",
+      "responseEndMs": 617,
+      "domContentLoadedMs": 1461,
+      "transferBytes": 153824,
+      "resourceCount": 9
+    },
+    {
+      "name": "repeat-load-150ms-64KiBps",
+      "responseEndMs": 135,
+      "domContentLoadedMs": 168,
+      "transferBytes": 16214,
+      "resourceCount": 8
+    },
+    {
+      "name": "installed-profile-offline-cold-launch",
+      "responseEndMs": 61,
+      "domContentLoadedMs": 84,
+      "transferBytes": 0,
+      "resourceCount": 2
+    }
+  ],
+  "viewports": [
+    {
+      "surface": "tab-home",
+      "width": 360,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-home",
+      "width": 390,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-home",
+      "width": 412,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-home",
+      "width": 768,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-home",
+      "width": 1366,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-home",
+      "width": 1440,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-offline",
+      "width": 360,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-offline",
+      "width": 390,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-offline",
+      "width": 412,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-offline",
+      "width": 768,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-offline",
+      "width": 1366,
+      "status": "PASS"
+    },
+    {
+      "surface": "tab-offline",
+      "width": 1440,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-home",
+      "width": 360,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-home",
+      "width": 390,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-home",
+      "width": 412,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-home",
+      "width": 768,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-home",
+      "width": 1366,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-home",
+      "width": 1440,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-offline",
+      "width": 360,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-offline",
+      "width": 390,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-offline",
+      "width": 412,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-offline",
+      "width": 768,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-offline",
+      "width": 1366,
+      "status": "PASS"
+    },
+    {
+      "surface": "installed-offline",
+      "width": 1440,
+      "status": "PASS"
+    }
+  ],
+  "notProven": [
+    "running-image-digest",
+    "installed-authenticated-login",
+    "installed-logout",
+    "real-release-update-A-to-B",
+    "physical-desktop",
+    "android",
+    "ios"
+  ],
+  "browser": "153.0.8010.12",
+  "phase": "app.standalone_ready",
+  "appLaunch": {
+    "windowMatches": true,
+    "standalone": true
+  },
+  "coldLaunchTransport": {
+    "fault": "DNS unavailable before browser start",
+    "failed": true,
+    "onlineHint": true
+  },
+  "status": "PASS",
+  "testerRevision": "78473cf9e18cfba6c59b1a8be8c7d2cadb7a51f3",
+  "workflowRun": "https://github.com/WB-DevWorld/AccessLobby/actions/runs/36766195669",
+  "artifactId": 11120886725,
+  "actualRunningWebDigestStatus": "NOT RUN"
+}
