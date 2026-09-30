@@ -1,8 +1,10 @@
 # PWA staging rollout — exact published candidate
 
-Relates to [#48](https://github.com/WB-DevWorld/AccessLobby/issues/48). PWA source [4830d1b030237a77684e976c65311bac8ffe29c3](https://github.com/WB-DevWorld/AccessLobby/commit/4830d1b030237a77684e976c65311bac8ffe29c3) is merged through [PR #49](https://github.com/WB-DevWorld/AccessLobby/pull/49). The [release manifest](../../infra/releases/staging-2026-09-30-pwa.json) records the five published digests. Publication is PASS; staging deployment is BLOCKED pending protected operator access.
+Relates to [#48](https://github.com/WB-DevWorld/AccessLobby/issues/48). PWA source [4830d1b030237a77684e976c65311bac8ffe29c3](https://github.com/WB-DevWorld/AccessLobby/commit/4830d1b030237a77684e976c65311bac8ffe29c3) is merged through [PR #49](https://github.com/WB-DevWorld/AccessLobby/pull/49). The [release manifest](../../infra/releases/staging-2026-09-30-pwa.json) records the five published digests. Publication and deployed public PWA delivery are PASS. Running image digest verification and full installed acceptance remain open; the earlier pre-deployment checkpoint is preserved below.
 
-## Evidence and current baseline
+**Later evidence, 18:01 UTC:** the owner deployed Build A; public preflight **23/23 PASS** and PWA HTTP gate **11/11 PASS**. The table below preserves the earlier pre-deployment checkpoint. Current browser observations and remaining gates are in [the September 30 staging record](../qa/pwa-2026-09-30/README.md). For the owner, use [the plain-language steps](pwa-owner-check.md).
+
+## Earlier evidence and baseline
 
 | Gate | Status | Exact evidence |
 | --- | --- | --- |
@@ -51,6 +53,7 @@ Compare the web image reference to the exact digest above; also record its local
 Run from the checkout of the follow-up qualification PR or its merged revision. Its source SHA is a tooling revision; retain the PWA artifact source SHA above until a different published artifact is deliberately selected.
 
 ```bash
+cd /etc/dokploy/compose/accesslobby-accesslobbystaging-beass9/code
 python3 infra/scripts/staging_preflight.py \
   --web-origin https://accesslobby.realjanelove.com \
   --api-origin https://api.accesslobby.realjanelove.com \

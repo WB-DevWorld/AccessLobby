@@ -1,5 +1,11 @@
 # Execution ledger — MVP-0
 
+## PWA Build A deployed and direct browser acceptance — 2026-09-30 UTC
+
+The owner deployed `4830d1b030237a77684e976c65311bac8ffe29c3`. Public preflight at 18:01:29 UTC PASS 23/23, exact API live/ready SHA; PWA HTTP gate PASS 11/11. Supplied container inventory shows main services running, both databases healthy and migrate/iam-config exited 0. Running web digest remains NOT RUN because the inventory prints a repository name. Independent HTTP pass covered eight checks plus one bounded retry of three slow endpoints; exact worker SHA/headers confirmed. Cloud Chrome tab PASS: sign-in/IAM/callback/live account, both logout scopes, signed-out Back/reopening, registration entry and malformed callback. No credential values or private account fields are recorded. See [the staging record](docs/qa/pwa-2026-09-30/README.md).
+
+This branch automates public stable-origin Chromium worker/cache/offline/install/viewport/performance qualification in a disposable profile and adds [plain-language owner steps](docs/runbooks/pwa-owner-check.md). Installed authenticated login/logout, second-person and organization switching, real release A→B, protected image inventory and physical/mobile acceptance remain NOT RUN or BLOCKED where access is needed. Issue #48 stays open. This tooling branch does not deploy images or change IAM/identity/consumer state.
+
 ## PWA post-merge publication and staging qualification handoff — 2026-09-30 UTC
 
 PR [#49](https://github.com/WB-DevWorld/AccessLobby/pull/49) merged as `4830d1b030237a77684e976c65311bac8ffe29c3`. Main [CI 36734724414](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36734724414), [theme 36734724548](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36734724548), [application publisher 36735128387](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36735128387) and [IAM publisher 36735696785](https://github.com/WB-DevWorld/AccessLobby/actions/runs/36735696785) PASS for that exact source. The production Chromium smoke step passed. The five published digest references are pinned in [the release manifest](infra/releases/staging-2026-09-30-pwa.json); [the rollout handoff](docs/runbooks/pwa-staging-handoff-2026-09-30.md) keeps main images and the shared API/web `GIT_SHA` consistent while preserving the separate pilot consumer.
