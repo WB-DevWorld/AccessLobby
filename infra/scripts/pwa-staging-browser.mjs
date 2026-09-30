@@ -95,13 +95,22 @@ async function viewports(page, surface, heading) {
 async function appPage() {
   const newPage = context.waitForEvent('page', { timeout: 30000 });
   const target = await browserCdp.send('PWA.launch', { manifestId: `${origin}/` });
-  const page = await newPage;
-  const cdp = await context.newCDPSession(page);
-  const { targetInfo } = await cdp.send('Target.getTargetInfo');
+  const createdPage = await newPage;
+  const launchedWindow = await browserCdp.send('Browser.getWindowForTarget', { targetId: target.targetId });
+  let page;
+  // Chrome can expose distinct tab and page targets for the same app window.
+  // Match the real window, rather than assuming the two opaque target IDs are equal.
+  for (const candidate of new Set([createdPage, ...context.pages()])) {
+    const cdp = await context.newCDPSession(candidate);
+    const { targetInfo } = await cdp.send('Target.getTargetInfo');
+    const candidateWindow = await browserCdp.send('Browser.getWindowForTarget', { targetId: targetInfo.targetId });
+    await cdp.detach();
+    if (candidateWindow.windowId === launchedWindow.windowId) { page = candidate; break; }
+  }
+  assert(page, 'Launched PWA window must have an attached page');
   await page.waitForURL(`${origin}/`, { waitUntil: 'domcontentloaded' });
-  report.appLaunch = { targetMatches: targetInfo.targetId === target.targetId,
+  report.appLaunch = { windowMatches: true,
     standalone: await page.evaluate(() => matchMedia('(display-mode: standalone)').matches) };
-  assert.equal(targetInfo.targetId, target.targetId);
   await page.waitForFunction(() => matchMedia('(display-mode: standalone)').matches, null, { timeout: 15000 });
   return page;
 }
