@@ -26,6 +26,15 @@ on:
         required: true
         default: false
         type: boolean
+      check_pwa:
+        description: Check deployed PWA assets, exact web worker SHA and private cache headers
+        required: true
+        default: false
+        type: boolean
+      expected_web_sha:
+        description: Full deployed web source SHA (required when check_pwa is true)
+        required: false
+        type: string
 permissions:
   contents: read
 jobs:
@@ -56,10 +65,19 @@ jobs:
           if [ "$CHECK_AUTH_PAGES" = true ]; then args+=(--check-auth-pages); fi
           if [ "$CHECK_CONSUMER_HEALTH" = true ]; then args+=(--check-consumer-health); fi
           python3 infra/scripts/staging_preflight.py "${args[@]}"
+      - name: Check public PWA HTTP boundary
+        if: ${{ always() && inputs.check_pwa }}
+        env:
+          EXPECTED_WEB_SHA: ${{ inputs.expected_web_sha }}
+        run: |
+          python3 infra/scripts/pwa_staging_preflight.py \
+            --web-origin https://accesslobby.realjanelove.com \
+            --expected-web-sha "$EXPECTED_WEB_SHA" \
+            --output "$RUNNER_TEMP/accesslobby-staging-preflight/pwa-report.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: accesslobby-staging-preflight
-          path: ${{ runner.temp }}/accesslobby-staging-preflight/report.json
+          path: ${{ runner.temp }}/accesslobby-staging-preflight/*.json
           if-no-files-found: warn
           retention-days: 7
