@@ -2,6 +2,8 @@
 
 **Owner decision, 2026-09-30:** AccessLobby is an installable Progressive Web App. Its web-origin worker improves delivery and recovery while the server, API and IAM remain authoritative for every identity and access decision. This standard is current; installed staging acceptance is tracked separately in issue #48.
 
+The [September 30 desktop A→B record](../qa/pwa-2026-09-30/build-b-acceptance.md) records the first physical Windows installed lifecycle, exact running web digests, retained session/preference and truthful offline/reconnect results. [Issue #52](https://github.com/WB-DevWorld/AccessLobby/issues/52) retains mobile and additional installed edge cases as NOT RUN. Desktop evidence must never be presented as Android/iOS qualification, production acceptance or direct inspection of the physical controller's build ID.
+
 ## Focused source transfer
 
 The focused reconciliation covered 25 distinct current/historical inputs before implementation: POS `AGENTS.md`, `CURRENT-WORK.md`, standards `PWA.md`, `OFFLINE-SYNC.md`, `TESTING.md`, `RELEASE.md`, ADR-005; POS PRs #63, #91, #100, #121 and issues #28, #89, #114; seven named Immediate PWA POS / POS PWA Work History sources in the AccessLobby source pack; transfer-kit engineering standards and decision log; AccessLobby integration contract, web layout, auth routes, cookie and context code, current CI/Compose/Dockerfiles; current Next.js and MDN PWA/service-worker documentation. These are distinct source checks, not 25 tests or proof of installed behavior.

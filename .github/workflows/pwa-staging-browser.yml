@@ -14,7 +14,7 @@ on:
       expected_web_sha:
         description: Full source SHA of the web image currently deployed to staging
         required: true
-        default: 4830d1b030237a77684e976c65311bac8ffe29c3
+        default: 91e1a66167aa4a74dea44062e41849f8e8efb02c
         type: string
 permissions:
   contents: read
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      EXPECTED_WEB_SHA: ${{ inputs.expected_web_sha || '4830d1b030237a77684e976c65311bac8ffe29c3' }}
+      EXPECTED_WEB_SHA: ${{ inputs.expected_web_sha || '91e1a66167aa4a74dea44062e41849f8e8efb02c' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

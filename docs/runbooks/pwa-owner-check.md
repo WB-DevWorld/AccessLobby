@@ -1,5 +1,7 @@
 # AccessLobby app checks — plain instructions
 
+**September 30 desktop result:** the owner completed these checks on Windows: installation, sign-in, both sign-out choices, offline reopening, Retry after reconnect and a real next-version update. They passed. The update kept the signed-in session and Dark theme. [The exact release/evidence record](../qa/pwa-2026-09-30/build-b-acceptance.md) distinguishes this desktop result from Android/iPhone and additional checks still NOT RUN under [#52](https://github.com/WB-DevWorld/AccessLobby/issues/52). Keep the steps below for those devices and future regressions; no extra deployment is required just because the evidence documents merge.
+
 The public server checks are done. The owner deployed the first PWA version and reported **23/23 public checks** and **11/11 PWA file checks** passing on September 30. The first “file not found” error came from running the commands one folder too high; moving into `code` fixed it.
 
 The **PWA staging browser qualification** GitHub workflow checks the background worker, cache, offline pages, installation in a temporary Linux Chromium profile and screen widths without account credentials. Sign-in in an installed window and the next-version update still need a device and a protected deployment.

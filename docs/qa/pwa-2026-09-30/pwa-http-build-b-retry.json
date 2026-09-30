@@ -1,0 +1,23 @@
+{
+  "evidenceScope": "targeted-public-http-retry",
+  "timeoutSeconds": 25,
+  "originalReport": "accesslobby-build-b-pwa-http.json",
+  "checks": [
+    {
+      "name": "pwa.manifest",
+      "checkedAt": "2026-09-30T21:26:02.606884+00:00",
+      "passed": true,
+      "status": 200,
+      "bytes": 450,
+      "durationMs": 5650
+    },
+    {
+      "name": "pwa.offline_shell",
+      "checkedAt": "2026-09-30T21:26:02.607744+00:00",
+      "passed": true,
+      "status": 200,
+      "bytes": 2088,
+      "durationMs": 5675
+    }
+  ]
+}
