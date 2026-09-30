@@ -2,6 +2,8 @@
 
 The stable AccessLobby staging web origin is `https://accesslobby.realjanelove.com`. Use only approved staging accounts. The running API/IAM/consumer and #44 app-onboarding gates remain separate. Do not change production or the existing pilot consumer to qualify this PWA.
 
+Start with [the exact published rollout handoff](pwa-staging-handoff-2026-09-30.md) and record results in [the installed evidence template](pwa-staging-evidence-template.md). The public PWA HTTP script verifies delivery and headers only; it does not replace the installed steps below.
+
 1. Record UTC time, source SHA, actual web image digest, `/health/live` API SHA, `/sw.js` `BUILD_ID`, manifest response and target browser/device. Confirm the web runtime `GIT_SHA` is the exact image source revision. Preserve the qualified previous web image digest for rollback.
 2. Deploy qualified PWA Build A at the stable origin through the normal protected Dokploy web image update. Confirm `/manifest.webmanifest`, 192/512 icons, `/offline.html` and `/sw.js` respond; worker headers are JavaScript and `no-store`; `/account` and other protected pages have `private, no-store`.
 3. In Chromium, install AccessLobby from the browser, open it standalone and check name/icon. In developer tools, verify the root-scoped service worker controls the web origin and Cache Storage contains only neutral shell/icons and hashed static assets.
