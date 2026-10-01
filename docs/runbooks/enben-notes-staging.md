@@ -38,6 +38,14 @@ AccessLobby shows a unique DNS TXT record. Copy the **name and value shown there
 
 An independent reviewer must approve this exact app as first party, its entry policy and all three URLs. Record the review reference. The protected operator then follows steps 1–4 of the [app onboarding acceptance runbook](app-onboarding-staging-acceptance.md): verify the database recovery baseline and current schema, run the plan, compare it with this request, activate, and read back the exact IAM client. Keep the scoped operator credential and review details private. Do not add this new client to an environment allowlist as a shortcut. DNS proof alone is insufficient for activation.
 
+### Copy-and-paste protected runner
+
+After the actual review and isolated restore pass, run `infra/scripts/activate-enben-staging.py` from the root VPS terminal with `--activate`, `--review-reference <actual-recorded-reference>` and `--backup <private-restored-backup-file>`. Keep `private-client-token.mjs` beside the Python script. Use files from the exact qualified source, not changing `main` downloads. The command is restricted to the known staging project and Enben request; it checks the current private backup, API baseline, entry policy, exact URLs and plan before using any IAM credential. It does not manufacture an independent review or reclassify an unrelated publisher.
+
+The root process reads only the two existing operator credential variables inside the IAM container and passes them privately to a separate short-lived process inside the API container. It never sets them on the public API service, prints them, stores them, edits Compose or opens an IAM port. If that existing account is unavailable or retired, it stops; do not paste a password or token into chat. The bootstrap token creates one temporary service account limited to client creation, query and read, with full scope disabled and a 90-second non-refreshing token. Only the scoped token reaches the normal provisioner. The provisioner rechecks live TXT proof and exact IAM readback before committing the active registry row. The temporary client is removed even after ordinary failures, and the separate bootstrap session is logged out. A cleanup failure needs protected investigation; it is not a successful operator pass. The command does not restart or replace an existing service. It stops on an already-active request rather than granting again.
+
+An identity backup on the VPS plus an isolated restore is a local recovery checkpoint. It does not establish off-host storage, full IAM/control-plane restore, retention or production recovery. Record those operational gates separately.
+
 ## 4. Test the app with two accounts
 
 1. Open Enben in one browser. Sign in as test account A. After the callback, choose **Create my account for this app** if shown. This creates an Enben account, not another AccessLobby identity.
