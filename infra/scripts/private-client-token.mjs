@@ -1,8 +1,10 @@
-/** Private operator process only: temporary client-create/read credential, never a public route. */
+/** Private operator process only: temporary realm client-management credential, never a public route. */
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 
-export const operatorRoles = ['create-client', 'query-clients', 'view-clients'];
+// The Admin REST create endpoint requires manage-clients; create-client alone is insufficient.
+// This is realm-wide client management, not an IAM-enforced one-client permission.
+export const operatorRoles = ['manage-clients', 'query-clients', 'view-clients'];
 
 export async function withScopedClientToken({ base, issuer, adminToken, fetcher = fetch, verifyToken }, useToken) {
   const url = new URL(base);

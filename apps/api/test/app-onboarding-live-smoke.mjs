@@ -147,7 +147,7 @@ try {
   });
   const leftover = await (await admin('/clients')).json();
   assert.equal(leftover.some(client => client.clientId.startsWith('accesslobby-private-provision-')), false);
-  console.info('SCOPED_CLIENT_PROVISIONER_PASS create-read-only no-human-access temporary-client-cleanup');
+  console.info('SCOPED_CLIENT_PROVISIONER_PASS client-management-scope no-human-access temporary-client-cleanup');
 
   for (let index = 0; index < 2; index++) {
     const username = `ci-onboarding-${randomUUID()}`;
