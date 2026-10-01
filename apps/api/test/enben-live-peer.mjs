@@ -29,6 +29,22 @@ export async function qualifyEnbenPeer({ browser, issuer, apiOrigin, application
         const response = await route.fetch({ url: `${transport}${url.pathname}${url.search}`, maxRedirects: 0 });
         await route.fulfill({ response });
       });
+      await context.route(url => url.origin === new URL(issuer).origin, async route => {
+        const response = await route.fetch({ maxRedirects: 0 });
+        const location = response.headers().location;
+        if ([302, 303].includes(response.status()) && location) {
+          const next = new URL(location, issuer);
+          assert.ok([origin, new URL(issuer).origin].includes(next.origin), 'IAM redirect must remain inside the exact approved origins');
+          // Playwright does not route later requests in a network redirect
+          // chain. Start a document navigation so the fixture peer is routed.
+          const destination = next.href.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[c]);
+          const headers = { ...response.headers(), 'content-type': 'text/html' };
+          for (const field of ['location', 'content-length', 'content-encoding']) delete headers[field];
+          return route.fulfill({ status: 200, headers,
+            body: `<meta http-equiv="refresh" content="0;url=${destination}">` });
+        }
+        await route.fulfill({ response });
+      });
       const page = await context.newPage();
       await page.goto(origin);
       await page.getByRole('link', { name: 'Sign in with AccessLobby' }).click();
@@ -36,7 +52,7 @@ export async function qualifyEnbenPeer({ browser, issuer, apiOrigin, application
       await page.locator('input[name="password"]').fill(password);
       await page.locator('#kc-login').click();
       await page.getByRole('button', { name: 'Create my account for this app' }).click();
-      await page.getByRole('heading', { name: 'Your notes', exact: true }).waitFor();
+      await page.getByRole('heading', { name: 'Your notes', exact: true, level: 1 }).waitFor();
     }
     const a = contexts[0].pages()[0], b = contexts[1].pages()[0];
     await a.getByLabel('Title', { exact: true }).fill('Real IAM private note');
@@ -54,7 +70,7 @@ export async function qualifyEnbenPeer({ browser, issuer, apiOrigin, application
     assert.equal((await a.goto(`${origin}${notePath}`)).status(), 401);
     await a.goto(origin);
     await a.getByRole('link', { name: 'Sign in with AccessLobby' }).click(); // Existing IAM session remains; no password prompt.
-    await a.getByRole('heading', { name: 'Your notes', exact: true }).waitFor();
+    await a.getByRole('heading', { name: 'Your notes', exact: true, level: 1 }).waitFor();
     await a.goto(`${origin}${notePath}`);
     assert.equal(await a.getByLabel('Note', { exact: true }).inputValue(), 'Edited through the real authenticated peer.');
     await a.getByRole('button', { name: 'Delete note' }).click();

@@ -14,7 +14,7 @@ try {
     await page.goto(fixture.origin);
     await page.getByRole('link', { name: 'Sign in with AccessLobby' }).click();
     await page.getByRole('button', { name: 'Create my account for this app' }).click();
-    await page.getByRole('heading', { name: 'Your notes', exact: true }).waitFor();
+    await page.getByRole('heading', { name: 'Your notes', exact: true, level: 1 }).waitFor();
   };
   await signIn(a, 'alice'); await signIn(b, 'bob');
   await a.getByLabel('Title', { exact: true }).fill('Alice private note');
