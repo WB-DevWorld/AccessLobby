@@ -12,82 +12,98 @@ export async function qualifyEnbenPeer({ browser, issuer, apiOrigin, application
       APP_ENTRY_REQUIRED: 'true', PUBLIC_REGISTRATION_ENABLED: 'false' }, stdio: 'ignore' });
   const exited = once(child, 'exit');
   const contexts = [];
+  const get = (path, cookie = '') => fetch(`${transport}${path}`, { headers: { cookie }, redirect: 'manual' });
+  const post = (path, cookie, fields) => fetch(`${transport}${path}`, { method: 'POST', redirect: 'manual',
+    headers: { cookie, origin, 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(fields) });
+  const opaqueCookie = (response, name) => {
+    const value = response.headers.getSetCookie().find(value => value.startsWith(`${name}=`));
+    assert.ok(value, 'Peer must issue the expected opaque cookie');
+    assert.match(value, /; HttpOnly; SameSite=Lax;/); assert.match(value, /; Secure$/);
+    assert.doesNotMatch(value, /; Domain=/);
+    return value.split(';')[0];
+  };
   try {
     let ready = false;
     for (let i = 0; i < 40; i++) {
-      try { ready = (await fetch(`${transport}/health/ready`)).ok; if (ready) break; } catch {}
+      try { ready = (await get('/health/ready')).ok; if (ready) break; } catch {}
       assert.equal(child.exitCode, null, 'Disposable notes peer must stay running');
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     assert.ok(ready);
     for (const user of users) {
-      const context = await browser.newContext(); contexts.push(context);
-      // Exact HTTPS peer hostname is a routing fixture. Authentication, browser
-      // cookies, peer callback/token validation and the registry API are real.
-      await context.route(`${origin}/**`, async route => {
-        const url = new URL(route.request().url());
-        const response = await route.fetch({ url: `${transport}${url.pathname}${url.search}`, maxRedirects: 0 });
-        await route.fulfill({ response });
-      });
-      await context.route(url => url.origin === new URL(issuer).origin, async route => {
-        const response = await route.fetch({ maxRedirects: 0 });
+      const context = await browser.newContext(); contexts.push({ context });
+      let destination;
+      // The real IAM redirect is captured before following the fixture HTTPS
+      // hostname. The actual peer consumes its code/state via loopback HTTP;
+      // this does not qualify deployed HTTPS browser cookie transport.
+      await context.route(url => url.origin === new URL(issuer).origin &&
+        (url.pathname.endsWith('/auth') || url.pathname.endsWith('/login-actions/authenticate') ||
+         url.pathname.endsWith('/logout')), async route => {
+        const response = await route.fetch({ maxRedirects: 0, timeout: 8000 });
         const location = response.headers().location;
-        if ([302, 303].includes(response.status()) && location) {
+        if (location) {
           const next = new URL(location, issuer);
-          assert.ok([origin, new URL(issuer).origin].includes(next.origin), 'IAM redirect must remain inside the exact approved origins');
-          // Playwright does not route later requests in a network redirect
-          // chain. Start a document navigation so the fixture peer is routed.
-          const destination = next.href.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[c]);
-          const headers = { ...response.headers(), 'content-type': 'text/html' };
-          for (const field of ['location', 'content-length', 'content-encoding']) delete headers[field];
-          return route.fulfill({ status: 200, headers,
-            body: `<meta http-equiv="refresh" content="0;url=${destination}">` });
+          if (next.origin === origin && ['/callback', '/'].includes(next.pathname)) {
+            assert.ok([302, 303].includes(response.status())); destination = next;
+            return route.fulfill({ status: 200, contentType: 'text/html', body: '<p>CI peer redirect captured</p>' });
+          }
         }
         await route.fulfill({ response });
       });
       const page = await context.newPage();
-      await page.goto(origin);
-      await page.getByRole('link', { name: 'Sign in with AccessLobby' }).click();
-      await page.locator('input[name="username"]').fill(user.username);
-      await page.locator('input[name="password"]').fill(password);
-      await page.locator('#kc-login').click();
-      await page.getByRole('button', { name: 'Create my account for this app' }).click();
-      await page.getByRole('heading', { name: 'Your notes', exact: true, level: 1 }).waitFor();
+      const signIn = async (sso = false) => {
+        destination = undefined;
+        const start = await get('/login'); assert.equal(start.status, 303);
+        const authorization = new URL(start.headers.get('location'));
+        assert.equal(authorization.searchParams.get('redirect_uri'), application.redirectUri);
+        const flow = opaqueCookie(start, '__Host-ref-flow');
+        await page.goto(authorization.href);
+        if (!sso) {
+          await page.locator('input[name="username"]').fill(user.username);
+          await page.locator('input[name="password"]').fill(password);
+          await page.locator('#kc-login').click();
+        }
+        assert.ok(destination && destination.pathname === '/callback', 'Real IAM callback required');
+        assert.equal(destination.searchParams.get('state'), authorization.searchParams.get('state'));
+        const callback = await get(`${destination.pathname}${destination.search}`, flow);
+        assert.equal(callback.status, 303, 'Peer must validate the actual IAM code, PKCE, nonce, JWTs and identity');
+        if (callback.headers.get('location') === '/account-choice') {
+          const joined = await post('/join', opaqueCookie(callback, '__Host-ref-pending'), {});
+          assert.equal(joined.status, 303); return opaqueCookie(joined, '__Host-ref-session');
+        }
+        return opaqueCookie(callback, '__Host-ref-session');
+      };
+      contexts.at(-1).signIn = signIn; contexts.at(-1).page = page;
+      contexts.at(-1).cookie = await signIn();
     }
-    const a = contexts[0].pages()[0], b = contexts[1].pages()[0];
-    await a.getByLabel('Title', { exact: true }).fill('Real IAM private note');
-    await a.getByLabel('Note', { exact: true }).fill('Peer-local ownership test.');
-    await a.getByRole('button', { name: 'Save note', exact: true }).click();
-    const notePath = await a.getByRole('link', { name: 'Real IAM private note' }).getAttribute('href');
-    assert.equal((await b.goto(`${origin}${notePath}`)).status(), 404);
-    await b.getByRole('heading', { name: 'Note not found', exact: true }).waitFor();
-    await a.goto(`${origin}${notePath}`);
-    assert.equal(await a.getByLabel('Note', { exact: true }).inputValue(), 'Peer-local ownership test.');
-    await a.getByLabel('Note', { exact: true }).fill('Edited through the real authenticated peer.');
-    await a.getByRole('button', { name: 'Save changes' }).click();
-    await a.getByRole('button', { name: 'Sign out of Enben', exact: true }).click();
-    await a.getByRole('heading', { name: 'A little room for your notes.' }).waitFor();
-    assert.equal((await a.goto(`${origin}${notePath}`)).status(), 401);
-    await a.goto(origin);
-    await a.getByRole('link', { name: 'Sign in with AccessLobby' }).click(); // Existing IAM session remains; no password prompt.
-    await a.getByRole('heading', { name: 'Your notes', exact: true, level: 1 }).waitFor();
-    await a.goto(`${origin}${notePath}`);
-    assert.equal(await a.getByLabel('Note', { exact: true }).inputValue(), 'Edited through the real authenticated peer.');
-    await a.getByRole('button', { name: 'Delete note' }).click();
-    assert.equal(await a.getByRole('link', { name: 'Real IAM private note' }).count(), 0);
-    const logout = a.waitForURL(url => url.origin === new URL(issuer).origin && url.pathname.endsWith('/logout'));
-    await a.getByRole('button', { name: 'Sign out of AccessLobby and supported apps', exact: true }).click();
-    await logout;
-    await a.getByRole('button', { name: 'Sign out', exact: true }).click();
-    await a.getByRole('heading', { name: 'A little room for your notes.' }).waitFor();
-    assert.equal((await a.goto(`${origin}/notes`)).status(), 401);
-    assert.equal((await b.goto(`${origin}/notes`)).status(), 200); // Another person's session is separate.
-    await a.goto(origin);
-    await a.getByRole('link', { name: 'Sign in with AccessLobby' }).click();
-    await a.locator('input[name="username"]').waitFor(); // Shared sign-out ended IAM SSO.
-    console.info('ENBEN_REAL_IAM_PASS two-person-code-PKCE JWKS API-entry private-note-owner edit delete local-logout SSO-return shared-logout-confirmation IAM-SSO-ended');
+    const [a, b] = contexts;
+    assert.equal((await post('/notes', a.cookie, { title: 'Real IAM private note', body: 'Peer-local ownership test.' })).status, 303);
+    const response = await get('/notes', a.cookie); assert.equal(response.headers.get('cache-control'), 'no-store');
+    const notePath = /href="(\/notes\/[a-f0-9-]{36})"/.exec(await response.text())[1];
+    assert.equal((await get(notePath, b.cookie)).status, 404);
+    assert.equal((await post(notePath, b.cookie, { title: 'steal', body: '' })).status, 404);
+    assert.equal((await post(`${notePath}/delete`, b.cookie, {})).status, 404);
+    assert.equal((await post(notePath, a.cookie, { title: 'Edited note', body: 'Saved through the actual authenticated peer.' })).status, 303);
+    assert.equal((await post('/logout', a.cookie, { scope: 'current' })).headers.get('location'), '/');
+    assert.equal((await get(notePath, a.cookie)).status, 401);
+    a.cookie = await a.signIn(true); // The same real IAM session remains; no password form.
+    assert.match(await (await get(notePath, a.cookie)).text(), /Saved through the actual authenticated peer/);
+    assert.equal((await post(`${notePath}/delete`, a.cookie, {})).status, 303);
+    assert.equal((await get(notePath, a.cookie)).status, 404);
+    const shared = await post('/logout', a.cookie, { scope: 'all' });
+    const logout = new URL(shared.headers.get('location'));
+    assert.equal(logout.origin, new URL(issuer).origin);
+    assert.equal(logout.searchParams.get('post_logout_redirect_uri'), `${origin}/`);
+    await a.page.goto(logout.href);
+    await a.page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    assert.equal((await get('/notes', a.cookie)).status, 401);
+    assert.equal((await get('/notes', b.cookie)).status, 200);
+    const fresh = await get('/login');
+    await a.page.goto(fresh.headers.get('location'));
+    await a.page.locator('input[name="username"]').waitFor(); // Shared sign-out ended real IAM SSO.
+    console.info('ENBEN_REAL_IAM_PASS browser-code-PKCE peer-callback-JWKS API-entry two-person-note-owner edit delete local-logout SSO-return shared-logout-confirmation IAM-SSO-ended');
   } finally {
-    for (const context of contexts) await context.close();
+    for (const { context } of contexts) await context.close();
     if (child.exitCode === null && child.signalCode === null) child.kill();
     await exited;
   }
