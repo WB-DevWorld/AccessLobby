@@ -36,9 +36,7 @@ export async function qualifyEnbenPeer({ browser, issuer, apiOrigin, application
       // The real IAM redirect is captured before following the fixture HTTPS
       // hostname. The actual peer consumes its code/state via loopback HTTP;
       // this does not qualify deployed HTTPS browser cookie transport.
-      await context.route(url => url.origin === new URL(issuer).origin &&
-        (url.pathname.endsWith('/auth') || url.pathname.endsWith('/login-actions/authenticate') ||
-         url.pathname.endsWith('/logout')), async route => {
+      await context.route(url => url.origin === new URL(issuer).origin, async route => {
         const response = await route.fetch({ maxRedirects: 0, timeout: 8000 });
         const location = response.headers().location;
         if (location) {
@@ -96,6 +94,7 @@ export async function qualifyEnbenPeer({ browser, issuer, apiOrigin, application
     assert.equal(logout.searchParams.get('post_logout_redirect_uri'), `${origin}/`);
     await a.page.goto(logout.href);
     await a.page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await a.page.getByText('CI peer redirect captured', { exact: true }).waitFor();
     assert.equal((await get('/notes', a.cookie)).status, 401);
     assert.equal((await get('/notes', b.cookie)).status, 200);
     const fresh = await get('/login');
