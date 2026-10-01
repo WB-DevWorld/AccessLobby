@@ -12,6 +12,7 @@ import { suspendRegistry, disableIamClient } from '../dist/suspend-app.js';
 import { loadAppEntry, AppEntryError } from '../../../examples/reference-consumer/app-entry.mjs';
 import { mayViewPrivate } from '../../../examples/reference-consumer/policy.mjs';
 import { qualifyEnbenPeer } from './enben-live-peer.mjs';
+import { withScopedClientToken } from '../../../infra/scripts/private-client-token.mjs';
 
 const databaseUrl = 'postgres://accesslobby:test-only-password@127.0.0.1:5432/accesslobby_iam_lifecycle';
 if (process.env.CI !== 'true' || process.env.IAM_LIFECYCLE_DATABASE_URL !== databaseUrl || !process.env.IAM_SMOKE_TOKEN) {
@@ -123,6 +124,30 @@ try {
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   assert.ok(ready, 'Disposable API must become ready');
+
+  // This disposable IAM has dynamic hostnames. Pin the operator token to its
+  // actual internal request host; human browser OIDC still pins localhost.
+  await withScopedClientToken({ base, issuer: `${base}/realms/accesslobby-first-party`, adminToken }, async token => {
+    const forbidden = await fetch(`${adminPath}/users`, { headers: { authorization: `Bearer ${token}` } });
+    assert.equal(forbidden.status, 403, 'Scoped provisioner must not read or manage human users');
+    const clientId = `ci-scoped-client-${randomUUID()}`;
+    const desired = { clientId, enabled: true, protocol: 'openid-connect', publicClient: true,
+      standardFlowEnabled: true, implicitFlowEnabled: false, directAccessGrantsEnabled: false,
+      serviceAccountsEnabled: false, redirectUris: ['https://ci-scope.example.test/callback'],
+      webOrigins: ['https://ci-scope.example.test'], attributes: {
+        'pkce.code.challenge.method': 'S256', 'post.logout.redirect.uris': 'https://ci-scope.example.test/',
+      }, protocolMappers: [{ name: 'accesslobby-api-audience', protocol: 'openid-connect', protocolMapper: 'oidc-audience-mapper',
+        config: { 'included.client.audience': 'accesslobby-api', 'access.token.claim': 'true', 'id.token.claim': 'false' } }],
+    };
+    try { await reconcileClient(base, 'accesslobby-first-party', token, desired); }
+    finally {
+      const clients = await (await admin(`/clients?clientId=${clientId}`)).json();
+      for (const client of clients.filter(value => value.clientId === clientId)) await admin(`/clients/${client.id}`, { method: 'DELETE' });
+    }
+  });
+  const leftover = await (await admin('/clients')).json();
+  assert.equal(leftover.some(client => client.clientId.startsWith('accesslobby-private-provision-')), false);
+  console.info('SCOPED_CLIENT_PROVISIONER_PASS client-management-scope no-human-access temporary-client-cleanup');
 
   for (let index = 0; index < 2; index++) {
     const username = `ci-onboarding-${randomUUID()}`;
