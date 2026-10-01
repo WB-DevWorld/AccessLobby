@@ -1,0 +1,16 @@
+# Separate Dokploy project. Do not replace the existing consumer pilot.
+services:
+  consumer:
+    image: ${CONSUMER_IMAGE:?pin the qualified Enben-capable consumer image digest}
+    restart: unless-stopped
+    environment:
+      CONSUMER_ORIGIN: https://enben.realjanelove.com
+      OIDC_ISSUER: https://iam.accesslobby.realjanelove.com/realms/accesslobby-first-party
+      OIDC_CLIENT_ID: enben-staging-open
+      ACCESSLOBBY_API_URL: https://api.accesslobby.realjanelove.com
+      PORT: "4000"
+      NOTES_ENABLED: "true"
+      APP_ENTRY_REQUIRED: "true"
+      PUBLIC_REGISTRATION_ENABLED: "false"
+      GRANTED_PERSON_IDS: ""
+    expose: ["4000"]

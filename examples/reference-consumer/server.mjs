@@ -5,7 +5,8 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { mayViewPrivate } from './policy.mjs';
 import { verifyLogoutToken, removeSessions } from './logout.mjs';
 import { AccountLinks } from './account-links.mjs';
-import { appEntryRequired, publicRegistrationEnabled } from './config.mjs';
+import { appEntryRequired, publicRegistrationEnabled, notesEnabled } from './config.mjs';
+import { Notes, NoteError, notesList, noteEditor, testNotesNotice } from './notes.mjs';
 import { traceRequest } from './diagnostics.mjs';
 import { loadMemberships, selectedMembership } from './memberships.mjs';
 import { AppEntryError, loadAppEntry } from './app-entry.mjs';
@@ -25,6 +26,9 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT m
 const grants = new Set((process.env.GRANTED_PERSON_IDS || '').split(',').filter(Boolean));
 const registrationEnabled = publicRegistrationEnabled();
 const entryRequired = appEntryRequired();
+const notesMode = notesEnabled();
+if (notesMode && !entryRequired) throw new Error('Enben Notes requires APP_ENTRY_REQUIRED=true');
+const notes = new Notes();
 const secure = new URL(origin).protocol === 'https:';
 const flowName = secure ? '__Host-ref-flow' : 'ref-flow';
 const sessionName = secure ? '__Host-ref-session' : 'ref-session';
@@ -57,7 +61,7 @@ const sendHealth = (response, status, state) => {
 };
 const redirect = (response, location, setCookies = []) => send(response, 303, '', { location, 'set-cookie': setCookies });
 const html = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
-const page = ({ title, eyebrow = 'Reference app', heading = title, message = '', content = '' }) => `<!doctype html>
+const page = ({ title, eyebrow = notesMode ? 'Enben Notes' : 'Reference app', heading = title, message = '', content = '' }) => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -66,10 +70,11 @@ const page = ({ title, eyebrow = 'Reference app', heading = title, message = '',
 <style>
 :root{color-scheme:light dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f7fb;color:#10203f}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(180deg,#f5f8fd,#edf3fb);color:#10203f}main{width:min(760px,calc(100% - 32px));margin:48px auto}.brand{display:flex;align-items:center;gap:10px;font-weight:800;color:#07377d;margin-bottom:40px}.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#1760df;color:#fff}.card{background:#fff;border:1px solid #d7e2f1;border-radius:24px;padding:clamp(24px,5vw,48px);box-shadow:0 18px 50px rgba(31,67,120,.10)}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-weight:800;font-size:.78rem;color:#0b5dde;margin:0 0 12px}h1{font-size:clamp(2rem,7vw,3.4rem);line-height:1.03;margin:0 0 18px}h2{font-size:1.2rem;margin:28px 0 12px}p{font-size:1.05rem;line-height:1.65;color:#526683}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}.button,button{appearance:none;border:1px solid #bfd0e7;border-radius:12px;background:#fff;color:#10203f;font:inherit;font-weight:750;padding:13px 18px;min-height:48px;text-decoration:none;cursor:pointer}.button-primary{background:#145de0;border-color:#145de0;color:#fff}.button-danger{border-color:#d7a8a8;color:#8e2020}.panel{margin-top:22px;padding:18px;border-radius:16px;background:#edf4ff;border:1px solid #cbdcf8}.panel-warning{background:#fff8e9;border-color:#f1d397}.stack{display:grid;gap:14px}.stack form{margin:0}.muted{font-size:.92rem;color:#6c7f9e}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88rem;overflow-wrap:anywhere}.inline-form{display:inline}.legacy-form{display:grid;gap:12px;max-width:420px}.legacy-form label{font-weight:700}.legacy-form input{width:100%;min-height:46px;border:1px solid #bfd0e7;border-radius:10px;padding:10px 12px;font:inherit;background:#fff;color:#10203f}.identifier-list{display:grid;gap:12px}.identifier-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;border-bottom:1px solid #cbdcf8;padding-bottom:12px}.identifier-row:last-child{border-bottom:0;padding-bottom:0}.identifier-row p{margin:0}.identifier-row .copy-button{min-height:44px;padding:9px 13px}.identifier-note{margin:16px 0 0;font-size:.92rem}@media(max-width:560px){main{width:min(100% - 20px,760px);margin:20px auto}.card{padding:22px}.identifier-row{grid-template-columns:1fr}.identifier-row .copy-button{width:100%}}@media (prefers-color-scheme:dark){:root{background:#071326;color:#eef5ff}body{background:linear-gradient(180deg,#071326,#091a31);color:#eef5ff}.brand{color:#dbeaff}.card{background:#0d1d34;border-color:#294261}.eyebrow{color:#7fb0ff}p,.muted{color:#b7c9e6}.button,button{background:#102541;border-color:#365477;color:#eef5ff}.button-primary{background:#2d70e8;border-color:#2d70e8}.panel{background:#112a4c;border-color:#2d4e78}.panel-warning{background:#352a12;border-color:#745b21}.legacy-form input{background:#0a182c;border-color:#365477;color:#eef5ff}.identifier-row{border-color:#2d4e78}}
 </style>
+${notesMode ? '<style>.notes-form{display:grid;gap:12px}.notes-form label{font-weight:700}.notes-form input,.notes-form textarea{width:100%;min-height:48px;border:1px solid #bfd0e7;border-radius:10px;padding:12px;font:inherit;color:inherit;background:transparent}.notes-form textarea{resize:vertical}.note-list{list-style:none;padding:0;display:grid;gap:12px}.note-list li{border:1px solid #bfd0e7;border-radius:12px;padding:14px;min-width:0}.note-link{display:block;min-height:44px;line-height:1.6;color:inherit;font-weight:750;overflow-wrap:anywhere}.note-preview{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #0b5dde;outline-offset:4px}@media(prefers-color-scheme:dark){a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline-color:#7fb0ff}}</style>' : ''}
 </head>
 <body>
 <main>
-<div class="brand"><span class="brand-mark" aria-hidden="true">A</span><span>AccessLobby reference app</span></div>
+<div class="brand"><span class="brand-mark" aria-hidden="true">${notesMode ? 'E' : 'A'}</span><span>${notesMode ? 'Enben Notes' : 'AccessLobby reference app'}</span></div>
 <section class="card">
 <p class="eyebrow">${html(eyebrow)}</p>
 <h1>${html(heading)}</h1>
@@ -99,9 +104,9 @@ const formBody = async (request, limit = 1024) => {
   let size = 0;
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > limit) return null;
-    chunks.push(chunk);
+    if (size <= limit) chunks.push(chunk);
   }
+  if (size > limit) return null;
   return new URLSearchParams(Buffer.concat(chunks).toString());
 };
 const clearAuthCookies = () => [cookie(flowName, '', 0), cookie(sessionName, '', 0), cookie(pendingName, '', 0)];
@@ -319,7 +324,7 @@ async function handle(request, response) {
             <p>This creates only this app&apos;s local account and connects it to your AccessLobby identity.</p>
             <form method="post" action="/join"><button class="button-primary" type="submit">Create my account for this app</button></form>
           </div>
-          <div class="panel">${existingAccount}</div>
+          ${notesMode ? '' : `<div class="panel">${existingAccount}</div>`}
           <form method="post" action="/logout-accesslobby"><button class="button-danger" type="submit">Sign out of AccessLobby</button></form>
         </div>`,
     });
@@ -384,6 +389,34 @@ async function handle(request, response) {
 
   const session = sessions.get(jar[sessionName]);
   const active = session && session.expires > Date.now() ? session : null;
+  if (notesMode && (path.pathname === '/notes' || path.pathname.startsWith('/notes/'))) {
+    if (!active) return sendPage(response, 401, { title: 'Sign in required', message: 'Sign in to open your notes.',
+      content: '<div class="actions"><a class="button button-primary" href="/login">Sign in with AccessLobby</a><a class="button" href="/">Return home</a></div>' });
+    const match = /^\/notes(?:\/([a-f0-9-]{36})(\/delete)?)?$/.exec(path.pathname);
+    if (!match) return sendPage(response, 404, { title: 'Note not found', message: 'This note is not available.' });
+    if (!['GET', 'POST'].includes(request.method) || (match[2] && request.method !== 'POST')) {
+      return sendPage(response, 405, { title: 'Request rejected', message: 'Use the note forms to save or delete a note.' }, { allow: match[2] ? 'POST' : 'GET, POST' });
+    }
+    if (request.method === 'POST' && request.headers.origin !== origin) return sendPage(response, 403, { title: 'Request rejected', message: 'Use the form on Enben to save your note.' });
+    if (!await checkAppEntry(response, active)) return;
+    try {
+      if (request.method === 'GET') return sendPage(response, 200, match[1]
+        ? { title: 'Edit note', content: noteEditor(notes.get(active.localUserId, match[1])) }
+        : { title: 'Your notes', message: 'A simple place to try AccessLobby sign-in with your own private notes.', content: notesList(notes.list(active.localUserId)) });
+      if (match[2]) { notes.delete(active.localUserId, match[1]); return redirect(response, '/notes'); }
+      if (request.headers['content-type']?.split(';')[0] !== 'application/x-www-form-urlencoded') return sendPage(response, 415, { title: 'Request rejected', message: 'Use the note form to save your note.' });
+      const fields = await formBody(request, 131072);
+      if (!fields) return sendPage(response, 413, { title: 'Note too large', message: 'Please use a smaller note.' });
+      if (fields.getAll('title').length !== 1 || fields.getAll('body').length !== 1) throw new NoteError(400, 'Use the title and note fields to save your note.');
+      if (match[1]) notes.update(active.localUserId, match[1], fields.get('title'), fields.get('body'));
+      else notes.create(active.localUserId, fields.get('title'), fields.get('body'));
+      return redirect(response, '/notes');
+    } catch (error) {
+      if (!(error instanceof NoteError)) throw error;
+      return sendPage(response, error.status, { title: error.status === 404 ? 'Note not found' : 'Note not saved', message: error.message,
+        content: '<div class="actions"><a class="button" href="/notes">Return to your notes</a></div>' });
+    }
+  }
   if (path.pathname === '/context' && request.method === 'POST') {
     if (!active) return sendPage(response, 401, { title: 'Sign in required', message: 'Sign in before choosing a context.' });
     if (request.headers.origin !== origin) return sendPage(response, 403, { title: 'Request rejected', message: 'Please use the form on this app to continue.' });
@@ -443,6 +476,14 @@ async function handle(request, response) {
   const notice = path.searchParams.get('error') === 'shared_logout_unavailable'
     ? '<div class="panel panel-warning" role="alert"><strong>You are signed out of this app.</strong><p>We could not also end the shared AccessLobby session. Try again later.</p></div>'
     : '';
+
+  if (notesMode) {
+    if (request.method !== 'GET') return sendPage(response, 405, { title: 'Request rejected', message: 'Use the app forms to continue.' }, { allow: 'GET' });
+    if (active) return redirect(response, '/notes');
+    return sendPage(response, 200, { title: 'Enben Notes', heading: 'A little room for your notes.',
+      message: 'Try a simple notes app with AccessLobby sign-in. Your app account keeps your notes separate from everyone else.',
+      content: `${notice}${testNotesNotice}<div class="actions"><a class="button button-primary" href="${activePending ? '/account-choice' : '/login'}">${activePending ? 'Finish setting up Enben' : 'Sign in with AccessLobby'}</a></div>` });
+  }
 
   if (active) {
     let organizations;
