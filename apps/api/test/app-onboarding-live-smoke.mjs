@@ -125,7 +125,9 @@ try {
   }
   assert.ok(ready, 'Disposable API must become ready');
 
-  await withScopedClientToken({ base, issuer, adminToken }, async token => {
+  // This disposable IAM has dynamic hostnames. Pin the operator token to its
+  // actual internal request host; human browser OIDC still pins localhost.
+  await withScopedClientToken({ base, issuer: `${base}/realms/accesslobby-first-party`, adminToken }, async token => {
     const forbidden = await fetch(`${adminPath}/users`, { headers: { authorization: `Bearer ${token}` } });
     assert.equal(forbidden.status, 403, 'Scoped provisioner must not read or manage human users');
     const clientId = `ci-scoped-client-${randomUUID()}`;
