@@ -9,6 +9,7 @@ COPY examples/reference-consumer/server.mjs examples/reference-consumer/policy.m
   examples/reference-consumer/logout.mjs examples/reference-consumer/account-links.mjs \
   examples/reference-consumer/config.mjs examples/reference-consumer/diagnostics.mjs \
   examples/reference-consumer/memberships.mjs examples/reference-consumer/app-entry.mjs \
+  examples/reference-consumer/notes.mjs \
   examples/reference-consumer/
 USER node
 WORKDIR /app/examples/reference-consumer

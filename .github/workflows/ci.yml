@@ -41,6 +41,8 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Verify production PWA offline and update lifecycle
         run: node infra/scripts/pwa-browser-smoke.mjs
+      - name: Verify Enben Notes browser story and responsive forms
+        run: node infra/scripts/enben-browser-smoke.mjs
       - name: Validate Dokploy Compose configuration
         env:
           IAM_DB_PASSWORD: ci-iam-password
@@ -114,6 +116,21 @@ jobs:
               assert str(env['APP_ENTRY_REQUIRED']).lower() == expected_entry
               assert env['GRANTED_PERSON_IDS'] == ''
           print('Consumer Compose preserves the legacy default and permits an isolated app-entry fixture')
+          PY
+          docker compose -f compose.enben-staging.dokploy.yaml config --format json > /tmp/enben-compose.json
+          python3 - <<'PY'
+          import json
+          config = json.load(open('/tmp/enben-compose.json'))
+          assert set(config['services']) == {'consumer'}
+          peer = config['services']['consumer']
+          assert not peer.get('ports')
+          env = peer['environment']
+          assert env['CONSUMER_ORIGIN'] == 'https://enben.realjanelove.com'
+          assert env['OIDC_CLIENT_ID'] == 'enben-staging-open'
+          assert env['NOTES_ENABLED'] == env['APP_ENTRY_REQUIRED'] == 'true'
+          assert env['PUBLIC_REGISTRATION_ENABLED'] == 'false'
+          assert not env['GRANTED_PERSON_IDS']
+          print('Enben is separate, requires app entry and keeps resource ownership inside the peer')
           PY
       - name: Check forbidden source material and secrets
         run: |

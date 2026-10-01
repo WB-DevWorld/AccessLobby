@@ -11,6 +11,7 @@ import { provisionApp, reconcileClient } from '../dist/provision-app.js';
 import { suspendRegistry, disableIamClient } from '../dist/suspend-app.js';
 import { loadAppEntry, AppEntryError } from '../../../examples/reference-consumer/app-entry.mjs';
 import { mayViewPrivate } from '../../../examples/reference-consumer/policy.mjs';
+import { qualifyEnbenPeer } from './enben-live-peer.mjs';
 
 const databaseUrl = 'postgres://accesslobby:test-only-password@127.0.0.1:5432/accesslobby_iam_lifecycle';
 if (process.env.CI !== 'true' || process.env.IAM_LIFECYCLE_DATABASE_URL !== databaseUrl || !process.env.IAM_SMOKE_TOKEN) {
@@ -167,11 +168,12 @@ try {
     await assert.rejects(reconcileClient(base, 'accesslobby-first-party', adminToken,
       { ...plan.client, redirectUris: [`${origin}/unapproved`] }), /differs from approved configuration/);
     const tokens = await Promise.all(users.map(user => login(clientId, `${origin}/callback`, user.username)));
-    fixtures.push({ ...requested, tokens });
+    fixtures.push({ ...requested, redirectUri: `${origin}/callback`, tokens });
   }
   console.info('APP_ONBOARDING_PASS requested-denied DNS-fixture-recheck review-fixture exact-live-IAM-readback retry conflict');
 
   const [open, restricted] = fixtures;
+  await qualifyEnbenPeer({ browser, issuer, apiOrigin, application: open, users, password });
   for (const [index, token] of open.tokens.entries()) {
     assert.equal((await api('/v1/me', token, 200)).person.id, people[index].person.id);
     const entry = await api('/v1/application-entry', token, 200);

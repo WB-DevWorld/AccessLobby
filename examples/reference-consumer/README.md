@@ -1,5 +1,7 @@
 # Independent reference consumer
 
+The optional **Enben Notes** mode is a small disposable app for testing protected access: one account saves a private note; another account cannot read, change or delete it. Set `NOTES_ENABLED=true` and `APP_ENTRY_REQUIRED=true` for an activated registry client. `/notes` checks live app admission on every view and mutation, then checks the peer-local account as the note owner. No person-ID environment grant is needed. The existing reference-app mode remains the default. Notes, links and sessions disappear when the process restarts. Follow the [Enben staging steps](../../docs/runbooks/enben-notes-staging.md) for the approved hostname.
+
 This runnable Node example implements the language-neutral [consumer contract](../../docs/integration-contract-v0.1.md) without importing AccessLobby source. It demonstrates joining from a peer, explicit existing-account linking, code + PKCE, issuer/JWKS/token checks, `/v1/me`, local or shared sign-out, signed backchannel session invalidation, and a local resource denial. Sessions and account links are **in memory**; it is not a production application or proof of named peer adoption.
 
 Start the local stack, render/register `reference-consumer` with callback `http://localhost:4000/callback`, logout `http://localhost:4000/`, and backchannel logout `http://localhost:4000/backchannel-logout`; add its ID to API `ALLOWED_CLIENT_IDS`. Then run:
