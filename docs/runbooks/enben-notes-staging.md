@@ -18,7 +18,7 @@ An older image does not contain Notes. Do not replace the digest with `latest`. 
 
 ## 2. Request the app in AccessLobby
 
-Sign into AccessLobby with the designated first-party app owner. Open `https://accesslobby.realjanelove.com/apps` and request an app with these exact values:
+Sign into AccessLobby with the designated first-party app owner. Open `https://accesslobby.realjanelove.com/apps`. On the refined UI, choose **Developer tools** to reach `/apps/manage`; older qualified builds show the request form directly on `/apps`. Request an app with these exact values:
 
 | Field | Value |
 | --- | --- |

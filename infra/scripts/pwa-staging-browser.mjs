@@ -22,6 +22,9 @@ let context;
 let browserCdp;
 let installed = false;
 let diagnosticPage;
+// Qualify the deployed release, including the accepted pre-refinement Build B.
+const homeHeading = /^(?:One AccessLobby identity|Your identity\. Your apps\. One sign-in\.)$/;
+let protectedPaths = ['/account', '/identity', '/contexts', '/apps', '/recovery'];
 const phase = name => { report.phase = name; console.log(`PHASE ${name}`); };
 const launch = async (transportFailure = false) => {
   context = await chromium.launchPersistentContext(profile, {
@@ -145,7 +148,11 @@ try {
   });
   await check('public.first_load', async () => {
     await page.goto(origin);
-    await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
+    await page.getByRole('heading', { name: homeHeading, exact: true }).waitFor();
+    const refined = await page.getByRole('heading', { name: 'Your identity. Your apps. One sign-in.', exact: true }).count() === 1;
+    report.uiVariant = refined ? 'refined' : 'accepted-legacy';
+    if (refined) protectedPaths.push('/apps/manage', '/sign-out');
+    report.protectedRoutes = [...protectedPaths];
     await page.waitForLoadState('load');
     await metrics(page, 'first-load-150ms-64KiBps');
   });
@@ -186,10 +193,10 @@ try {
     return { manifestUrl: manifest.url, installabilityErrors: errors.installabilityErrors };
   });
   await check('tab.responsive_public_shell', async () => {
-    await viewports(page, 'tab-home', 'One AccessLobby identity');
+    await viewports(page, 'tab-home', homeHeading);
   });
   await check('tab.protected_pages_network_only', async () => {
-    for (const path of ['/account', '/identity', '/contexts', '/apps', '/recovery']) {
+    for (const path of protectedPaths) {
       const response = await page.goto(`${origin}${path}`);
       assert.match(response.headers()['cache-control'], /private/);
       assert.match(response.headers()['cache-control'], /no-store/);
@@ -200,7 +207,7 @@ try {
   });
   await check('tab.offline_protected_and_auth_shell', async () => {
     await context.setOffline(true);
-    for (const path of ['/', '/account', '/identity', '/contexts', '/apps', '/recovery', '/auth/login', '/auth/callback']) {
+    for (const path of ['/', ...protectedPaths, '/auth/login', '/auth/callback']) {
       await page.goto(`${origin}${path}`);
       await page.getByRole('heading', { name: 'Connection required', exact: true }).waitFor();
       assert.equal(await page.getByRole('heading', { name: "You're signed in", exact: true }).count(), 0);
@@ -221,15 +228,15 @@ try {
   await check('tab.reconnect', async () => {
     await context.setOffline(false);
     await page.getByRole('link', { name: 'Retry connection', exact: true }).click();
-    await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
+    await page.getByRole('heading', { name: homeHeading, exact: true }).waitFor();
   });
   await check('chromium.install_and_standalone_launch', async () => {
     await browserCdp.send('PWA.install', { manifestId: `${origin}/`, installUrlOrBundleUrl: `${origin}/` });
     installed = true;
     await browserCdp.send('PWA.changeAppUserSettings', { manifestId: `${origin}/`, displayMode: 'standalone' });
     page = await appPage();
-    await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
-    await viewports(page, 'installed-home', 'One AccessLobby identity');
+    await page.getByRole('heading', { name: homeHeading, exact: true }).waitFor();
+    await viewports(page, 'installed-home', homeHeading);
     await page.getByRole('button', { name: 'Color theme: system. Activate to switch theme.', exact: true }).click();
     await page.getByRole('button', { name: 'Color theme: light. Activate to switch theme.', exact: true }).waitFor();
     assert.equal(await page.evaluate(() => localStorage.getItem('accesslobby-theme')), 'light');
@@ -269,7 +276,7 @@ try {
     await context.close();
     await launch();
     page = await appPage();
-    await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
+    await page.getByRole('heading', { name: homeHeading, exact: true }).waitFor();
     assert.equal(await page.evaluate(() => localStorage.getItem('accesslobby-theme')), 'light');
   });
 } catch (error) {

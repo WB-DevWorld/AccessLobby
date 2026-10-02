@@ -335,3 +335,20 @@ hr {
     color: var(--al-ink);
   }
 }
+
+/* Match the quieter account UI without replacing engine-owned forms. */
+:root { --al-border: #d6deeb; --al-shadow: 0 12px 36px rgba(35, 66, 117, 0.08); }
+.pf-v5-c-login__main, .card-pf { border-radius: 1.1rem; }
+#kc-page-title { font-size: clamp(1.7rem, 5vw, 2.15rem); line-height: 1.2; }
+.pf-v5-c-button, .btn { border-radius: 0.7rem; }
+.pf-v5-c-button.pf-m-primary, .btn-primary, input[type="submit"] { box-shadow: 0 4px 12px rgba(21, 88, 214, 0.13); }
+.pf-v5-c-button:hover, .btn:hover, input[type="submit"]:hover { transform: none; }
+#kc-content, #kc-info, .pf-v5-c-alert { overflow-wrap: anywhere; }
+input, select { font-size: 1rem; }
+input[aria-invalid="true"], .pf-v5-c-form-control.pf-m-error { border-color: #b62f38; }
+.pf-v5-c-button:disabled, input[type="submit"]:disabled { opacity: 0.65; cursor: wait; }
+@media (prefers-color-scheme: dark) {
+  :root { --al-border: #294465; --al-shadow: 0 12px 36px rgba(0, 0, 0, 0.2); }
+  .pf-v5-c-button.pf-m-primary, .btn-primary, input[type="submit"] { color: #061526; }
+  #kc-info, .pf-v5-c-login__main-footer-band { border-color: var(--al-border); }
+}

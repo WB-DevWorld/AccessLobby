@@ -13,3 +13,6 @@ const messages: Record<string, string> = {
   identity_unavailable: 'Account information is temporarily unavailable. Please try again.',
 };
 export function contextError(code?: string): string | null { return code ? messages[code] ?? null : null; }
+
+const notices: Record<string, string> = { selected: 'Account view updated.', created: 'Organization created. You are its first owner.', invite: 'Invitation created.', accept: 'Invitation accepted.', decline: 'Invitation declined.', revoke: 'Invitation revoked.', role: 'Organization role updated.', remove: 'Member removed.', leave: 'You have left the organization.' };
+export function contextNotice(code?: string): string | null { return code ? notices[code] ?? null : null; }

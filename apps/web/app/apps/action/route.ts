@@ -36,5 +36,5 @@ export async function POST(request: NextRequest) {
       notice = error.error && known.has(error.error) ? error.error : 'identity_unavailable';
     }
   } catch { notice = 'identity_unavailable'; }
-  return NextResponse.redirect(new URL(`/apps?notice=${encodeURIComponent(notice)}`, origin()), 303);
+  return NextResponse.redirect(new URL(`/apps/manage?notice=${encodeURIComponent(notice)}`, origin()), 303);
 }

@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       const contexts = await getContexts();
       if (!contexts) return NextResponse.redirect(new URL('/contexts?error=identity_unavailable', origin()), 303);
       if (orgId && (!uuid(orgId) || !contexts.contexts.some(c => c.type === 'organization' && c.id === orgId))) return bad();
-      const response = NextResponse.redirect(new URL('/contexts', origin()), 303);
+      const response = NextResponse.redirect(new URL('/contexts?notice=selected', origin()), 303);
       response.cookies.set(contextCookie(), await seal({ personId: contexts.person.id, organizationId: orgId }, 3600),
         { httpOnly: true, secure: secureCookie(), sameSite: 'lax', path: '/', maxAge: 3600 });
       return response;
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
     }
     if (intent === 'create') {
       const created = await result.json() as { id?: string };
-      return NextResponse.redirect(new URL(created.id && uuid(created.id) ? `/organizations/${created.id}` : '/contexts', origin()), 303);
+      return NextResponse.redirect(new URL(created.id && uuid(created.id) ? `/organizations/${created.id}?notice=created` : '/contexts?notice=created', origin()), 303);
     }
-    return NextResponse.redirect(new URL(intent === 'accept' || intent === 'decline' || intent === 'leave' ? '/contexts' : detail, origin()), 303);
+    return NextResponse.redirect(new URL(`${intent === 'accept' || intent === 'decline' || intent === 'leave' ? '/contexts' : detail}?notice=${encodeURIComponent(intent)}`, origin()), 303);
   } catch { return NextResponse.redirect(destination('identity_unavailable'), 303); }
 }

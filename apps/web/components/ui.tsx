@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { RetryButton } from '@/components/retry-button';
 import type { CurrentIdentityResult } from '@/lib/current-identity-model';
 
 export function SkipLink() {
@@ -101,10 +102,11 @@ export function AccountAccessState({ result }: { result: Exclude<CurrentIdentity
             : 'Your account information was not changed or replaced. Please try again when the service is available.'}
         </p>
         <div className="state-actions">
-          <Link className="button button-primary" href={restricted ? '/auth/login?intent=switch' : '/auth/login'}>
-            {restricted ? 'Sign in as a different person' : signedOut ? 'Sign in' : 'Try again'}
-          </Link>
+          {signedOut || restricted ? <Link className="button button-primary" href={restricted ? '/auth/login?intent=switch' : '/auth/login'}>
+            {restricted ? 'Sign in as a different person' : 'Sign in'}
+          </Link> : <RetryButton />}
           <Link className="button button-secondary" href="/">Return home</Link>
+          {!signedOut && <Link className="text-link" href="/sign-out">Sign out</Link>}
         </div>
       </main>
     </div>

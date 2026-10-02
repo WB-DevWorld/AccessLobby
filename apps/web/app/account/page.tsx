@@ -1,155 +1,48 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { CopyIdentifier } from '@/components/copy-identifier';
-import {
-  AccountAccessState,
-  ArrowLink,
-  AvailabilityPanel,
-  DataRow,
-  StatusBadge,
-  SurfaceCard,
-} from '@/components/ui';
+import { AccountAccessState, ArrowLink, AvailabilityPanel, StatusBadge, SurfaceCard } from '@/components/ui';
+import { SectionSkeleton } from '@/components/skeleton';
+import { RetryButton } from '@/components/retry-button';
+import { AvailableApps } from '@/components/available-apps';
 import { getCurrentIdentity } from '@/lib/current-identity';
 import { formatIdentityStatus } from '@/lib/current-identity-model';
 import { getContexts, selectedContext } from '@/lib/contexts';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Your account', robots: { index: false, follow: false } };
+
+async function WorkingContext({ personId }: { personId: string }) {
+  const data = await getContexts(personId);
+  if (!data) return <SurfaceCard title="Personal & organizations"><AvailabilityPanel title="Memberships could not be checked" description="Try again before acting for an organization." action={<RetryButton />} /></SurfaceCard>;
+  const selected = await selectedContext(personId, data.contexts);
+  const organizations = data.contexts.filter(context => context.type === 'organization');
+  const current = organizations.find(org => org.id === selected);
+  return <SurfaceCard title="Personal & organizations">
+    <p className="selected-context"><span className="context-emblem" aria-hidden="true">◈</span><span><strong>{current?.name ?? 'Personal use'}</strong><small>{current ? `${current.role} · Selected for this account view` : 'Acting for yourself'}</small></span></p>
+    {data.invitations.length > 0 && <div className="invitation-notice"><strong>{data.invitations.length} invitation{data.invitations.length === 1 ? '' : 's'} waiting</strong><Link href="/contexts">Review invitations →</Link></div>}
+    <p>{organizations.length} organization{organizations.length === 1 ? '' : 's'} linked to your identity.</p>
+    <ArrowLink href="/contexts">Switch or manage organizations</ArrowLink>
+    <p className="hero-note">Organization membership does not grant app entry or app-specific permissions.</p>
+  </SurfaceCard>;
+}
 
 export default async function Account() {
   const identity = await getCurrentIdentity();
-
   if (identity.state !== 'ready') return <AccountAccessState result={identity} />;
-
-  const status = formatIdentityStatus(identity.person.status);
-  const contexts = await getContexts(identity.person.id);
-  const organizations = contexts?.contexts.filter(context => context.type === 'organization') ?? [];
-  const selected = contexts ? await selectedContext(identity.person.id, contexts.contexts) : null;
-
-  return (
-    <AppShell
-      active="overview"
-      title="Your AccessLobby account"
-      description="See your personal identity, organization relationships, and sign-out choices."
-      personStatus={identity.person.status}
-      actions={<Link className="button button-secondary button-compact" href="/identity">View identity</Link>}
-    >
-      <section className="identity-hero">
-        <div className="identity-avatar" aria-hidden="true">AL</div>
-        <div className="identity-hero-copy">
-          <div className="identity-title-line">
-            <h2>You&apos;re signed in</h2>
-            <StatusBadge>{status}</StatusBadge>
-          </div>
-          <p>Your AccessLobby identity is active and ready to use with supported apps.</p>
-        </div>
-        <div className="identity-live-state">
-          <span className="live-dot" aria-hidden="true" />
-          <div><strong>Account status checked</strong><small>Loaded securely from AccessLobby</small></div>
-        </div>
-        <CopyIdentifier
-          label="AccessLobby ID"
-          value={identity.person.id}
-          description="This stable ID identifies you in AccessLobby and stays the same when your email address or sign-in method changes."
-        />
-      </section>
-
-      <section className="metric-grid" aria-label="Current identity facts">
-        <SurfaceCard eyebrow="Identity status" className="metric-card">
-          <strong className="metric-value">{status}</strong>
-          <p>Your AccessLobby identity can be used to sign in to supported apps.</p>
-        </SurfaceCard>
-        <SurfaceCard eyebrow="Your identity" className="metric-card">
-          <strong className="metric-value">Stays the same</strong>
-          <p>Changing contact details does not have to create a different AccessLobby identity.</p>
-        </SurfaceCard>
-        <SurfaceCard eyebrow="Inside each app" className="metric-card">
-          <strong className="metric-value">The app decides</strong>
-          <p>Each app may keep its own local account, information, roles and permissions.</p>
-        </SurfaceCard>
-      </section>
-
-      <section className="dashboard-grid">
-        <SurfaceCard title="Your working contexts" className="dashboard-span-two">
-          {!contexts ? <AvailabilityPanel title="Organization relationships are unavailable"
-            description="Your identity is active, but we could not check your memberships or invitations. Try again before acting for an organization." /> : <>
-            <p>Your personal context is available. {selected
-              ? 'You have also selected an organization for this AccessLobby account view.'
-              : 'No organization is selected in this AccessLobby account view.'}</p>
-            {organizations.length > 0 && <ul className="context-list">
-              {organizations.map(org => <li key={org.id}>
-                <strong>{org.name}</strong> · {org.role}{selected === org.id ? ' · Selected here' : ''}
-                <p><Link className="text-link" href={`/organizations/${org.id}`}>
-                  {org.role === 'member' ? 'View organization members' : 'Manage organization membership'}
-                </Link></p>
-              </li>)}
-            </ul>}
-            {contexts.invitations.length > 0 && <p><Link className="text-link" href="/contexts">
-              Review {contexts.invitations.length} pending organization invitation{contexts.invitations.length === 1 ? '' : 's'}
-            </Link></p>}
-            <p><Link className="text-link" href="/contexts">Choose personal or organization context</Link></p>
-            <p className="hero-note">Membership administration is separate from entry and permissions inside each connected app.</p>
-          </>}
-        </SurfaceCard>
-
-        <SurfaceCard title="Account at a glance" className="dashboard-span-two">
-          <dl className="data-list">
-            <DataRow label="AccessLobby ID" mono>{identity.person.id}</DataRow>
-            <DataRow label="Identity status"><StatusBadge>{status}</StatusBadge></DataRow>
-            <DataRow label="Identity type">Individual</DataRow>
-            <DataRow label="Sign-in">Secure AccessLobby sign-in</DataRow>
-            <DataRow label="Accounts inside apps">Created or connected separately by each app</DataRow>
-            <DataRow label="Permissions inside apps">Managed by each app</DataRow>
-          </dl>
-        </SurfaceCard>
-
-        <SurfaceCard title="Quick actions">
-          <div className="action-list">
-            <ArrowLink href="/identity">Review your identity profile</ArrowLink>
-            <ArrowLink href="/contexts">Personal and organization contexts</ArrowLink>
-            <ArrowLink href="/apps">Apps and access</ArrowLink>
-            <ArrowLink href="/auth/login?intent=switch">Sign in as a different person</ArrowLink>
-            <ArrowLink href="/recovery">Review recovery status</ArrowLink>
-            <ArrowLink href="#sign-out">Choose how to sign out</ArrowLink>
-          </div>
-        </SurfaceCard>
-
-        <SurfaceCard title="What you can do now">
-          <ul className="check-list">
-            <li>Sign in securely with AccessLobby</li>
-            <li>Return to the same AccessLobby identity</li>
-            <li>View and copy your stable AccessLobby ID</li>
-            <li>Review your organization roles and pending invitations</li>
-            <li>Choose whether to sign out of this app or the shared sign-in session</li>
-          </ul>
-        </SurfaceCard>
-
-        <SurfaceCard title="More identity controls are coming" className="dashboard-span-two">
-          <AvailabilityPanel
-            title="Profile details, recovery and session controls are still being added"
-            description="We will show more identity information only after the matching data contracts, security rules and services are ready."
-            action={<Link className="text-link" href="/identity">View your identity profile</Link>}
-          />
-        </SurfaceCard>
-
-        <div id="sign-out" className="dashboard-span-two" tabIndex={-1}>
-          <SurfaceCard title="How would you like to sign out?" className="decision-card">
-            <p className="card-copy">
-              Sign out of this app only, or also end the shared AccessLobby sign-in session used by supported apps. Some apps may keep a separate local session until they receive or process the shared sign-out.
-            </p>
-            <div className="decision-actions" role="group" aria-label="Sign-out choice">
-              <form action="/auth/logout" method="post">
-                <input type="hidden" name="scope" value="current" />
-                <button className="button button-secondary" type="submit">Sign out of this app</button>
-              </form>
-              <form action="/auth/logout" method="post">
-                <input type="hidden" name="scope" value="all" />
-                <button className="button button-primary" type="submit">Sign out of AccessLobby and supported apps</button>
-              </form>
-            </div>
-            <p className="hero-note">Signing out of this app keeps the shared AccessLobby session active, so returning may sign you in again without asking for your password.</p>
-          </SurfaceCard>
-        </div>
-      </section>
-    </AppShell>
-  );
+  return <AppShell active="overview" title="Your account" description="Your identity and next steps, in one place." personStatus={identity.person.status}>
+    <section className="identity-hero compact-identity">
+      <div className="identity-avatar" aria-hidden="true">AL</div>
+      <div className="identity-hero-copy"><p className="eyebrow">Your personal identity</p><h2>You&apos;re signed in</h2><StatusBadge>{formatIdentityStatus(identity.person.status)}</StatusBadge></div>
+      <CopyIdentifier label="AccessLobby ID" value={identity.person.id} description="Your lasting identity across supported apps." />
+    </section>
+    <section className="dashboard-grid account-overview">
+      <Suspense fallback={<SectionSkeleton label="Loading organizations and invitations" rows={2} />}><WorkingContext personId={identity.person.id} /></Suspense>
+      <Suspense fallback={<SectionSkeleton label="Loading available apps" />}><AvailableApps compact /></Suspense>
+      <SurfaceCard title="Useful next steps"><div className="action-list"><ArrowLink href="/identity">View identity</ArrowLink><ArrowLink href="/recovery">Recovery & help</ArrowLink><ArrowLink href="/help">Get help</ArrowLink></div></SurfaceCard>
+      <SurfaceCard title="One identity, separate app accounts"><p>Each app may keep its own local account, information, roles and permissions linked to your AccessLobby identity.</p><Link className="text-link" href="/help">How it works →</Link></SurfaceCard>
+    </section>
+    <div id="sign-out" className="account-sign-out"><span>Finished here?</span><Link className="text-link" href="/sign-out">Choose how to sign out →</Link></div>
+  </AppShell>;
 }
