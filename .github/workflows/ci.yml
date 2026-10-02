@@ -40,6 +40,15 @@ jobs:
       - run: pnpm build
       - name: Install Chromium for installed-PWA smoke
         run: pnpm exec playwright install --with-deps chromium
+      - name: Verify refined production UI and native account actions
+        run: node infra/scripts/ui-browser-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-ui-refinement
+          path: artifacts/ui-refinement/
+          if-no-files-found: warn
+          retention-days: 7
       - name: Verify production PWA offline and update lifecycle
         run: node infra/scripts/pwa-browser-smoke.mjs
       - name: Verify Enben Notes browser story and responsive forms

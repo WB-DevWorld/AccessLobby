@@ -84,7 +84,7 @@ try {
   await page.getByRole('heading', { name: 'Connection required' }).waitFor();
   await context.setOffline(false);
   await page.getByRole('link', { name: 'Retry connection' }).click();
-  await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Your identity. Your apps. One sign-in.', exact: true }).waitFor();
 
   await stop(server);
   server = await start('b'.repeat(40));
@@ -148,7 +148,7 @@ try {
   const priorPeerController = await peer.evaluateHandle(() => navigator.serviceWorker.controller);
   await page.getByRole('button', { name: 'Update now' }).click();
   await peer.waitForFunction(previous => navigator.serviceWorker.controller !== previous, priorPeerController, { timeout: 15000 });
-  await page.getByRole('heading', { name: 'One AccessLobby identity', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Your identity. Your apps. One sign-in.', exact: true }).waitFor();
   await page.waitForFunction(async () => !(await navigator.serviceWorker.getRegistration()).waiting, null, { timeout: 15000 });
   assert.equal(await peer.evaluate(() => window.pwaSmokeDocument), 'unchanged', 'other window must not reload');
   await peer.getByText('Update ready', { exact: true }).waitFor({ state: 'hidden' });

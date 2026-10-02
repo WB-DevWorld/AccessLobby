@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { PwaLifecycle } from '@/components/pwa-lifecycle';
+import { PwaStatus } from '@/components/pwa-status';
 import './style.css';
 import './alignment.css';
+import './refinement.css';
 
 export const metadata: Metadata = {
   title: {
@@ -29,5 +31,5 @@ export const viewport: Viewport = {
 };
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}<PwaLifecycle /></body></html>;
+  return <html lang="en"><body><noscript><div className="noscript-notice">Some account pages need JavaScript to finish loading. Turn it on and reload to use all account controls.</div><style>{'.skeleton-section, .skeleton-identity { display: none !important; }'}</style></noscript>{children}<PwaLifecycle /><PwaStatus /></body></html>;
 }

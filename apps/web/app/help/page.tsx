@@ -1,0 +1,14 @@
+import Link from 'next/link';
+import { PublicShell } from '@/components/public-shell';
+export const metadata = { title: 'Help & support' };
+export default function Help() {
+  return <PublicShell><article className="reading-page"><p className="eyebrow">AccessLobby help</p><h1>Let’s get you where you need to go.</h1><p className="reading-lede">Useful answers about your identity, apps and account access.</p>
+    <section><h2>Sign in and return to your app</h2><p>Start with AccessLobby sign-in inside a supported app. After sign-in, its verified callback takes you back. You can also <Link href="/auth/login">sign in here</Link> to open your AccessLobby account.</p></section>
+    <section><h2>Personal and organization use</h2><p>You have one personal identity. Joining an organization adds a membership; it does not create another person or automatically grant access to an app. Use <Link href="/contexts">Personal & organizations</Link> to choose your account view. To use a different human account, choose “Sign in as another person” in the account menu.</p></section>
+    <section><h2>Existing accounts</h2><p>An app with an account-linking flow must verify both your existing app sign-in and your AccessLobby sign-in. Matching email addresses alone cannot merge accounts. Your app retains its own data and roles.</p></section>
+    <section id="support"><h2>Recovery and support</h2><p>If “Forgot your password?” is available on the sign-in screen, follow that process. If it is unavailable, or your identity is restricted, contact the administrator who invited you. For app-specific access, contact that app’s administrator.</p><p>Trusted contacts, passkeys, backup recovery codes and device recovery are not active AccessLobby account controls in this release.</p></section>
+    <section><h2>Sign-out choices</h2><p>“This app only” leaves the shared sign-in active, allowing quick re-entry. Shared sign-out ends the AccessLobby session in this browser and lets participating apps process the sign-out. It does not end every session on every device.</p><Link className="text-link" href="/sign-out">Choose how to sign out →</Link></section>
+    <section id="access"><h2>Pilot access</h2><p>Access is currently provided through invited accounts or registration where enabled. Applications must pass the required domain and first-party review before activation. Membership, app entry and app permissions are separate checks.</p><p>This page explains current pilot access. Formal public service terms have not been published here.</p></section>
+    <section><h2>Installed app and offline use</h2><p>Install AccessLobby using your browser’s install option where supported. Offline mode provides a basic information page; sign-in and account checks need a connection. An update can wait while you finish an account step.</p></section>
+  </article></PublicShell>;
+}

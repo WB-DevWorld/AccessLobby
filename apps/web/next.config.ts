@@ -4,7 +4,7 @@ const config: NextConfig = {
   output: 'standalone',
   async headers() {
     return ['/auth/:path*', '/account', '/identity', '/contexts/:path*', '/organizations/:path*',
-      '/apps/:path*', '/recovery'].map(source => ({ source, headers: [noStore] }));
+      '/apps/:path*', '/recovery', '/sign-out'].map(source => ({ source, headers: [noStore] }));
   },
 };
 export default config;
