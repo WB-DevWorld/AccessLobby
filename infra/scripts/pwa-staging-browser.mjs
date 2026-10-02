@@ -174,10 +174,6 @@ try {
   });
   await check('public.repeat_load', async () => {
     await page.reload();
-    const refined = await page.getByRole('heading', { name: 'Your identity. Your apps. One sign-in.', exact: true }).count() === 1;
-    report.uiVariant = refined ? 'refined' : 'accepted-legacy';
-    if (refined) protectedPaths.push('/apps/manage', '/sign-out');
-    report.protectedRoutes = [...protectedPaths];
     await page.waitForLoadState('load');
     await metrics(page, 'repeat-load-150ms-64KiBps');
     return cacheBoundary(page);

@@ -178,8 +178,8 @@ jobs:
             sleep 1
           done
           grep -q 'AccessLobby' /tmp/accesslobby-web.html
-          grep -q 'Access is currently limited' /tmp/accesslobby-web.html
-          ! grep -q '>Create an account<' /tmp/accesslobby-web.html
+          grep -q 'Access is currently by invitation.' /tmp/accesslobby-web.html
+          ! grep -Eq '>(Create an account|Create account)<' /tmp/accesslobby-web.html
       - name: Check reference consumer behind an HTTPS proxy
         run: |
           docker run -d --name accesslobby-ci-consumer -p 127.0.0.1:14000:4000 \
