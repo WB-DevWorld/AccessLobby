@@ -14,7 +14,7 @@ Owner-requested implementation from current main `e0ddc8432de0db8fee17e01316ed22
 | Loading | Route skeletons for account, identity, contexts, organization detail, apps, developer tools, recovery and sign-out; independent account organization/app section skeletons. No success or identity/access claim before validation. Reduced motion stops pulse animation. |
 | Sign-out | Separate accessible choice page; unchanged current-app and shared current-browser POST scopes. Unavailable/restricted identities can still clear their local session. No claim of all-device logout. |
 | Authentication appearance | Quieter bundled Keycloak CSS aligned with the account UI, mobile/focus/dark/reduced-motion support. Engine-owned templates, forms, credential handling and realm configuration remain unchanged. |
-| PWA | Dismissible browser-supported install suggestion, truthful connection notice, existing safe offline/update behavior. New private sign-out route is no-store. Staging browser checks include both new account routes. |
+| PWA | Dismissible browser-supported install suggestion, truthful connection notice, existing safe offline/update behavior. New private sign-out route is no-store. Staging browser checks recognize the exact observed legacy/refined UI and include both new account routes when the refined release is deployed; the previously accepted Build B remains testable. |
 | Page metadata | Public titles/descriptions, protected noindex metadata and privacy-preserving headers. |
 
 Streamed account rendering requires JavaScript; a no-script notice explains this and hides inert loading placeholders. Native POST transport still works with client scripts disabled after the form has rendered.
