@@ -17,6 +17,7 @@ browsers.push(context);
 const page = await context.newPage();
 page.setDefaultTimeout(20000);
 let phase = 'start';
+let diagnostic = {};
 
 function wp(site, code) {
   return execFileSync(fixture.php, [fixture.wpCli, '--path=' + site.path, 'eval', code],
@@ -33,12 +34,13 @@ function config(site, changes) {
 }
 async function test(name, operation) {
   phase = 'start';
+  diagnostic = {};
   const start = performance.now();
   try { await operation(); cases.push({ name, status: 'PASS', milliseconds: Math.round(performance.now() - start) });
     console.log('BROWSER_PASS ' + name); }
   catch (error) {
     // Assertion/Playwright errors can contain cookie values, callback or verification URLs.
-    cases.push({ name, status: 'FAIL', phase, errorClass: error.name });
+    cases.push({ name, status: 'FAIL', phase, errorClass: error.name, diagnostic });
     throw new Error('Browser acceptance failed: ' + name + ' at ' + phase);
   }
 }
@@ -47,10 +49,24 @@ async function identity(site, tab = page) {
   return Number(await tab.locator('#fixture-identity').getAttribute('data-user'));
 }
 async function localLogin(site, username, tab = page) {
-  await tab.goto(site.base + '/wp-login.php?redirect_to=' + encodeURIComponent(site.account));
-  await tab.locator('#user_login').fill(username);
-  await tab.locator('#user_pass').fill(fixture.password);
-  await Promise.all([tab.waitForURL(site.account), tab.locator('#wp-submit').click()]);
+  try {
+    await tab.goto(site.base + '/wp-login.php?redirect_to=' + encodeURIComponent(site.account));
+    await tab.locator('#user_login').fill(username);
+    await tab.locator('#user_pass').fill(fixture.password);
+    await Promise.all([tab.waitForURL(site.account), tab.locator('#wp-submit').click()]);
+  } catch (error) {
+    // Synthetic fixture messages only; never retain input values, cookies, query strings or form actions.
+    try {
+      let message = await tab.locator('#login_error').innerText({ timeout: 1000 }).catch(() => '');
+      message = message.replaceAll(fixture.password, '[redacted]').replace(/https?:\/\/\S+/g, '[url]').slice(0, 400);
+      const url = new URL(tab.url());
+      const action = url.searchParams.get('action');
+      diagnostic = { pathname: url.pathname, coreAction: ['confirm_admin_email', 'login', 'rp', 'resetpass', 'lostpassword'].includes(action) ? action : '', localForms: await tab.locator('#loginform').count(),
+        iamForms: await tab.locator('#kc-form-login').count(), message,
+        activePlugins: JSON.parse(wp(site, 'echo wp_json_encode(get_option("active_plugins"));')) };
+    } catch {}
+    throw error;
+  }
 }
 async function directLocalCookie(site, tab, context) {
   await tab.goto(site.account);
