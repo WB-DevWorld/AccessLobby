@@ -152,9 +152,7 @@ final class Controller {
 			$this->sessions->invalidate_user_links( $flow['local_user'] );
 		} else {
 			$user = $this->store->resolve( $identity, $c, $flow['local_user'] );
-			if ( ! $flow['local_user'] ) {
-				$this->sessions->establish( $user, $identity, $c );
-			}
+			$this->sessions->establish( $user, $identity, $c );
 			do_action( 'accesslobby_authenticated', $user, array( 'provenance' => $flow['intent'] ) );
 		}
 		$this->store->audit( 'callback_succeeded', get_current_user_id() );

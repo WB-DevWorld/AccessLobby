@@ -13,6 +13,7 @@ import ssl
 import sys
 import subprocess
 import time
+import hashlib
 
 fixture = json.loads(Path(sys.argv[1]).read_text())
 a, b = fixture['sites']
@@ -98,18 +99,18 @@ try:
     page = submit(page, item)
     item = form(page, lambda f: f['id'] == 'kc-form-login')
     page = submit(page, item, {'username': 'shopper', 'password': fixture['password']})
-    assert page[2] == 200, 'OIDC callback rejected: ' + str(page[2]) + ' / ' + page[1][-1200:]
+    assert page[2] == 200, 'OIDC callback rejected: ' + str(page[2])
     check('fresh real IAM dual proof links original WP customer', lambda: account(a) == a['legacyUser'] or (_ for _ in ()).throw(AssertionError('Link failed')))
     logout(a)
     assert account(a) == 0
     page = request(a['base'] + '/wp-login.php?action=al_start&' + urlencode({'redirect_to': a['protected']}))
-    check('quiet OIDC re-entry restores original protected target', lambda: page[0] == a['protected'] or (_ for _ in ()).throw(AssertionError('Re-entry failed: ' + page[1][-1200:])))
+    check('quiet OIDC re-entry restores original protected target', lambda: page[0] == a['protected'] or (_ for _ in ()).throw(AssertionError('Re-entry failed')))
     page = request(b['base'] + '/wp-login.php?action=al_start&' + urlencode({'redirect_to': b['protected']}))
-    assert page[0] == b['protected'], 'Site B did not quietly reuse issuer session: ' + page[1][-1200:]
+    assert page[0] == b['protected'], 'Site B did not quietly reuse issuer session'
     b_user = account(b)
     assert b_user > 0 and b_user != a['legacyUser']
     check('independent subdirectory WordPress SSO creates separate local account', lambda: None)
-    assert wp(a, 'echo implode(",",get_userdata(' + str(a['legacyUser']) + ')->roles);') == 'customer'
+    assert wp(a, 'echo implode(",",get_userdata(' + str(a['legacyUser']) + ')->roles);') == ('customer' if a['woo'] else 'editor')
     assert wp(b, 'echo implode(",",get_userdata(' + str(b_user) + ')->roles);') == 'subscriber'
     check('site-local roles differ and commerce ownership remains local', lambda: None)
     logout(a)
@@ -123,6 +124,34 @@ try:
     page = request(b['base'] + '/wp-login.php?action=al_start')
     assert 'kc-form-login' in page[1]
     check('shared logout ends quiet re-entry for this browser session', lambda: None)
+    original_client = client
+    client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+    before_join = wp(a, 'echo count_users()["total_users"];')
+    page = request(a['base'] + '/wp-login.php?action=al_start&' + urlencode({'intent': 'join', 'redirect_to': a['protected']}))
+    item = form(page, lambda f: f['id'] == 'kc-register-form')
+    values = {'username': 'joinedvisitor', 'firstName': 'New', 'lastName': 'Visitor', 'email': 'joinedvisitor@example.test'}
+    if 'password' in item['fields']:
+        values.update({'password': fixture['password'], 'password-confirm': fixture['password']})
+    page = submit(page, item, values)
+    assert wp(a, 'echo count_users()["total_users"];') == before_join, 'WordPress user created before verification'
+    mail_path = Path(fixture['mailbox'], hashlib.sha256(b'joinedvisitor@example.test').hexdigest() + '.json')
+    deadline = time.monotonic() + 15
+    while not mail_path.exists() and time.monotonic() < deadline: time.sleep(.1)
+    links = json.loads(mail_path.read_text())['links']
+    link = next(url for url in links if '/login-actions/action-token?' in url)
+    page = request(link)
+    if 'kc-passwd-update-form' in page[1]:
+        page = submit(page, form(page, lambda f: f['id'] == 'kc-passwd-update-form'), {'password-new': fixture['password'], 'password-confirm': fixture['password']})
+    assert page[0] == a['protected'] and account(a) > 0, 'Verified Join did not complete'
+    assert int(wp(a, 'echo count_users()["total_users"];')) == int(before_join) + 1
+    joined_id = account(a)
+    assert wp(a, 'echo implode(",",get_userdata(' + str(joined_id) + ')->roles);') == ('customer' if a['woo'] else 'subscriber')
+    logout(a)
+    page = request(a['base'] + '/wp-login.php?action=al_start&' + urlencode({'redirect_to': a['protected']}))
+    assert page[0] == a['protected'] and account(a) == joined_id
+    assert int(wp(a, 'echo count_users()["total_users"];')) == int(before_join) + 1
+    check('peer Join verifies email before one safe local account and repeat SSO reuses it', lambda: None)
+    client = original_client
     page = request(a['base'] + '/wp-login.php')
     item = form(page, lambda f: f['id'] == 'loginform')
     page = submit(page, item, {'log': 'fixture_admin', 'pwd': fixture['password'], 'redirect_to': a['account'], 'testcookie': '1'})
@@ -153,12 +182,13 @@ try:
     item = form(page, lambda f: 'options.php' in f['action'])
     changes = {key: str(value) for key, value in {
         'issuer': fixture['issuer'], 'api': fixture['api'], 'client_id': a['client'], 'mode': 'enforced',
-        'jit': 1, 'default_role': 'customer', 'machine_auth': 1, 'migration_reference': 'fixture-backup-rollback',
+        'jit': 1, 'default_role': 'customer' if a['woo'] else 'subscriber', 'machine_auth': 1, 'migration_reference': 'fixture-backup-rollback',
         'recovery_reference': 'fixture-http-rehearsal', 'ack_unlinked': 1, 'ack_privileged': 1, 'ack_invalidate': 1}.items()}
     page = submit(page, item, {'accesslobby_sso[' + key + ']': value for key, value in changes.items()})
     assert wp(a, 'echo get_option("accesslobby_sso")["mode"];') == 'enforced'
     check('real admin settings enable enforced mode only after readiness proof', lambda: None)
     for target in [a['base'] + '/wp-login.php', a['base'] + '/wp-admin/', a['wooAccount']]:
+        if not target: continue
         client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
         page = request(target)
         assert 'kc-form-login' in page[1] and 'id="user_pass"' not in page[1]

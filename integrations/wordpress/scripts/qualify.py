@@ -19,19 +19,22 @@ import uuid
 import zipfile
 import ssl
 import importlib.util
+from urllib.parse import urlparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--runtime', type=Path, required=True)
 parser.add_argument('--package', type=Path, required=True)
 parser.add_argument('--keycloak-home', type=Path, required=True)
 args = parser.parse_args()
+if os.environ.get('ALWP_DISPOSABLE_FIXTURE') != '1':
+    raise SystemExit('Set ALWP_DISPOSABLE_FIXTURE=1 only for isolated throwaway databases; no service started.')
 runtime = args.runtime.resolve()
 plugin = Path(__file__).resolve().parents[1]
 repo = plugin.parents[1]
 if not (plugin / 'tests/browser.mjs').is_file():
     raise SystemExit('Missing browser fixture; no service started.')
 work = runtime / ('qualification-' + uuid.uuid4().hex[:8])
-work.mkdir(parents=True)
+work.mkdir(parents=True, mode=0o700)
 env = os.environ.copy()
 env['NO_PROXY'] = '127.0.0.1,localhost'
 env['no_proxy'] = env['NO_PROXY']
@@ -111,6 +114,8 @@ if env.get('ALWP_INITDB'):
     run([env['ALWP_PSQL'], '-h', '127.0.0.1', '-p', '5433', '-U', 'accesslobby', '-d', 'postgres', '-c', 'CREATE DATABASE accesslobby'], quiet=True)
     database_url = 'postgres://accesslobby@127.0.0.1:5433/accesslobby'
 if not database_url: raise RuntimeError('DATABASE_URL or native PostgreSQL fixture commands required')
+if urlparse(database_url).hostname not in {'127.0.0.1', 'localhost'}:
+    raise SystemExit('Disposable PostgreSQL fixtures must be loopback-only.')
 
 issuer = 'https://127.0.0.1:8083/realms/accesslobby-first-party'
 api = 'http://127.0.0.1:8090'
@@ -129,9 +134,16 @@ run([keytool, '-importcert', '-noprompt', '-alias', 'fixture', '-file', cert,
 spec = importlib.util.spec_from_file_location('alwp_tls_proxy', plugin / 'tests/tls_proxy.py')
 tls_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tls_module)
+mail_spec = importlib.util.spec_from_file_location('alwp_smtp_fixture', plugin / 'tests/smtp_fixture.py')
+mail_module = importlib.util.module_from_spec(mail_spec)
+mail_spec.loader.exec_module(mail_module)
+mailbox = work / 'private-mailbox'
+proxies.append(mail_module.start_mailbox(mailbox))
 realm = json.loads((repo / 'infra/keycloak/realm.template.json').read_text())
-realm.update({'loginTheme': 'keycloak', 'sslRequired': 'none', 'registrationAllowed': False,
-              'verifyEmail': False, 'resetPasswordAllowed': False})
+realm.update({'loginTheme': 'keycloak', 'sslRequired': 'none', 'registrationAllowed': True,
+              'verifyEmail': True, 'resetPasswordAllowed': False,
+              'smtpServer': {'host': '127.0.0.1', 'port': '2525', 'from': 'iam@example.test',
+                             'auth': 'false', 'ssl': 'false', 'starttls': 'false'}})
 template = realm['clients'][0]
 template['redirectUris'] = ['http://127.0.0.1:8091/callback']
 template['webOrigins'] = ['http://127.0.0.1:8091']
@@ -158,7 +170,8 @@ realm['users'] = [{'id': str(uuid.uuid4()), 'username': name, 'enabled': True, '
 imports = args.keycloak_home / 'data/import'
 imports.mkdir(parents=True, exist_ok=True)
 (imports / 'wordpress-fixture-realm.json').unlink(missing_ok=True)
-(imports / 'accesslobby-first-party-realm.json').write_text(json.dumps(realm))
+realm_file = imports / 'accesslobby-first-party-realm.json'
+realm_file.write_text(json.dumps(realm)); realm_file.chmod(0o600)
 kc = spawn('keycloak', [args.keycloak_home / 'bin/kc.sh', 'start-dev', '--http-enabled=false', '--https-port=8083', '--http-host=127.0.0.1',
     '--https-certificate-file=' + str(cert), '--https-certificate-key-file=' + str(key),
     '--hostname=https://127.0.0.1:8083', '--db-url=jdbc:h2:file:' + str(work / 'iam') + ';NON_KEYWORDS=VALUE;DB_CLOSE_ON_EXIT=FALSE',
@@ -240,9 +253,10 @@ for site in sites:
     print('FIXTURE WordPress ' + site['label'] + ' ready', flush=True)
 
 fixture = {'sites': sites, 'issuer': issuer, 'api': api, 'password': password, 'php': php, 'wpCli': wp_cli,
-           'artifactDir': str(work), 'certificate': str(cert), 'package': str(args.package.resolve())}
+           'artifactDir': str(work), 'certificate': str(cert), 'package': str(args.package.resolve()), 'mailbox': str(mailbox)}
 config_file = work / 'private-fixture-config.json'
 config_file.write_text(json.dumps(fixture)); config_file.chmod(0o600)
+run(['python3', str(plugin / 'tests/concurrency.py'), str(config_file)], cwd=repo)
 driver = env.get('ALWP_FIXTURE_DRIVER', 'browser')
 if driver == 'http':
     run(['python3', str(plugin / 'tests/http_flow.py'), str(config_file)], cwd=repo)

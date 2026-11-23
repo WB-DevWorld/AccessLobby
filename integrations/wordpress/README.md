@@ -13,6 +13,6 @@ Requires PHP 8.3+, OpenSSL/Sodium, WordPress 6.9+, InnoDB users/usermeta and plu
 
 Administrator: [settings and operations](docs/administrator.md), [troubleshooting](docs/troubleshooting.md). Developer: [public hooks, tests and release](docs/developer.md). Security: [security/retention](docs/security.md). Estate: [qualification record](docs/site-qualification.md). External publishers: [separate gate](docs/external.md).
 
-Build: `composer install --no-interaction`, `python3 scripts/prefix-jwt.py`, `composer test`, `composer analyze`, `python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.2.zip`. Locked JWT code is namespace-isolated; no runtime dependency downloads. Initial CI builds the produced ZIP and checks protocol/static/security rules. Runtime installation and browser qualification remain separate unfinished gates.
+Build: `composer install --no-interaction`, `python3 scripts/prefix-jwt.py`, `composer test`, `composer analyze`, `python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.2.zip`. Locked JWT code is namespace-isolated; no runtime dependency downloads. CI covers PHP8.3/8.4/8.5 protocol/static/package checks and actual HTTPS IAM/API/two-WordPress Chromium fixtures. The [compatibility matrix](docs/compatibility.md) distinguishes exact passing fixture revisions from real-estate and external-publisher gates.
 
 Relates to AccessLobby #59. Package/CI evidence does not mean CETECH/FLAIROC deployment or universal external support.

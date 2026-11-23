@@ -9,10 +9,11 @@ final class Sessions {
 	}
 
 	public function establish( int $user, array $identity, array $c ): void {
-		$sid_key = self::sid_key( $c, $identity['sid'] );
+		$sid_key  = self::sid_key( $c, $identity['sid'] );
+		$previous = get_current_user_id() === $user ? wp_get_session_token() : '';
 		$this->store->lock(
 			'sid:' . $sid_key,
-			function () use ( $user, $identity, $sid_key ) {
+			function () use ( $user, $identity, $sid_key, $previous ) {
 				if ( $this->store->has_state( 'revoked:' . $sid_key, 'revoked_sid' ) || $identity['expires'] <= time() ) {
 					throw new Failure( 'ended_issuer_session' );
 				}
@@ -39,6 +40,10 @@ final class Sessions {
 					}
 					do_action( 'wp_login', get_userdata( $user )->user_login, get_userdata( $user ) );
 					$this->store->audit( 'session_started', $user );
+					if ( '' !== $previous ) {
+						$manager->destroy( $previous );
+						$this->store->remove_session( Security::fingerprint( $previous ) );
+					}
 				} catch ( \Throwable $e ) {
 					$manager->destroy( $token );
 					$this->store->remove_session( Security::fingerprint( $token ) );

@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 
 const fixture = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const [a, b] = fixture.sites;
@@ -29,7 +30,11 @@ async function test(name, operation) {
   const start = performance.now();
   try { await operation(); cases.push({ name, status: 'PASS', milliseconds: Math.round(performance.now() - start) });
     console.log('BROWSER_PASS ' + name); }
-  catch (error) { cases.push({ name, status: 'FAIL', error: String(error.message).replace(/([?&](?:code|state|session_state)=)[^&\s]+/g, '$1[redacted]') }); throw error; }
+  catch (error) {
+    // Assertion/Playwright errors can contain cookie values, callback or verification URLs.
+    cases.push({ name, status: 'FAIL', errorClass: error.name });
+    throw new Error('Browser acceptance failed: ' + name);
+  }
 }
 async function identity(site, tab = page) {
   await tab.goto(site.account);
@@ -67,6 +72,7 @@ try {
     assert.match(response.headers()['cache-control'], /private.*no-store/);
   });
   await test('fresh dual proof links existing ' + (a.woo ? 'WooCommerce customer' : 'WordPress user'), async () => {
+    const oldCookie = (await context.cookies()).find(c => c.name.startsWith('wordpress_logged_in_'));
     await page.getByRole('button', { name: 'Connect AccessLobby', exact: true }).click();
     await iamLogin(page, 'shopper');
     assert.equal(await identity(a), a.legacyUser);
@@ -78,6 +84,9 @@ try {
     assert.equal(data.linked, 'active'); assert.deepEqual(data.roles, [a.woo ? 'customer' : 'editor']);
     if (a.woo) { assert.equal(data.customer, a.legacyUser); assert.equal(data.total, '73.00'); }
     assert.equal(data.address, 'Preserved fixture address'); assert.equal(data.b2b, 'yes');
+    const newCookie = (await context.cookies()).find(c => c.name.startsWith('wordpress_logged_in_'));
+    assert.notEqual(oldCookie.value, newCookie.value);
+    assert.equal(wp(a, 'global $wpdb;echo $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}accesslobby_sessions WHERE user_id=' + a.legacyUser + '");'), '1');
   });
   await test('site-only logout clears WP without automatically re-entering', async () => {
     await siteLogout(a);
@@ -145,6 +154,47 @@ try {
     await page.goto(b.base + '/wp-login.php?action=al_start');
     await page.locator('#username').waitFor();
     assert.equal(new URL(page.url()).port, '8083');
+  });
+  await test('peer Join verifies email before creating exactly one safe local account', async () => {
+    const joinedContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(joinedContext);
+    const joined = await joinedContext.newPage();
+    const count = Number(wp(a, 'echo count_users()["total_users"];'));
+    await joined.goto(a.base + '/wp-login.php?action=al_start&intent=join&redirect_to=' + encodeURIComponent(a.protected));
+    await joined.locator('#kc-register-form').waitFor();
+    for (const [name, value] of Object.entries({ username: 'joinedvisitor', firstName: 'New', lastName: 'Visitor', email: 'joinedvisitor@example.test' })) {
+      await joined.locator('[name="' + name + '"]').fill(value);
+    }
+    if (await joined.locator('[name="password"]').count()) {
+      await joined.locator('[name="password"]').fill(fixture.password);
+      await joined.locator('[name="password-confirm"]').fill(fixture.password);
+    }
+    await joined.locator('#kc-register-form input[type="submit"]').click();
+    await joined.waitForURL(url => url.port === '8083' && url.pathname.includes('login-actions'));
+    assert.equal(Number(wp(a, 'echo count_users()["total_users"];')), count);
+    const mailPath = fixture.mailbox + '/' + createHash('sha256').update('joinedvisitor@example.test').digest('hex') + '.json';
+    let link;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      try { link = JSON.parse(readFileSync(mailPath, 'utf8')).links.find(url => url.includes('/login-actions/action-token?')); } catch {}
+      if (link) break;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    assert(link, 'Synthetic verification mail was not captured');
+    await joined.goto(link);
+    if (await joined.locator('#kc-passwd-update-form').count()) {
+      await joined.locator('#password-new').fill(fixture.password);
+      await joined.locator('#password-confirm').fill(fixture.password);
+      await joined.locator('#kc-passwd-update-form input[type="submit"]').click();
+    }
+    await joined.waitForURL(a.protected);
+    const joinedId = Number(await joined.locator('#fixture-identity').getAttribute('data-user'));
+    assert(joinedId > 0);
+    assert.equal(Number(wp(a, 'echo count_users()["total_users"];')), count + 1);
+    assert.equal(wp(a, 'echo implode(",",get_userdata(' + joinedId + ')->roles);'), a.woo ? 'customer' : 'subscriber');
+    await siteLogout(a, joined);
+    await joined.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.protected));
+    await joined.waitForURL(a.protected);
+    assert.equal(Number(await joined.locator('#fixture-identity').getAttribute('data-user')), joinedId);
+    assert.equal(Number(wp(a, 'echo count_users()["total_users"];')), count + 1);
   });
   const adminContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(adminContext);
   const admin = await adminContext.newPage();

@@ -19,6 +19,10 @@ $woo_account = 0;
 $checkout = 0;
 $product_id = 0;
 if ( class_exists( 'WooCommerce' ) ) {
+	// WooCommerce enables store-page Coming Soon on a fresh install; open only this disposable store.
+	update_option( 'woocommerce_coming_soon', 'no' );
+	update_option( 'woocommerce_default_country', 'US:CA' );
+	update_option( 'woocommerce_currency', 'USD' );
 	$woo_account = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'My account', 'post_content' => '[woocommerce_my_account]' ) );
 	update_option( 'woocommerce_myaccount_page_id', $woo_account );
 	$checkout = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Fixture checkout', 'post_content' => '[woocommerce_checkout]' ) );
