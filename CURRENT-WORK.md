@@ -1,5 +1,25 @@
 # Execution ledger — MVP-0
 
+## Production dependency audit repair — 2026-11-23 UTC
+
+PR #60 head `92afbb261672401426aa4d8d3ad36f2e81ac13fd` failed general verify at `pnpm audit --prod --audit-level high` ([run 45240417866](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45240417866), job `137923216279`): 2 critical and 6 high in the unchanged Next.js 16.3.6 and NestJS 12.1.0 production graphs. Later migration, typecheck, test, build, UI, PWA and container steps were skipped. Plugin CI on PHP 8.3/8.4/8.5, IAM smoke and IAM theme passed. This entry does not treat those skipped gates as green, and it does not claim WordPress runtime acceptance.
+
+npm registry on 2026-11-23: stable Next.js `16.4.6` (16.5.0 was canary only), NestJS common/core/platform-express `12.6.0`, `body-parser` `2.4.0`, `multer` `2.5.0`, `sharp` `0.35.5`, `source-map-js` `1.2.4`, and `qs` `6.17.1`. pnpm 11.19.0 does not read `package.json#pnpm`, so the floors are `overrides` in `pnpm-workspace.yaml`. Each selected version is inside the parent package's published range: `express@5.3.0` allows `body-parser@^2.3.0` and `qs@^6.16.0`; `@nestjs/platform-express@12.6.0` depends on `multer@2.5.0` exactly; `next@16.4.6` optionally depends on `sharp@^0.35.5`; `postcss@8.5.23` depends on `source-map-js@^1.2.1`. The lockfile resolves one copy of each: `next@16.4.6`, `express@5.3.0` to `body-parser@2.4.0` and `qs@6.17.1`, `multer@2.5.0`, `sharp@0.35.5`, and `source-map-js@1.2.4`.
+
+| Advisory | Floor that failed CI | Fix in this lockfile |
+| --- | --- | --- |
+| GHSA-2464-fhr4-w9xw Next.js image SVG RCE, critical | `next` `>=16.0.0 <=16.4.0` | `next@16.4.6` |
+| GHSA-673q-mjm6-r5xr Next.js `use cache` typed-array RCE, critical | `next` `>=16.0.0 <=16.4.0` | `next@16.4.6` |
+| GHSA-p3m5-59mp-jv5r Next.js App Router Server Action DoS, high | `next` `>=16.0.0 <=16.4.0` | `next@16.4.6` |
+| GHSA-cjq9-62q9-8jv4 Next.js image-optimization SSRF, high | `next` `>=16.0.0 <16.3.8` | `next@16.4.6` |
+| GHSA-68fv-2mgg-jv7q `source-map-js` DoS, high | `>=1.0.0 <1.2.2` | `source-map-js@1.2.4` |
+| GHSA-wq5f-xc86-pv6w `sharp` librsvg, high | `<0.35.5` | `sharp@0.35.5` |
+| GHSA-27r3-jxmh-p828 `body-parser` compressed-body DoS, high | `>=2.0.0 <2.4.0` | `body-parser@2.4.0` |
+| GHSA-q7qp-rjg7-q26m `multer` teardown DoS, high | `>=2.0.0 <2.5.0` | `multer@2.5.0` |
+| GHSA-6pq8-jhm2-2vcw `qs` stringify DoS, moderate | `>=6.7.0 <=6.16.0` | `qs@6.17.1` |
+
+The `qs` advisory was below the CI high threshold and is included because a full production audit still reported it. Local `pnpm audit --prod` after the lockfile update reported no known vulnerabilities. `pnpm typecheck` passed. Web tests passed 21/21, including OIDC logout and PWA worker checks. `next build` completed on Next.js 16.4.6. Reference-consumer tests passed 15/15 on a second run; the first run had two loopback socket closures that are not closed by that rerun. A disposable Postgres 17.11 run passed API tests 19/19 only when executed serially on a fresh database. A default parallel run on a database that already contained discoverable applications failed two visibility counts. Those two failures stay open until isolated fixtures reproduce cleanly. Chromium UI/PWA, real IAM, container builds and remote CI for this dependency change are not yet recorded. No image was published and staging was not redeployed. Public staging API `/health/live` and `/health/ready` returned 200 with version `3d9220a140d61df5effe633bc72cf5142c4a8371` and readiness `ready`. Issue #59 stays open. Relates to #59.
+
 ## WordPress connector development checkpoint and Cursor handoff — 2026-11-23 UTC
 
 Owner requested a reusable two-mode WordPress connector, then explicitly chose **Prepare the Cursor handoff now** because Cursor already has estate SSH access. Starting main/public staging API: `3d9220a140d61df5effe633bc72cf5142c4a8371`; live web/API/discovery returned 200/ready; five current main CI/theme/PWA/publish runs passed; no open PR at initial inspection. 28 focused source passes are recorded. A self-contained independently versioned candidate PHP plugin, isolated locked JWT dependency, docs, initial CI and deterministic ZIP packaging are on `feat/wordpress-connector`. No existing canonical connector repository was found; a separate repository could not be created through current tools/browser sign-in.
