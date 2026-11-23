@@ -3,7 +3,7 @@
     "php": "8.4.27",
     "woocommerce": "11.3.1",
     "site": "https:\/\/127.0.0.1:8441",
-    "assertions": 36,
+    "assertions": 37,
     "passed": [
         "versioned migration idempotent",
         "callback preserves site path",
@@ -28,6 +28,7 @@
         "one-use state consumed",
         "callback state replay rejected",
         "independent WP sessions created",
+        "link-session rotation removes previous token and preserves unrelated device",
         "unrelated sid cannot clear session",
         "matching backchannel destroys corresponding WP session",
         "another device remains signed in",

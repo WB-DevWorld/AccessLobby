@@ -1,10 +1,11 @@
 {
-    "assertions": 16,
+    "assertions": 19,
     "passed": [
         "post-registration hook cannot elevate JIT user",
         "unsafe JIT transaction leaves no orphan user",
         "missing durable audit denies account creation",
         "audit failure rolls back account and mapping",
+        "unreadable revocation state fails closed rather than meaning absent",
         "missing durable audit denies unlink",
         "unlink audit failure preserves active mapping",
         "readiness identifies custom privileged capabilities",
@@ -15,6 +16,8 @@
         "emergency issuance retains incident reference hash",
         "emergency ticket excluded from audit values",
         "enforcement fails closed before migration readiness",
+        "incomplete database upgrade cannot report successful schema",
+        "failed schema upgrade retains prior version for repair",
         "version-one schema upgrades idempotently",
         "schema upgrade preserves existing identity ownership"
     ]

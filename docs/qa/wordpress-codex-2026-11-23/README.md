@@ -1,17 +1,30 @@
 # Codex comparison: WordPress runtime evidence — 2026-11-23
 
-Common starting head: `92afbb261672401426aa4d8d3ad36f2e81ac13fd`; independent branch `feat/wordpress-codex-comparison`. The owner's renewed instruction explicitly authorizes continued work alongside Cursor. Neither candidate is selected or merged by these results.
+Common starting head: `92afbb261672401426aa4d8d3ad36f2e81ac13fd`; independent branch `feat/wordpress-codex-comparison`, draft PR61. The owner explicitly authorized continued work alongside Cursor. PR60/handoff remains preserved; neither candidate is selected, merged or deployed by these results.
 
-A local isolated fixture used actual Keycloak 26.7.0 over HTTPS, unchanged AccessLobby API source plus PostgreSQL 17.12, MariaDB 11.8.6, PHP 8.4.27, WordPress 7.1.5 and WooCommerce 11.3.1. Site A is a root installation with WooCommerce; Site B is a separate database/client under `/gh/`. Loopback certificates are trusted explicitly by server transports; no production TLS check is disabled. Registry review/DNS rows and people are disposable fixtures, not live onboarding evidence.
+## Proven runtime
 
-- WordPress/Woo database suite: 36 assertions PASS.
-- Independent subdirectory WordPress database suite: 34 assertions PASS.
-- Adversarial hook/audit/recovery/schema tests: 16 per site PASS.
-- Actual HTTP Code/PKCE/JWKS/identity/admission/link/SSO/logout flow: eight cases PASS. Existing Woo customer history/roles remain; quiet second-site SSO creates a different local user/role; local-only logout leaves B active; real issuer backchannel ends matching sessions on A and B; issuer re-entry subsequently requires authentication.
-- Protocol unit baseline remains 39 tests/44 assertions PASS; PHPStan level5 and configured WordPress coding/security checks pass locally.
+The isolated fixtures use actual HTTPS Keycloak26.7.0, unchanged AccessLobby API source plus PostgreSQL, real WordPress/MariaDB and independently registered root and `/gh/` installations. Site A has WooCommerce on the current WP7.1.5 matrix; the patched WP6.9.12 matrix is plain WordPress because current Woo11.3.1 requires WP7.0+. Loopback certificates are explicitly trusted; production TLS checking is never disabled. Synthetic registry/DNS-review records are test prerequisites, not domain/publisher onboarding evidence. The two installs have separate databases/clients/user IDs and origin ports; public cross-domain estate adoption remains a separate gate.
 
-The local Chromium launch was blocked by the workspace's prohibited Unix socket. HTTP protocol results are deliberately not called browser UI results. A separate real browser CI matrix is added for WordPress 7.1.5/PHP8.4 and patched minimum-line WordPress 6.9.12/PHP8.3. It must pass before claiming that qualification.
+At `1802e18bb1f86992428b61c8db6ba44412944a76`, the WP7.1.5/PHP8.4/Woo11.3.1 Chromium job passes **27 cases**: hybrid local login, fresh customer/admin dual proof, session rotation, quiet second-site SSO, local/shared signed backchannel logout, verified peer Join, migration/readiness, HTTPS recovery/replay, enforced core/admin/My Account/frontend entry, original destination, local authorization denial, a real guest order without an account, outage/prerequisite faults, and rollback/reactivation. [WordPress workflow](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45254815855). The general API/UI/PWA/offline/update/container/proxy workflow also passes at this head: [CI](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45254815967). PHP8.3/8.4/8.5 protocol/package jobs pass. Exact later-head results and package hashes are retained by CI; `build.json` records revision and archive hashes.
 
-Enforced-mode full UI, guest purchase, real emergency HTTPS redemption, actual licensed WoodMart/B2BKing and controlled estate rollout remain distinct acceptance work. External privacy/onboarding remains closed, and multisite is explicitly unsupported. No live server/client/production state was modified.
+The WP6.9.12/PHP8.3 real browser suite passes at `93eae64e0e73c895058e832b4de74420ba4cd175`: [workflow](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45253869624). Current-head runs also cover rollback and source/package metadata/HTTPS-home validation. Consult their exact job result rather than inferring a new-head pass from an earlier one.
 
-Runtime package tested: alpha.2, SHA-256 `0b9fe5a24afcdf0de5d9141584dc38f161cba00c26c11c958136d9f74e064aa7`. This identifies the runtime bytes in this run; later runtime source edits require a new hash/result. Tests/harness can evolve separately and are tracked in Git.
+## Committed local categorical reports
+
+Native PHP8.4.27 / WP7.1.5 / Woo11.3.1 / MariaDB11.8.6 / PostgreSQL17.12 evidence in this directory:
+
+- Database suite: 37 root/Woo + 35 subdirectory assertions PASS.
+- Adversarial hooks/audit/revocation/recovery/schema checks: 19 per site PASS.
+- Three independent-process JIT/link/state races PASS.
+- Seventeen real HTTP authentication/identity/admission/link/verified-Join/SSO/logout/enforced/recovery/outage/fault cases PASS.
+- Normal ZIP lifecycle/uninstall/reinstall preserves users, mappings and orders on both sites.
+- Unit baseline: 39 tests / 44 assertions PASS; PHPStan5 and configured WordPress coding/security checks pass.
+
+These native reports test package SHA256 `2d0fcea9cba31a02782327b63896291863bb53ae4f3b203940fd377ecba83cf9`. All 48 packaged files were compared byte-for-byte against runtime/docs files at `93eae64e0e73c895058e832b4de74420ba4cd175`, with zero mismatches. The final HTTPS-home guard adds one assertion per database suite; its subsequent CI result is separate.
+
+Local Chromium cannot launch under this workspace's Unix-socket restriction. Native HTTP results are explicitly labeled `HTTP_PROTOCOL_NOT_BROWSER_UI`; browser evidence comes from actual remote Chromium CI. Only categorical JSON is retained/uploaded. Private credentials, realm imports, mail verification links and raw runtime logs are excluded.
+
+## Limits
+
+No live CETECH/FLAIROC host, client/IAM configuration, production storefront or main branch was changed. Licensed WoodMart/B2BKing/mobile/cache/security-plugin qualification and controlled real-host backup/recovery remain outstanding. Arbitrary external publisher activation remains closed; token-wide pairwise identity/consent/onboarding and independent external pilot are not implemented. Multisite is unsupported. This is a reviewable first-party candidate, not a completed estate rollout or universal WordPress release. [Fair comparison criteria](../../wordpress-candidate-comparison.md).

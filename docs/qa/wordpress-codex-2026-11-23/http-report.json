@@ -4,12 +4,12 @@
     {
       "name": "local WordPress login preserves legacy customer",
       "status": "PASS",
-      "milliseconds": 648
+      "milliseconds": 695
     },
     {
       "name": "fresh real IAM dual proof links original WP customer",
       "status": "PASS",
-      "milliseconds": 667
+      "milliseconds": 589
     },
     {
       "name": "quiet OIDC re-entry restores original protected target",
@@ -38,6 +38,11 @@
     },
     {
       "name": "shared logout ends quiet re-entry for this browser session",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "peer Join verifies email before one safe local account and repeat SSO reuses it",
       "status": "PASS",
       "milliseconds": 0
     },
@@ -73,6 +78,11 @@
     },
     {
       "name": "API outage fails new enforced sign-in closed and preserves existing local session policy",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "missing prerequisite fault keeps enforced local authentication closed",
       "status": "PASS",
       "milliseconds": 0
     }

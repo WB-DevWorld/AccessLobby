@@ -27,6 +27,10 @@ $store->migrate();
 $store->migrate();
 $check( '2' === get_option( 'accesslobby_schema' ), 'versioned migration idempotent' );
 $check( str_contains( Config::route( 'callback' ), parse_url( site_url(), PHP_URL_PATH ) ?: '/' ), 'callback preserves site path' );
+$original_home = get_option( 'home' );
+update_option( 'home', 'http://unsafe-fixture.example.test' );
+try { $denied( fn() => Config::validate( $c ), 'HTTP public home cannot weaken HTTPS callback and destination policy' ); }
+finally { update_option( 'home', $original_home ); }
 
 $suffix = substr( wp_generate_uuid4(), 0, 8 );
 $legacy = wp_insert_user( array( 'user_login' => 'legacy_' . $suffix, 'user_pass' => wp_generate_password( 40 ),
@@ -134,6 +138,9 @@ $check( get_userdata( $legacy )->ID === $legacy && get_userdata( $legacy )->role
 $check( ! str_contains( wp_json_encode( $wpdb->get_results( 'SELECT * FROM ' . $store->table( 'audit' ), ARRAY_A ) ), $first_token ), 'session token never appears in audit' );
 
 $result = array( 'wordpress' => get_bloginfo( 'version' ), 'php' => PHP_VERSION, 'woocommerce' => defined( 'WC_VERSION' ) ? WC_VERSION : null,
+	'theme' => array( 'name' => wp_get_theme()->get( 'Name' ), 'version' => wp_get_theme()->get( 'Version' ) ),
+	'pluginVersion' => ACCESSLOBBY_WP_VERSION, 'database' => $wpdb->db_version(), 'activePlugins' => get_option( 'active_plugins' ),
+	'hpos' => class_exists( 'Automattic\\WooCommerce\\Utilities\\OrderUtil' ) ? Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled() : null,
 	'site' => site_url(), 'assertions' => count( $passed ), 'passed' => $passed );
 if ( getenv( 'ALWP_INTEGRATION_RESULT' ) ) { file_put_contents( getenv( 'ALWP_INTEGRATION_RESULT' ), wp_json_encode( $result, JSON_PRETTY_PRINT ) ); }
 WP_CLI::line( wp_json_encode( $result, JSON_PRETTY_PRINT ) );

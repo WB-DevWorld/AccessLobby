@@ -81,6 +81,7 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       ALWP_DISPOSABLE_FIXTURE: '1'
+      ALWP_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       DATABASE_URL: postgres://accesslobby:fixture-only-password@127.0.0.1:5432/accesslobby
       ALWP_MYSQL_HOST: 127.0.0.1
       ALWP_MYSQL_PORT: '3306'
@@ -132,5 +133,6 @@ jobs:
             ${{ runner.temp }}/alwp/qualification-*/security-*.json
             ${{ runner.temp }}/alwp/qualification-*/lifecycle-*.json
             ${{ runner.temp }}/alwp/qualification-*/concurrency.json
+            ${{ runner.temp }}/alwp/qualification-*/build.json
           if-no-files-found: warn
           retention-days: 14

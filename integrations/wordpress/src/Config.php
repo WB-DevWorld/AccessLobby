@@ -27,6 +27,7 @@ final class Config {
 		Security::endpoint( $c['issuer'] );
 		Security::endpoint( $c['api'] );
 		Security::endpoint( site_url() );
+		Security::endpoint( home_url() );
 		if ( ! preg_match( '/^[a-z][a-z0-9_-]{2,79}$/D', $c['client_id'] ) || ! in_array( $c['mode'], array( 'hybrid', 'enforced' ), true ) ) {
 			throw new Failure( 'invalid_configuration' );
 		}

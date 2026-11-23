@@ -19,6 +19,7 @@ import uuid
 import zipfile
 import ssl
 import importlib.util
+import hashlib
 from urllib.parse import urlparse
 
 parser = argparse.ArgumentParser()
@@ -43,6 +44,16 @@ wp_cli = str(runtime / 'wp-cli.phar')
 children = []
 logs = []
 proxies = []
+metadata = {
+    'sourceRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
+    'candidateRevision': env.get('ALWP_CANDIDATE_SHA'),
+    'sourceDirty': bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=repo, text=True).strip()),
+    'packageSha256': hashlib.sha256(args.package.read_bytes()).hexdigest(),
+    'wordpressArchiveSha256': hashlib.sha256((runtime / 'wordpress.zip').read_bytes()).hexdigest(),
+    'wooEnabled': env.get('ALWP_WITH_WOO', 'true') == 'true',
+    'keycloakDistribution': args.keycloak_home.name,
+}
+(work / 'build.json').write_text(json.dumps(metadata, indent=2) + '\n')
 
 def run(command, *, cwd=None, input=None, extra=None, quiet=False, stream=False):
     result = subprocess.run([str(x) for x in command], cwd=cwd, input=input, text=True,
