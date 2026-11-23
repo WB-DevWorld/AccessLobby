@@ -1,0 +1,192 @@
+{
+  "engine": "actual Keycloak + unchanged AccessLobby API + real WordPress/WooCommerce",
+  "sites": [
+    {
+      "label": "a",
+      "base": "https://127.0.0.1:8441",
+      "client": "wordpress-a"
+    },
+    {
+      "label": "b",
+      "base": "https://127.0.0.1:8442/gh",
+      "client": "wordpress-b"
+    }
+  ],
+  "cases": [
+    {
+      "name": "hybrid core login exposes AccessLobby and preserves local form",
+      "status": "PASS",
+      "milliseconds": 193
+    },
+    {
+      "name": "hybrid local customer login retains original local account",
+      "status": "PASS",
+      "milliseconds": 1011
+    },
+    {
+      "name": "hybrid custom password frontend can issue an ordinary local cookie",
+      "status": "PASS",
+      "milliseconds": 337
+    },
+    {
+      "name": "fresh dual proof links existing WordPress user",
+      "status": "PASS",
+      "milliseconds": 2389
+    },
+    {
+      "name": "site-only logout clears WP without automatically re-entering",
+      "status": "PASS",
+      "milliseconds": 372
+    },
+    {
+      "name": "quiet SSO re-entry preserves original protected destination",
+      "status": "PASS",
+      "milliseconds": 659
+    },
+    {
+      "name": "second independent subdirectory WP reuses IAM session without credentials",
+      "status": "PASS",
+      "milliseconds": 1720
+    },
+    {
+      "name": "site-only logout on A leaves independent B session active",
+      "status": "PASS",
+      "milliseconds": 436
+    },
+    {
+      "name": "subdirectory repeat login resolves exactly one local account",
+      "status": "PASS",
+      "milliseconds": 1069
+    },
+    {
+      "name": "WordPress sessions use Secure and HttpOnly cookies over HTTPS",
+      "status": "PASS",
+      "milliseconds": 1
+    },
+    {
+      "name": "callback rejects missing state without creating a session",
+      "status": "PASS",
+      "milliseconds": 146
+    },
+    {
+      "name": "unsigned backchannel cannot destroy another WP session",
+      "status": "PASS",
+      "milliseconds": 134
+    },
+    {
+      "name": "actual issuer logout invalidates matching sessions on both WP peers",
+      "status": "PASS",
+      "milliseconds": 1083
+    },
+    {
+      "name": "all-app logout ends quiet IAM re-entry",
+      "status": "PASS",
+      "milliseconds": 206
+    },
+    {
+      "name": "peer Join verifies email before creating exactly one safe local account",
+      "status": "PASS",
+      "milliseconds": 2792
+    },
+    {
+      "name": "enforced migration gate refuses an unprepared administrator",
+      "status": "PASS",
+      "milliseconds": 1782
+    },
+    {
+      "name": "existing administrator links explicitly without claim-based elevation",
+      "status": "PASS",
+      "milliseconds": 1388
+    },
+    {
+      "name": "HTTPS emergency ticket creates only the intended short admin session",
+      "status": "PASS",
+      "milliseconds": 918
+    },
+    {
+      "name": "linked admin enables enforced mode only after readiness acknowledgements",
+      "status": "PASS",
+      "milliseconds": 1103
+    },
+    {
+      "name": "enforced cookie guard denies a valid local-password frontend that bypasses authenticate",
+      "status": "PASS",
+      "milliseconds": 368
+    },
+    {
+      "name": "host recovery can issue a short administrator cookie while enforcement is active",
+      "status": "PASS",
+      "milliseconds": 616
+    },
+    {
+      "name": "Application Password REST authentication follows its explicit machine policy",
+      "status": "PASS",
+      "milliseconds": 1072
+    },
+    {
+      "name": "enforced wp-login automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 224
+    },
+    {
+      "name": "enforced wp-admin automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 188
+    },
+    {
+      "name": "enforced generic frontend automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 277
+    },
+    {
+      "name": "enforced protected journey preserves its original destination and local permission",
+      "status": "PASS",
+      "milliseconds": 559
+    },
+    {
+      "name": "identity API outage fails new enforced login closed and leaves existing sessions usable",
+      "status": "PASS",
+      "milliseconds": 1066
+    },
+    {
+      "name": "missing prerequisite fault cannot reopen enforced local password login",
+      "status": "PASS",
+      "milliseconds": 655
+    },
+    {
+      "name": "authorized rollback restores local login and enforced reactivation ends rollback sessions",
+      "status": "PASS",
+      "milliseconds": 1929
+    },
+    {
+      "name": "subdirectory enforced core starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 178
+    },
+    {
+      "name": "subdirectory enforced admin starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 253
+    },
+    {
+      "name": "subdirectory enforced frontend starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 291
+    },
+    {
+      "name": "subdirectory enforced callback preserves protected destination and original local account",
+      "status": "PASS",
+      "milliseconds": 1184
+    },
+    {
+      "name": "enforced shared logout ends matching peer sessions and preserves another IAM browser device",
+      "status": "PASS",
+      "milliseconds": 1929
+    },
+    {
+      "name": "unavailable backchannel peer retains a bounded session and shared IAM still ends",
+      "status": "PASS",
+      "milliseconds": 2680
+    }
+  ]
+}

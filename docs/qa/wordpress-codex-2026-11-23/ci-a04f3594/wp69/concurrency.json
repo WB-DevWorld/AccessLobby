@@ -1,0 +1,17 @@
+{
+  "evidenceType": "REAL_WORDPRESS_DATABASE_CONCURRENCY",
+  "cases": [
+    {
+      "name": "concurrent JIT resolves exactly one local user and durable mapping",
+      "status": "PASS"
+    },
+    {
+      "name": "conflicting concurrent links give one winner and one closed conflict",
+      "status": "PASS"
+    },
+    {
+      "name": "concurrent callback state consumption succeeds once",
+      "status": "PASS"
+    }
+  ]
+}

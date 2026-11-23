@@ -2,7 +2,15 @@
 
 Common starting head: `92afbb261672401426aa4d8d3ad36f2e81ac13fd`; independent branch `feat/wordpress-codex-comparison`, draft PR61. The owner explicitly authorized continued work alongside Cursor. PR60/handoff remains preserved; neither candidate is selected, merged or deployed by these results.
 
-## Proven runtime
+## Current retained acceptance
+
+The final comparison qualification is in [ACCEPTANCE.md](ACCEPTANCE.md). Candidate `a04f35944b9c3af304d9cdfda89650cbb6770c21` passes all six WordPress workflow jobs: PHP8.3/8.4/8.5 protocol/static/coding/package; real WP7.1.5/Woo11.3.1 classic CPT on PHP8.4; real WP7.1.5/Woo11.3.1 HPOS on PHP8.3; and plain WP6.9.12 on PHP8.3. Each lane uses two independently registered installations and an independent `/gh/` site. The Woo lanes each pass 39 browser cases; plain WP passes 35. General API/UI/PWA/IAM/container/proxy regression and branded-IAM CI pass at the same candidate.
+
+Exact immutable ZIP SHA256: `3fd9652455522eb23d50f04b161f529b0a656805bebddf5b0c69a3f489fba81c`. All 48 files match the tested source. Sanitized, revision-bound reports under `ci-a04f3594` survive artifact expiry. Public read-only health and package-byte proofs are separate JSON records. Older counts below are historical increments; no old result is used to infer a later-head pass.
+
+The installed compatibility guide conservatively records the HPOS lane as pending at package freeze. The later passing CI reports above establish its bounded fixture qualification without changing those tested package bytes. They do not certify Checkout Blocks, proprietary themes/extensions, real estate deployment or arbitrary external publishers.
+
+## Historical incremental runtime
 
 The isolated fixtures use actual HTTPS Keycloak26.7.0, unchanged AccessLobby API source plus PostgreSQL, real WordPress/MariaDB and independently registered root and `/gh/` installations. Site A has WooCommerce on the current WP7.1.5 matrix; the patched WP6.9.12 matrix is plain WordPress because current Woo11.3.1 requires WP7.0+. Loopback certificates are explicitly trusted; production TLS checking is never disabled. Synthetic registry/DNS-review records are test prerequisites, not domain/publisher onboarding evidence. The two installs have separate databases/clients/user IDs and origin ports; public cross-domain estate adoption remains a separate gate.
 

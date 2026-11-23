@@ -1,0 +1,10 @@
+{
+  "sourceRevision": "387b9029dcca68c1fff1ba11aa29079b13b98f13",
+  "candidateRevision": "a04f35944b9c3af304d9cdfda89650cbb6770c21",
+  "sourceDirty": false,
+  "packageSha256": "3fd9652455522eb23d50f04b161f529b0a656805bebddf5b0c69a3f489fba81c",
+  "wordpressArchiveSha256": "35d12b6e9b82bd71f7b34b5e64e029daff5c91936a5969cd0b3214df470bfb0a",
+  "wooEnabled": false,
+  "hposRequested": false,
+  "keycloakDistribution": "keycloak-26.7.0"
+}
