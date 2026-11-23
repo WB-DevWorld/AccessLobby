@@ -17,14 +17,19 @@ args.output.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(args.output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
     for file in sorted(files):
         assert file.is_file(), file
-        info = zipfile.ZipInfo("accesslobby-sso/" + str(file.relative_to(root)), date_time=(2026, 11, 23, 0, 0, 0))
+        relative = file.relative_to(root).as_posix()
+        if "\\" in relative or relative.startswith("/") or ".." in relative.split("/"):
+            raise RuntimeError("Archive path must stay inside the plugin with POSIX separators")
+        info = zipfile.ZipInfo("accesslobby-sso/" + relative, date_time=(2026, 11, 23, 0, 0, 0))
         info.external_attr = 0o100644 << 16
         info.compress_type = zipfile.ZIP_DEFLATED
         archive.writestr(info, file.read_bytes())
 with zipfile.ZipFile(args.output) as archive:
+    names = archive.namelist()
     assert archive.testzip() is None
-    assert "accesslobby-sso/accesslobby-sso.php" in archive.namelist()
-    assert not any("/tests/" in name or "/vendor/" in name or ".env" in name for name in archive.namelist())
+    assert "accesslobby-sso/accesslobby-sso.php" in names
+    assert all("\\" not in name and name.startswith("accesslobby-sso/") for name in names)
+    assert not any("/tests/" in name or "/vendor/" in name or ".env" in name for name in names)
 digest = hashlib.sha256(args.output.read_bytes()).hexdigest()
 args.output.with_suffix(".zip.sha256").write_text(digest + "  " + args.output.name + "\n")
 print(args.output, digest)
