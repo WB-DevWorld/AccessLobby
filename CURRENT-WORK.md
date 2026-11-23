@@ -2,6 +2,8 @@
 
 ## WordPress alpha.4 qualification — 2026-11-23 UTC
 
+Release tooling now uses portable ZIP paths/order, rejects symlinks/backslashes and fixes LF/binary checkout policy. A dedicated Windows packaging CI job checks every archived byte against Git; actual Windows WordPress runtime is not implied. The canonical Linux ZIP remains byte-identical.
+
 Implementation 7c9ec8c8985939addb17ccf1e25bd8313c652eb3 passes all 11 CI jobs. The five real HTTPS two-WordPress matrices pass 62 browser cases per Woo lane (current classic/HPOS, reported CETECH versions, Kadence/reported FLAIROC versions) and 58 on plain WP6.9. Each now proves SSO and both logout scopes in both directions with a real independent reference consumer, its separate local account/resource policy, and another browser's survival. Native HTTP 24 cases pass separately. Source, actual merge checkout and exact ZIP hashes are retained; supplementary native build metadata explicitly records its pre-commit dirty tree.
 
 Alpha.4 adds migrations005/006/007: opaque per-session reconciliation with normally 30-second checks and at most 90 seconds of outage grace, narrowly typed WordPress registry URLs that work through real onboarding/provisioning, and closed external app-subject/consent preparation. Web/reference shared logout marks only its own verified browser session before issuer logout. Missing backchannel, legacy API negotiation, malformed receipt and slow-failure grace bounds are tested. The API's logout event validation also rejects nonempty/array event values. Existing identity, local roles/commerce and PWA cache/update contracts remain intact.

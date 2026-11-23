@@ -1,13 +1,43 @@
 name: WordPress connector
 on:
   pull_request:
-    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml']
+    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml', '.gitattributes']
   push:
     branches: [main]
-    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml']
+    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml', '.gitattributes']
 permissions:
   contents: read
 jobs:
+  windows-package:
+    name: Windows installable ZIP
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: integrations/wordpress
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with native Windows Python and check exact Git source bytes
+        run: |
+          python scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.4.zip
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess, zipfile
+          package = Path('dist/accesslobby-sso-0.1.0-alpha.4.zip')
+          with zipfile.ZipFile(package) as archive:
+              assert archive.testzip() is None
+              assert not any('\\' in name for name in archive.namelist())
+              for name in archive.namelist():
+                  relative = name.removeprefix('accesslobby-sso/')
+                  canonical = subprocess.check_output(['git', 'show', 'HEAD:integrations/wordpress/' + relative])
+                  assert archive.read(name) == canonical, 'Packaged content differs from the Git source'
+          print('WINDOWS_PACKAGE_PASS portable ZIP entries and exact committed runtime bytes')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: accesslobby-wordpress-pilot-windows
+          path: integrations/wordpress/dist/
+          retention-days: 14
   protocol:
     name: PHP ${{ matrix.php }} protocol and package
     runs-on: ubuntu-latest

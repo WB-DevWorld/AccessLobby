@@ -8,7 +8,7 @@
 |---|---|
 | Canonical source | WB-DevWorld/AccessLobby; independently versioned plugin at integrations/wordpress |
 | Our branch / PR | feat/wordpress-codex-comparison / [draft PR61](https://github.com/WB-DevWorld/AccessLobby/pull/61) |
-| Tested implementation | `7c9ec8c8985939addb17ccf1e25bd8313c652eb3`; later evidence-only commits preserve all packaged bytes |
+| Tested implementation | `7c9ec8c8985939addb17ccf1e25bd8313c652eb3`; later release-tooling/evidence commits preserve all packaged bytes |
 | Common Cursor handoff | `92afbb261672401426aa4d8d3ad36f2e81ac13fd` |
 | Other candidate | Cursor [PR60](https://github.com/WB-DevWorld/AccessLobby/pull/60), observed 948018e9; separate and unmodified by this lane |
 | Main / public staging API | `3d9220a140d61df5effe633bc72cf5142c4a8371`; read-only web200, live200/ok, ready200/ready and exact issuer discovery at 23:33 UTC |
@@ -113,3 +113,8 @@ The review bundle contains the installable ZIP/hash, this report, retained evide
 4. Move to a canonical standalone connector repository only with governance/tool access and preserve history/versioned packaging; stage immutable AccessLobby images through existing protected-main procedures after candidate selection.
 
 No percentage or universal compatibility claim substitutes for those unresolved gates.
+
+
+## Release tooling portability
+
+The builder now sorts by portable relative paths, uses POSIX ZIP entry names on Windows and refuses symlinks/backslash entries. Git text files are LF on each platform while known binary types remain binary. A dedicated native Windows packaging job compares every ZIP member against committed Git bytes; its result is recorded in the final review bundle LATEST-CHECKS.json and PR checks. Linux rebuilt the exact same906f9044 ZIP after this tooling-only correction. This does not claim WordPress/PHP browser runtime on Windows is qualified.
