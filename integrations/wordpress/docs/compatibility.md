@@ -5,9 +5,9 @@ This alpha supports reviewed first-party pilots. QUALIFIED below means the liste
 | Surface/environment | Status | Evidence / remaining gate |
 |---|---|---|
 | PHP 8.3 / 8.4 / 8.5 protocol, static, coding and packaging | QUALIFIED (bounded) | 39 unit tests / 44 assertions per job, locked dependency audit, PHPStan5 and WordPress coding/security rules in CI |
-| WP7.1.5 / PHP8.4 / Woo11.3.1 classic CPT root + independent plain `/gh/` installation | QUALIFIED (fixture) | Actual HTTPS IAM/API/Chromium; 39 browser cases at `59f559aebfe651cbaeb5391e498f08798e29ae72` |
-| WP6.9.12 / PHP8.3 plain root + independent `/gh/` | QUALIFIED (fixture) | 35 real IAM/API/browser cases at `59f559aebfe651cbaeb5391e498f08798e29ae72`; includes enforced/Join/link/SSO/logout/recovery/fault/rollback |
-| WP7.1.5 / PHP8.3 / Woo11.3.1 HPOS root + independent plain `/gh/` | PARTIALLY QUALIFIED | Public compatibility declaration and explicit CI storage lane added; consult the latest retained CI report before treating HPOS as qualified |
+| WP7.1.5 / PHP8.4 / Woo11.3.1 classic CPT root + independent plain `/gh/` installation | QUALIFIED (fixture) | Actual HTTPS IAM/API/Chromium; 55 browser cases at `dccc000530e03f50103c2ea45d03ef7714d6e27b` (alpha.3) |
+| WP6.9.12 / PHP8.3 plain root + independent `/gh/` | QUALIFIED (fixture) | 51 real IAM/API/browser cases at `dccc000530e03f50103c2ea45d03ef7714d6e27b` (alpha.3); includes enforced/Join/link/SSO/logout/recovery/fault/rollback |
+| WP7.1.5 / PHP8.3 / Woo11.3.1 HPOS root + independent plain `/gh/` | QUALIFIED (fixture) | 55 browser cases and data preservation at alpha.3 `dccc0005`; current increment needs its own run |
 | Current Woo11.3.1 on WP6.9 | UNSUPPORTED | Woo's own package requires WP7.0+; plain WP6.9 is tested separately |
 | Hybrid and enforced core/admin/protected/frontend login | QUALIFIED (fixture) | Real local login, fresh linking, automatic SSO, safe original destination and local 403 authorization |
 | Existing customer/order/address ownership, safe JIT, explicit linking | QUALIFIED (fixture) | Real WP/Woo APIs; no email merge, unchanged local IDs/roles/metadata and orders |
@@ -18,7 +18,7 @@ This alpha supports reviewed first-party pilots. QUALIFIED below means the liste
 | Install/deactivate/reactivate/schema upgrade/uninstall/reinstall | QUALIFIED (fixture) | Normal ZIP/WP-CLI lifecycle; users, mappings, orders retained; denied partial schema upgrade tested |
 | Secure/HttpOnly cookies and private dynamic account pages | QUALIFIED (fixture) | HTTPS browser checks; production proxy/CDN exclusions remain a site gate |
 | Generic account shortcode / wp_login_form frontend | QUALIFIED (fixture) | Native WordPress form/account actions exercised without theme-source edits |
-| Login/Join shortcode, block/editor, template/API helpers | PARTIALLY QUALIFIED | Runtime source exists and common underlying flow is tested; editor insertion/theme-builder UX needs its own qualification |
+| Login/Join shortcode, dynamic block/editor Journey/save/reload | QUALIFIED (bounded fixture) | Alpha.3 real editor/component persistence; arbitrary inserter/theme-builder UX remains untested |
 | WoodMart + WooCommerce / WoodMart + B2BKing | UNTESTED | Supported hook/conventional-form adapter exists; licensed modal/mobile/account-builder/role/commerce tests outstanding |
 | WPML / WP Rocket / Redis / Cloudflare / Wordfence | UNTESTED | Cache/security requirements documented; actual settings/route/topology tests required |
 | Custom membership plugins/frontends | UNTESTED | Generic API exists; no individual paid-membership plugin certified |
@@ -30,3 +30,5 @@ This alpha supports reviewed first-party pilots. QUALIFIED below means the liste
 Exact current source/package hashes are in each CI runtime artifact's `build.json`; detailed reports are under repository `docs/qa/wordpress-codex-2026-11-23`. Later source changes need their own passing run. The latest green candidate still requires controlled estate adoption, independent security review and promotion approval before production. First-party MVP and universal external support are not declared complete.
 
 The HPOS declaration uses WooCommerce's [official compatibility API](https://developer.woocommerce.com/docs/features/orders/high-performance-order-storage/recipe-book/). Fixture order creation, guest checkout and uninstall retention use WooCommerce CRUD in both storage modes; no order-table SQL is part of the connector.
+
+Alpha.4 adds WordPress registry onboarding, optional receipt reconciliation and a closed external identity preview. Its qualification is pending until exact new CI/native reports pass; the preceding alpha.3 proof does not automatically qualify changed source. External native pairwise probes are negative gate tests, never external activation.

@@ -33,6 +33,13 @@ function config(site, changes) {
   wp(site, '$c=get_option("accesslobby_sso");$v=json_decode(base64_decode("' + encoded + '"),true);' +
     'update_option("accesslobby_sso",array_merge($c,$v));');
 }
+function receiptAge(site, user, age) {
+  wp(site, 'global $wpdb;$s=new AccessLobby\\WordPress\\Store($wpdb);' +
+    '$rows=$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}accesslobby_sessions WHERE user_id=%d",' + user + '),ARRAY_A);' +
+    'foreach($rows as $row){$d=AccessLobby\\WordPress\\Security::open($row["sealed_token"]);' +
+    'if(!empty($d["peer_session"])){ $d["last_checked"]=time()-' + age + ';$d["last_attempt"]=time()-31;' +
+    '$s->update_session_private($row["token_key"],$d);}}');
+}
 async function test(name, operation) {
   phase = 'start';
   diagnostic = {};
@@ -225,6 +232,26 @@ try {
     const response = await context.request.post(b.base + '/?rest_route=/accesslobby/v1/backchannel-logout', { form: { logout_token: 'unauthenticated.fake.logout' } });
     assert.equal(response.status(), 400);
     assert.equal(await identity(b), bUser);
+  });
+  for (const variant of ['missing', 'malformed']) await test(variant === 'missing' ?
+    'older API without receipts retains bounded SSO compatibility' : 'malformed advertised receipt fails closed before a WordPress session', async () => {
+    const isolated = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(isolated);
+    const tab = await isolated.newPage();
+    const count = wp(a, 'echo count_users()["total_users"];');
+    wp(a, 'update_option("alwp_fixture_receipt_variant","' + variant + '");');
+    try {
+      await tab.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.account));
+      await tab.locator('#username').fill('shopper'); await tab.locator('#password').fill(fixture.password);
+      await tab.locator('#kc-login').click();
+      if (variant === 'missing') {
+        await tab.waitForURL(a.account); receiptAge(a, a.legacyUser, 95);
+        assert.equal(await identity(a, tab), a.legacyUser);
+      } else {
+        await tab.getByText('invalid_session_receipt', { exact: true }).waitFor();
+        assert.equal(await identity(a, tab), 0);
+      }
+      assert.equal(wp(a, 'echo count_users()["total_users"];'), count);
+    } finally { wp(a, 'delete_option("alwp_fixture_receipt_variant");'); }
   });
   await test('actual issuer logout invalidates matching sessions on both WP peers', async () => {
     await page.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.account));
@@ -526,7 +553,7 @@ try {
     assert.equal(await identity(a, shared), 0); assert.equal(await identity(b, shared), 0);
     assert.equal(await identity(a, other), a.legacyUser);
   });
-  await test('unavailable backchannel peer retains a bounded session and shared IAM still ends', async () => {
+  await test('missed backchannel is reconciled on the next due check before the WordPress cookie expires', async () => {
     const outageContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(outageContext);
     const outage = await outageContext.newPage();
     await outage.goto(b.protected); await iamLogin(outage, 'shopper');
@@ -536,19 +563,46 @@ try {
       await allLogout(a, outage);
       assert(Number(wp(b, 'echo get_option("alwp_fixture_delivery_attempts");')) >= 1);
       assert.equal(await identity(a, outage), 0);
-      assert.equal(await identity(b, outage), bUser);
       const bound = JSON.parse(wp(b, '$sessions=WP_Session_Tokens::get_instance(' + bUser + ')->get_all();echo wp_json_encode(["now"=>time(),"max"=>max(array_column($sessions,"expiration"))]);'));
       assert(bound.max > bound.now && bound.max <= bound.now + 3600);
+      phase = 'force_receipt_due'; receiptAge(b, bUser, 31);
+      assert.equal(await identity(b, outage), 0);
+      assert(Number(wp(b, 'global $wpdb;echo $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}accesslobby_audit WHERE event=\'session_reconciled_ended\'");')) >= 1);
     } finally { wp(b, 'delete_option("alwp_fixture_backchannel_outage");'); }
     await siteLogout(b, outage);
     await outage.goto(b.base + '/wp-login.php?action=al_start');
     await outage.locator('#username').waitFor();
   });
+  await test('receipt outage grants bounded grace, then denies access and resumes the same cookie after recovery', async () => {
+    const isolated = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(isolated);
+    const tab = await isolated.newPage();
+    await tab.goto(a.protected); await iamLogin(tab, 'shopper');
+    assert.equal(await identity(a, tab), a.legacyUser);
+    const cookiesBefore = await isolated.cookies(a.base);
+    const cookie = cookiesBefore.find(c => c.name.startsWith('wordpress_logged_in_'));
+    assert(cookie);
+    const sessionsBefore = wp(a, 'echo hash("sha256",wp_json_encode(WP_Session_Tokens::get_instance(' + a.legacyUser + ')->get_all()));');
+    wp(a, 'update_option("alwp_fixture_receipt_outage",1);');
+    try {
+      phase = 'within_grace'; receiptAge(a, a.legacyUser, 45);
+      assert.equal(await identity(a, tab), a.legacyUser);
+      phase = 'grace_expired'; receiptAge(a, a.legacyUser, 95);
+      assert.equal(await identity(a, tab), 0);
+      const still = (await isolated.cookies(a.base)).find(c => c.name === cookie.name);
+      assert(still && still.value === cookie.value);
+      assert.equal(wp(a, 'echo hash("sha256",wp_json_encode(WP_Session_Tokens::get_instance(' + a.legacyUser + ')->get_all()));'), sessionsBefore);
+    } finally { wp(a, 'delete_option("alwp_fixture_receipt_outage");'); }
+    phase = 'service_recovered'; receiptAge(a, a.legacyUser, 95);
+    assert.equal(await identity(a, tab), a.legacyUser);
+    assert.equal(wp(a, 'echo hash("sha256",wp_json_encode(WP_Session_Tokens::get_instance(' + a.legacyUser + ')->get_all()));'), sessionsBefore);
+    const recovered = (await isolated.cookies(a.base)).find(c => c.name === cookie.name);
+    assert(recovered && recovered.value === cookie.value);
+  });
   await qualifyUpgrade({ test, browser, browsers, fixture, a, wp, wpCommand, iamLogin, identity,
     stage: value => { phase = value; }, diagnose: value => { diagnostic = value; } });
 } finally {
   writeFileSync(fixture.artifactDir + '/browser-report.json', JSON.stringify({
-    engine: 'actual Keycloak + unchanged AccessLobby API + real WordPress/WooCommerce',
+    engine: 'actual Keycloak + AccessLobby API + real WordPress/WooCommerce',
     sites: fixture.sites.map(s => ({ label: s.label, base: s.base, client: s.client })), cases,
   }, null, 2) + '\n');
   for (const ctx of browsers) await ctx.close();

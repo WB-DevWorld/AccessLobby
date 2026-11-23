@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-alpha.4 — 2026-11-23
+
+- Negotiate optional opaque AccessLobby session receipts, seal them server-side and check fresh SSO sessions for durable shared logout, application admission and identity suspension.
+- Record shared-browser logout before issuer redirection; preserve legacy bounded sessions during API/plugin rollout and emergency/machine authentication.
+- Use a 30-second check interval and at most 90 seconds of already-authenticated outage grace; never extend existing session expiry.
+
 ## 0.1.0-alpha.3 — 2026-11-23
 
 - Restrict enforced-mode frontend submit interception to supported forms with credential fields; an unrelated form class cannot initiate SSO.

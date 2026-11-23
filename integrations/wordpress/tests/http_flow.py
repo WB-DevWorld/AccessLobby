@@ -65,6 +65,13 @@ def wp(site, code):
     return result.stdout.strip()
 
 
+def receipt_age(site, user, age):
+    wp(site, 'global $wpdb;$s=new AccessLobby\\WordPress\\Store($wpdb);' +
+       '$rows=$wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}accesslobby_sessions WHERE user_id=%d",' + str(user) + '),ARRAY_A);' +
+       'foreach($rows as $r){$d=AccessLobby\\WordPress\\Security::open($r["sealed_token"]);if(!empty($d["peer_session"])){' +
+       '$d["last_checked"]=time()-' + str(age) + ';$d["last_attempt"]=time()-31;$s->update_session_private($r["token_key"],$d);}}')
+
+
 def check(name, operation):
     started = time.monotonic()
     operation()
@@ -124,6 +131,48 @@ try:
     page = request(b['base'] + '/wp-login.php?action=al_start')
     assert 'kc-form-login' in page[1]
     check('shared logout ends quiet re-entry for this browser session', lambda: None)
+    page = submit(page, form(page, lambda f: f['id'] == 'kc-form-login'), {'username': 'shopper', 'password': fixture['password']})
+    assert account(b) == b_user
+    request(a['base'] + '/wp-login.php?action=al_start')
+    assert account(a) == a['legacyUser']
+    wp(b, 'update_option("alwp_fixture_backchannel_outage",1);update_option("alwp_fixture_delivery_attempts",0);')
+    try:
+        logout(a, 'all')
+        assert int(wp(b, 'echo get_option("alwp_fixture_delivery_attempts");')) >= 1
+        receipt_age(b, b_user, 31)
+        assert account(b) == 0, 'Missed backchannel session was not reconciled'
+    finally:
+        wp(b, 'delete_option("alwp_fixture_backchannel_outage");')
+    check('durable receipt ends a missed-backchannel peer before cookie expiry', lambda: None)
+    page = request(a['base'] + '/wp-login.php?action=al_start')
+    page = submit(page, form(page, lambda f: f['id'] == 'kc-form-login'), {'username': 'shopper', 'password': fixture['password']})
+    assert account(a) == a['legacyUser']
+    wp(a, 'update_option("alwp_fixture_receipt_outage",1);')
+    try:
+        receipt_age(a, a['legacyUser'], 45)
+        assert account(a) == a['legacyUser'], 'Bounded receipt grace unavailable'
+        receipt_age(a, a['legacyUser'], 95)
+        assert account(a) == 0, 'Receipt outage did not fail closed after grace'
+    finally:
+        wp(a, 'delete_option("alwp_fixture_receipt_outage");')
+    receipt_age(a, a['legacyUser'], 95)
+    assert account(a) == a['legacyUser'], 'Same cookie did not recover'
+    check('receipt outage grace expires and the same session recovers without a new sign-in', lambda: None)
+    valid_client = client
+    for variant in ['missing', 'malformed']:
+        client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+        wp(a, 'update_option("alwp_fixture_receipt_variant","' + variant + '");')
+        try:
+            page = request(a['base'] + '/wp-login.php?action=al_start')
+            page = submit(page, form(page, lambda f: f['id'] == 'kc-form-login'), {'username': 'shopper', 'password': fixture['password']})
+            if variant == 'missing':
+                assert page[2] == 200 and account(a) == a['legacyUser'], 'Legacy receipt negotiation failed'
+            else:
+                assert page[2] == 400 and 'invalid_session_receipt' in page[1] and account(a) == 0, 'Malformed receipt was accepted'
+        finally:
+            wp(a, 'delete_option("alwp_fixture_receipt_variant");')
+    client = valid_client
+    check('optional receipt rollout accepts absence and rejects a malformed advertised capability', lambda: None)
     original_client = client
     client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
     before_join = wp(a, 'echo count_users()["total_users"];')
@@ -151,7 +200,8 @@ try:
     assert page[0] == a['protected'] and account(a) == joined_id
     assert int(wp(a, 'echo count_users()["total_users"];')) == int(before_join) + 1
     check('peer Join verifies email before one safe local account and repeat SSO reuses it', lambda: None)
-    client = original_client
+    # Staff qualification uses its own browser session, independent of shopper receipt probes.
+    client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
     page = request(a['base'] + '/wp-login.php')
     item = form(page, lambda f: f['id'] == 'loginform')
     page = submit(page, item, {'log': 'fixture_admin', 'pwd': fixture['password'], 'redirect_to': a['account'], 'testcookie': '1'})
@@ -161,7 +211,7 @@ try:
     page = submit(page, item)
     item = form(page, lambda f: f['id'] == 'kc-form-login')
     page = submit(page, item, {'username': 'staff', 'password': fixture['password']})
-    assert page[2] == 200 and account(a) == 1
+    assert page[2] == 200 and account(a) == 1, 'Privileged fresh link failed with HTTP ' + str(page[2])
     check('privileged existing account links by fresh dual proof without role mapping', lambda: None)
     administrator_client = client
     ticket = wp(a, '$s=new AccessLobby\\WordPress\\Store($GLOBALS["wpdb"]);echo AccessLobby\\WordPress\\Emergency::issue($s,1,"127.0.0.1","fixture-http-rehearsal");')

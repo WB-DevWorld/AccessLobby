@@ -8,7 +8,7 @@ import { getCurrentIdentity, identityApi } from '@/lib/current-identity';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Developer tools', robots: { index: false, follow: false } };
 
-type App = { id: string; clientId: string; name: string; status?: string;
+type App = { id: string; clientId: string; name: string; status?: string; platform?: 'web' | 'wordpress';
   visibility: 'discoverable' | 'hidden'; admission: 'authenticated_open' | 'grant_required';
   originVerificationHost?: string; originVerificationValue?: string; originVerifiedAt?: string | null;
   backchannelLogoutUri?: string | null };
@@ -34,6 +34,8 @@ const notices: Record<string, string> = {
   revoked: 'App entry revoked. Existing sessions inside that app follow its own expiry and recheck policy.',
   invalid_application_url: 'Use an exact HTTPS URL for the callback and logout on the same origin.',
   application_origin_mismatch: 'The callback and logout URLs must have the same origin.',
+  application_path_mismatch: 'WordPress callback and logout URLs must use the same wp-login.php path.',
+  invalid_application_platform: 'Choose Web application or WordPress.',
   invalid_client_id: 'Choose a unique lowercase client ID with letters, digits, hyphen or underscore.',
   invalid_application_name: 'Use an application name between 2 and 120 characters.',
   invalid_visibility: 'Choose a valid visibility setting.',
@@ -63,6 +65,10 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
           <input type="hidden" name="intent" value="request" />
           <label htmlFor="app-name">Application name</label><input id="app-name" name="name" required minLength={2} maxLength={120} />
           <label htmlFor="app-client">Client ID</label><input id="app-client" name="clientId" required pattern="[a-z0-9_-]+" maxLength={80} autoCapitalize="none" spellCheck={false} aria-describedby="client-help" /><small id="client-help">Lowercase letters, numbers, hyphens and underscores.</small>
+          <label htmlFor="app-platform">Platform</label><select id="app-platform" name="platform">
+            <option value="web">Web application</option><option value="wordpress">WordPress</option>
+          </select>
+          <p>For WordPress, copy the exact URLs from the AccessLobby plugin settings.</p>
           <label htmlFor="app-callback">Exact HTTPS callback URL</label><input id="app-callback" name="redirectUri" type="url" pattern="https://.+" required />
           <label htmlFor="app-logout">Exact HTTPS logout return URL</label><input id="app-logout" name="logoutUri" type="url" pattern="https://.+" required />
           <details className="information-details"><summary>Advanced: shared sign-out endpoint</summary><label htmlFor="app-backchannel">Backchannel logout URL (optional)</label>
@@ -84,6 +90,7 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
         mine.length === 0 ? <p>You have not requested an application yet.</p> :
           <div className="context-grid">{mine.map(app => <SurfaceCard title={app.name} key={app.id}>
             <p>Client ID: <code>{app.clientId}</code></p>
+            <p>Platform: {app.platform === 'wordpress' ? 'WordPress' : 'Web application'}.</p>
             <p>Status: <strong>{app.status === 'active' ? 'Active' : app.status === 'suspended' ? 'Suspended' : 'Requested'}</strong>. Entry: {app.admission === 'grant_required' ? 'Grant required' : 'Authenticated open'}.</p>
             <p>Backchannel logout: {app.backchannelLogoutUri ? <code>{app.backchannelLogoutUri}</code> : 'Not registered'}</p>
             {app.status === 'requested' && app.originVerificationHost && app.originVerificationValue && <>

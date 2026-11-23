@@ -134,8 +134,17 @@ async function discover() {
   return doc;
 }
 
-async function sharedLogoutDestination() {
+async function sharedLogoutDestination(session) {
   const doc = await discover();
+  if (session?.accessToken) {
+    const response = await fetch(`${api}/v1/session/end`, { method: 'POST',
+      headers: { authorization: `Bearer ${session.accessToken}` }, signal: AbortSignal.timeout(5000) });
+    if (response.status !== 404) {
+      if (!response.ok) throw new Error('Shared logout marker unavailable');
+      const result = await response.json();
+      if (result.contract !== 'accesslobby.browser-session.v0.1' || result.ended !== true) throw new Error('Invalid logout marker');
+    }
+  }
   const logout = new URL(doc.end_session_endpoint);
   logout.searchParams.set('client_id', clientId);
   logout.searchParams.set('post_logout_redirect_uri', `${origin}/`);
@@ -344,10 +353,11 @@ async function handle(request, response) {
 
   if (path.pathname === '/logout-accesslobby' && request.method === 'POST') {
     if (request.headers.origin !== origin) return sendPage(response, 403, { title: 'Request rejected', message: 'Please use the sign-out button on this app.' });
+    const current = sessions.get(jar[sessionName]) ?? pendingAccounts.get(jar[pendingName]);
     sessions.delete(jar[sessionName]);
     pendingAccounts.delete(jar[pendingName]);
     let destination = '/';
-    try { destination = await sharedLogoutDestination(); }
+    try { destination = await sharedLogoutDestination(current); }
     catch { destination = '/?error=shared_logout_unavailable'; }
     return redirect(response, destination, clearAuthCookies());
   }
@@ -358,10 +368,11 @@ async function handle(request, response) {
     if (!fields) return sendPage(response, 413, { title: 'Form too large', message: 'Please return and try again.' });
     const scope = fields.get('scope');
     if (scope !== 'current' && scope !== 'all') return sendPage(response, 400, { title: 'Choose how to sign out', message: 'Select either this app only or AccessLobby and supported apps.' });
+    const current = sessions.get(jar[sessionName]);
     sessions.delete(jar[sessionName]);
     let destination = '/';
     if (scope === 'all') {
-      try { destination = await sharedLogoutDestination(); }
+      try { destination = await sharedLogoutDestination(current); }
       catch { destination = '/?error=shared_logout_unavailable'; }
     }
     return redirect(response, destination, [cookie(sessionName, '', 0)]);

@@ -67,6 +67,9 @@ final class Plugin {
 		$store->migrate();
 		$oidc       = new Oidc( new Http(), new TokenValidator() );
 		$sessions   = new Sessions( $store );
+		$reconciler = new Reconciler( $store, new Http() );
+		add_filter( 'determine_current_user', array( $reconciler, 'current_user' ), 50 );
+		add_action( 'init', array( $reconciler, 'guard_current' ), 0 );
 		$controller = new Controller( $store, $oidc, $sessions );
 		add_action( 'login_init', array( $controller, 'dispatch' ), 0 );
 		add_action( 'accesslobby_cleanup', array( $store, 'purge' ) );

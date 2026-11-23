@@ -1,4 +1,4 @@
-"""Real native Keycloak + unchanged AccessLobby API + two independent WP installations.
+"""Real native Keycloak + AccessLobby API + two independent WP installations.
 
 Run in one process namespace (also works in CI). All DBs, users, DNS-review rows and
 credentials are disposable synthetic fixtures. This never connects to an estate site.
@@ -179,6 +179,20 @@ for label, port, prefix, woo in [('a', 8081, '', True), ('b', 8082, '/gh', False
         'backchannel.logout.session.required': 'true'})
     realm['clients'].append(client)
     sites.append({'label': label, 'base': base, 'port': port, 'tlsPort': tls_port, 'prefix': prefix, 'woo': woo, 'client': client['clientId']})
+# Isolated IAM-only privacy probes: never registered/admitted as AccessLobby external applications.
+privacy_clients = []
+for label in ['one', 'two']:
+    external = copy.deepcopy(template)
+    callback = f'https://external-{label}.example.test/wp-login.php?action=al_callback'
+    external.update({'clientId': 'external-privacy-' + label, 'name': 'Inactive privacy probe',
+        'redirectUris': [callback], 'webOrigins': [], 'defaultClientScopes': ['basic'], 'optionalClientScopes': [],
+        'attributes': {'pkce.code.challenge.method': 'S256'}, 'protocolMappers': [
+            {'name': 'pairwise-probe', 'protocol': 'openid-connect', 'protocolMapper': 'oidc-sha256-pairwise-sub-mapper',
+             'config': {'pairwiseSubAlgorithmSalt': secrets.token_urlsafe(32)}},
+            {'name': 'isolated-probe-audience', 'protocol': 'openid-connect', 'protocolMapper': 'oidc-audience-mapper',
+             'config': {'included.custom.audience': 'external-api-pilot', 'access.token.claim': 'true', 'id.token.claim': 'false'}}]})
+    realm['clients'].append(external)
+    privacy_clients.append({'clientId': external['clientId'], 'callback': callback})
 realm['users'] = [{'id': str(uuid.uuid4()), 'username': name, 'enabled': True, 'emailVerified': True,
     'email': name + '@example.test', 'firstName': name, 'lastName': 'Fixture',
     'credentials': [{'type': 'password', 'value': password, 'temporary': False}]}
@@ -204,8 +218,8 @@ const owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 await p.query("INSERT INTO persons(id,status) VALUES($1,'active')",[owner]);
 for(const s of JSON.parse(process.env.ALWP_SITE_CLIENTS)){
 await p.query(`INSERT INTO applications(id,client_id,name,owner_person_id,redirect_uri,logout_uri,backchannel_logout_uri,
-visibility,admission,trust_class,status,activated_at,review_reference,origin_challenge,origin_verified_at,origin_verified_host)
-VALUES($1,$2,$3,$4,$5,$6,$7,'hidden','authenticated_open','first_party','active',now(),'disposable-fixture','synthetic-proof',now(),'127.0.0.1')`,
+visibility,admission,trust_class,status,activated_at,review_reference,origin_challenge,origin_verified_at,origin_verified_host,platform)
+VALUES($1,$2,$3,$4,$5,$6,$7,'hidden','authenticated_open','first_party','active',now(),'disposable-fixture','synthetic-proof',now(),'127.0.0.1','wordpress')`,
 [s.id,s.client,s.client,owner,s.base+'/wp-login.php?action=al_callback',s.base+'/wp-login.php?action=al_signed_out',s.base+'/?rest_route=/accesslobby/v1/backchannel-logout']);}
 await p.end();"""
 for site in sites: site['id'] = str(uuid.uuid4())
@@ -213,7 +227,7 @@ run(['node', '--input-type=module', '-e', seed], cwd=repo / 'apps/api',
     extra={**api_env, 'ALWP_SITE_CLIENTS': json.dumps(sites)}, quiet=True)
 api_process = spawn('api', ['node', '--import', 'tsx', 'src/main.ts'], cwd=repo / 'apps/api', extra=api_env)
 wait_url(api + '/health/ready', api_process)
-print('FIXTURE unchanged AccessLobby API and PostgreSQL ready', flush=True)
+print('FIXTURE AccessLobby API and PostgreSQL ready', flush=True)
 
 for site in sites:
     base_dir = work / ('site-' + site['label'])
@@ -289,9 +303,12 @@ for site in sites:
 
 fixture = {'sites': sites, 'issuer': issuer, 'api': api, 'password': password, 'php': php, 'wpCli': wp_cli,
            'artifactDir': str(work), 'certificate': str(cert), 'package': str(args.package.resolve()),
-           'upgradePackage': str(args.upgrade_from.resolve()), 'mailbox': str(mailbox)}
+           'upgradePackage': str(args.upgrade_from.resolve()), 'mailbox': str(mailbox),
+           'privacyClients': privacy_clients, 'privateProviderSubject': realm['users'][0]['id']}
 config_file = work / 'private-fixture-config.json'
 config_file.write_text(json.dumps(fixture)); config_file.chmod(0o600)
+run(['node', '--import', 'tsx', 'test/external-privacy-live.mjs', str(config_file)], cwd=repo / 'apps/api',
+    extra={'NODE_EXTRA_CA_CERTS': str(cert)}, stream=True)
 run(['python3', str(plugin / 'tests/concurrency.py'), str(config_file)], cwd=repo, stream=True)
 driver = env.get('ALWP_FIXTURE_DRIVER', 'browser')
 if driver == 'http':

@@ -51,7 +51,20 @@ add_filter( 'pre_http_request', static function ( $result, $args, $url ) {
 	if ( get_option( 'alwp_fixture_outage' ) && str_contains( $url, '/v1/me' ) ) {
 		return new WP_Error( 'fixture_outage', 'Disposable identity API outage' );
 	}
+	if ( get_option( 'alwp_fixture_receipt_outage' ) && str_contains( $url, '/v1/peer-sessions/status' ) ) {
+		return new WP_Error( 'fixture_receipt_outage', 'Disposable session check outage' );
+	}
 	return $result;
+}, 10, 3 );
+add_filter( 'http_response', static function ( $response, $args, $url ) {
+	$variant = get_option( 'alwp_fixture_receipt_variant' );
+	if ( $variant && str_contains( $url, '/v1/me' ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+		$body = json_decode( $response['body'], true );
+		if ( 'missing' === $variant ) { unset( $body['peerSession'] ); }
+		if ( 'malformed' === $variant ) { $body['peerSession'] = array( 'contract' => 'untrusted', 'receipt' => 'not-a-capability' ); }
+		$response['body'] = wp_json_encode( $body );
+	}
+	return $response;
 }, 10, 3 );
 add_filter( 'rest_pre_dispatch', static function ( $result, $server, $request ) {
 	if ( get_option( 'alwp_fixture_backchannel_outage' ) && '/accesslobby/v1/backchannel-logout' === $request->get_route() ) {

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   let path: string; let method = 'POST'; let body: object | undefined;
   if (intent === 'request') {
     path = '/v1/applications';
-    body = { name: field('name'), clientId: field('clientId'), redirectUri: field('redirectUri'),
+    body = { name: field('name'), clientId: field('clientId'), platform: field('platform') || 'web', redirectUri: field('redirectUri'),
       logoutUri: field('logoutUri'), backchannelLogoutUri: field('backchannelLogoutUri'),
       visibility: field('visibility'), admission: field('admission') };
   } else if (intent === 'verify' && uuid(appId)) {

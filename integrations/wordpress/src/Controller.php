@@ -190,7 +190,8 @@ final class Controller {
 			$url   = Config::route( 'signed_out' );
 			if ( 'all' === $scope ) {
 				// Resolve discovery before clearing local state, so outage is explained honestly.
-				$d     = $this->oidc->discovery( $c );
+				$d = $this->oidc->discovery( $c );
+				( new Reconciler( $this->store, new Http() ) )->end_current( $c );
 				$state = Security::random();
 				$bind  = Security::random();
 				$this->store->state_put( $state, 'logout_flow', array( 'binding' => hash( 'sha256', $bind ) ), 300 );

@@ -20,6 +20,8 @@ For a non-mutating topology check before preparing the client, write a private J
 
 ## Operator registration
 
+WordPress uses the platform-specific profile from [ADR010](adr/010-wordpress-registration-and-session-receipts.md). Select **WordPress** in developer tools, include `"platform":"wordpress"` in API/planner requests, or use renderer `--platform wordpress`. Copy exact callback/logout/REST routes from connector settings, including fixed queries and installation subdirectory. Existing `web` requests remain query-free. DNS proof, first-party review, private provisioning/readback and app-entry policy still apply. Deploy migrations005/006 before the matching API revision.
+
 1. Assign a unique lowercase client ID for this application and environment. Choose exact HTTPS callback and post-logout URLs on the application's own origin (localhost HTTP only for development). Record the AccessLobby environment's exact `OIDC_ISSUER`, API base URL and approved client ID. Do not reuse staging registrations in production.
 2. Render a public interactive client representation, for example:
 

@@ -74,11 +74,19 @@ final class Admin {
 			if ( 'ready' !== ( $health['status'] ?? null ) ) {
 				throw new Failure( 'upstream_not_ready' );
 			}
+			$peer_sessions = false;
+			try {
+				$capabilities  = ( new Http() )->json( rtrim( $c['api'], '/' ) . '/v1/consumer-capabilities' );
+				$peer_sessions = 'accesslobby.peer-session.v0.1' === ( $capabilities['peerSessions'] ?? '' );
+			} catch ( \Throwable $error ) {
+				// Older APIs continue the documented bounded-session/backchannel contract.
+			}
 			update_option(
 				'accesslobby_connection_test',
 				array(
-					'fingerprint' => Config::fingerprint( $c ),
-					'time'        => time(),
+					'fingerprint'   => Config::fingerprint( $c ),
+					'time'          => time(),
+					'peer_sessions' => $peer_sessions,
 				),
 				false
 			);
@@ -111,6 +119,7 @@ final class Admin {
 			'Logout return URL'         => Config::route( 'signed_out' ),
 			'Backchannel logout URL'    => rest_url( 'accesslobby/v1/backchannel-logout' ),
 			'Admission'                 => 'Required: /v1/application-entry; roles and resource access stay local',
+			'Session reconciliation'    => ! empty( $health['peer_sessions'] ) ? 'Available for fresh SSO sessions; 30-second checks, bounded outage grace' : 'API capability not confirmed; legacy sessions keep their original bounded expiry',
 			'Account links'             => $counts['linked'] . ' / ' . $counts['total'],
 			'Unlinked privileged users' => $counts['unlinked_privileged'],
 			'Emergency recovery'        => Emergency::configured() ? 'Host-configured; rehearsal reference required' : 'Not configured',

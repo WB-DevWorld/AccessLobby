@@ -34,12 +34,18 @@ final class Sessions {
 		$previous = get_current_user_id() === $user ? wp_get_session_token() : '';
 		$this->store->lock(
 			'sid:' . $sid_key,
-			function () use ( $user, $identity, $sid_key, $previous ) {
+			function () use ( $user, $identity, $c, $sid_key, $previous ) {
 				if ( $this->store->has_state( 'revoked:' . $sid_key, 'revoked_sid' ) || $identity['expires'] <= time() ) {
 					throw new Failure( 'ended_issuer_session' );
 				}
 				$manager = \WP_Session_Tokens::get_instance( $user );
-				$token   = $manager->create( $identity['expires'] );
+				$tag     = static fn( $info ) => array_merge( $info, array( 'accesslobby_sso' => true ) );
+				add_filter( 'attach_session_information', $tag );
+				try {
+					$token = $manager->create( $identity['expires'] );
+				} finally {
+					remove_filter( 'attach_session_information', $tag );
+				}
 				try {
 					$this->store->save_session(
 						array(
@@ -47,7 +53,15 @@ final class Sessions {
 							'sid_key'      => $sid_key,
 							'subject_key'  => hash( 'sha256', $identity['issuer'] . "\0" . $identity['subject'] ),
 							'user_id'      => $user,
-							'sealed_token' => Security::seal( array( 'token' => $token ) ),
+							'sealed_token' => Security::seal(
+								array(
+									'token'         => $token,
+									'configuration' => Config::fingerprint( $c ),
+									'peer_session'  => $identity['peer_session'] ?? null,
+									'last_checked'  => time(),
+									'last_attempt'  => time(),
+								)
+							),
 							'expires'      => $identity['expires'],
 						)
 					);
@@ -61,6 +75,9 @@ final class Sessions {
 					}
 					do_action( 'wp_login', get_userdata( $user )->user_login, get_userdata( $user ) );
 					$this->store->audit( 'session_started', $user );
+					if ( empty( $identity['peer_session'] ) ) {
+						$this->store->audit( 'session_legacy_receipt_unavailable', $user );
+					}
 					if ( '' !== $previous ) {
 						$manager->destroy( $previous );
 						$this->store->remove_session( Security::fingerprint( $previous ) );

@@ -6,11 +6,11 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const client = await pool.connect();
 try {
   await client.query('BEGIN');
-  for (const migration of ['001_identity.sql', '002_session_revocation.sql', '003_organizations.sql', '004_applications.sql']) {
+  for (const migration of ['001_identity.sql', '002_session_revocation.sql', '003_organizations.sql', '004_applications.sql', '005_peer_session_receipts.sql', '006_wordpress_platform.sql', '007_external_identity_preview.sql']) {
     const sql = readFileSync(fileURLToPath(new URL(`../migrations/${migration}`, import.meta.url)), 'utf8');
     await client.query(sql);
   }
   await client.query('COMMIT');
-  console.info('Migrations 001 through 004 applied');
+  console.info('Migrations 001 through 007 applied');
 } catch (error) { await client.query('ROLLBACK'); throw error; }
 finally { client.release(); await pool.end(); }

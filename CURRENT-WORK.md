@@ -1,5 +1,14 @@
 # Execution ledger — MVP-0
 
+## Broader WordPress implementation — candidate alpha.4, 2026-11-23 UTC
+
+In progress on independent draft PR61, after alpha.3's retained green qualification. Additive API migrations005/006/007 implement opaque per-session reconciliation, a narrowly typed WordPress registration profile and closed external identity/consent preparation. WordPress alpha.4 stores encrypted receipts, checks app/person/admission/revocation on due requests, records shared logout before issuer redirect and bounds status-outage grace. Existing identity/local-role/commerce contracts remain intact. Web/reference shared logout records its own browser-session marker; PWA caching/lifecycle rules are preserved.
+
+The real onboarding defect is corrected: generic query-free app URLs could not accept WordPress core/REST fixed queries. WordPress registration now preserves exact root/subdirectory routes through request, DNS proof, private plan/provisioning and IAM readback. The generic web profile remains query-free. External preparation creates no IAM client; its optional first-party preview API is disabled by default, and the first-party-only DB/API activation gates remain closed. App-scoped subjects refer to the existing canonical person; scoped consent/withdrawal and token-wide negative privacy tests are executable foundations, not external authentication completion. See ADR010/011.
+
+Local API PostgreSQL tests25, web tests22, Python45, PHP39/44, PHPStan and typecheck have passed during this increment. Real native qualification found and corrected a POST201/200 receipt mismatch; rerun and new browser/CI evidence remain pending. Do not substitute alpha.3 proof for changed source. Main remains3d9220a1; PR60 independently advanced to948018e9. No live estate installation, staging deployment, merge, production promotion or winner selection has occurred here. Issue59 remains open; actual estate/licensed stack and external token/API/consent UX/pilot gates remain.
+
+
 ## Continued WordPress frontend/account qualification — 2026-11-23 UTC
 
 Alpha.3 at `dccc000530e03f50103c2ea45d03ef7714d6e27b` passes all nine CI jobs. The three real HTTPS IAM/API/two-WP matrices pass 55 browser cases per Woo classic/HPOS lane and 51 on plain WP6.9, including fresh disconnect/reconnect, rejected wrong/lost/denied proofs, enforced unlink refusal, shortcode/block entry, real Gutenberg Journey/save/reload, mobile mounted login and unrelated-form regression. A real alpha.2→alpha.3 ZIP update preserves an old-version SSO session and local user/mapping/role/commerce, with both CLI and browser runtime versions read back. Source/code ZIP remains 48 files, SHA256 `695ea54b7cca6857b96c5e8bc3a8740d470a718a4bfe4ca22f520a7f5971e17e`; later evidence-only commits retain those bytes.

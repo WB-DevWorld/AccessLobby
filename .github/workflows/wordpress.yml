@@ -40,7 +40,7 @@ jobs:
           vendor/bin/phpcs --config-set installed_paths ../../wp-coding-standards/wpcs,../../phpcsstandards/phpcsutils,../../phpcsstandards/phpcsextra
           vendor/bin/phpcs --standard=phpcs.xml
       - name: Build installable pilot ZIP (runtime installation remains a separate gate)
-        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.3.zip
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.4.zip
       - uses: actions/upload-artifact@v4
         with:
           name: accesslobby-wordpress-pilot-php-${{ matrix.php }}
@@ -116,7 +116,7 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Build candidate ZIP
         working-directory: integrations/wordpress
-        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.3.zip
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.4.zip
       - name: Build exact previously qualified upgrade source
         run: |
           git fetch --no-tags --depth=1 origin 8ede31e7218178d81192a8f4b72156bb64cb6875
@@ -133,7 +133,7 @@ jobs:
           tar -xzf "$RUNNER_TEMP/alwp/keycloak.tar.gz" -C "$RUNNER_TEMP/alwp"
       - name: Actual IAM API WordPress WooCommerce browser acceptance
         run: |
-          python3 integrations/wordpress/scripts/qualify.py --runtime "$RUNNER_TEMP/alwp" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.3.zip --upgrade-from "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.2.zip" --keycloak-home "$RUNNER_TEMP/alwp/keycloak-26.7.0"
+          python3 integrations/wordpress/scripts/qualify.py --runtime "$RUNNER_TEMP/alwp" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.4.zip --upgrade-from "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.2.zip" --keycloak-home "$RUNNER_TEMP/alwp/keycloak-26.7.0"
       - name: Retain sanitized categorical evidence only
         if: always()
         uses: actions/upload-artifact@v4
@@ -148,5 +148,6 @@ jobs:
             ${{ runner.temp }}/alwp/qualification-*/lifecycle-*.json
             ${{ runner.temp }}/alwp/qualification-*/concurrency.json
             ${{ runner.temp }}/alwp/qualification-*/build.json
+            ${{ runner.temp }}/alwp/qualification-*/external-privacy.json
           if-no-files-found: warn
           retention-days: 14

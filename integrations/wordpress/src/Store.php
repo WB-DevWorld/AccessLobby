@@ -391,6 +391,22 @@ final class Store {
 		}
 	}
 
+	public function session_for_token( string $key ): ?array {
+		$row = $this->db->get_row( $this->db->prepare( 'SELECT * FROM %i WHERE token_key=%s', $this->table( 'sessions' ), $key ), ARRAY_A );
+		if ( '' !== $this->db->last_error ) {
+			throw new Failure( 'session_storage_unavailable' );
+		}
+		return $row ? $row : null;
+	}
+
+	public function update_session_private( string $key, array $data ): bool {
+		$result = $this->db->update( $this->table( 'sessions' ), array( 'sealed_token' => Security::seal( $data ) ), array( 'token_key' => $key ) );
+		if ( false === $result ) {
+			throw new Failure( 'session_storage_unavailable' );
+		}
+		return $result > 0;
+	}
+
 	public function remove_session( string $key ): void {
 		$this->db->delete( $this->table( 'sessions' ), array( 'token_key' => $key ) );
 	}

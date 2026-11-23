@@ -252,6 +252,22 @@ try {
   await api('/v1/application-entry', open.tokens[0], 401);
   console.info('APP_ONBOARDING_PASS registry-first old-token-denied legacy-no-bypass IAM-outage-denied disable-readback retry');
 
+  const disabledPreview = await fetch(apiOrigin + '/v1/preview/external-consents');
+  assert.equal(disabledPreview.status, 404);
+  assert.equal(disabledPreview.headers.get('cache-control'), 'no-store');
+  const unknownReceipt = await fetch(apiOrigin + '/v1/peer-sessions/status', { method: 'POST',
+    headers: { authorization: 'PeerSession ' + 'x'.repeat(43), 'x-accesslobby-client-id': restricted.clientId } });
+  assert.equal(unknownReceipt.status, 401);
+  const forgedEnd = await fetch(apiOrigin + '/v1/session/end', { method: 'POST',
+    headers: { authorization: 'Bearer ' + webTokens[0], 'content-type': 'application/json' }, body: JSON.stringify({ sid: 'unrelated-browser' }) });
+  assert.equal(forgedEnd.status, 401);
+  const ended = await api('/v1/session/end', webTokens[0], 200, undefined, 'POST');
+  assert.equal(ended.contract, 'accesslobby.browser-session.v0.1'); assert.equal(ended.ended, true);
+  await api('/v1/session/end', webTokens[0], 200, undefined, 'POST'); // Deterministic replay is idempotent.
+  assert.equal((await api('/v1/me', webTokens[0], 401)).error, 'session_ended');
+  await api('/v1/me', webTokens[1], 200); // Independent browser is not an all-devices logout.
+  console.info('APP_ONBOARDING_PASS receipt-http-status unknown-capability forged-sid-denied own-browser-marker idempotence device-isolation external-preview-disabled');
+
   await stopServer();
   await assert.rejects(loadAppEntry(apiOrigin, { accessToken: restricted.tokens[1] }, restricted.clientId),
     error => error instanceof AppEntryError && error.status === 503);

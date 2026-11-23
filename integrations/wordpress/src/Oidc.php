@@ -110,14 +110,23 @@ final class Oidc {
 			throw new Failure( 'fresh_authentication_required' );
 		}
 		$headers = array(
-			'Authorization' => 'Bearer ' . $t['access_token'],
-			'Accept'        => 'application/json',
-			'x-request-id'  => wp_generate_uuid4(),
+			'Authorization'                 => 'Bearer ' . $t['access_token'],
+			'Accept'                        => 'application/json',
+			'x-request-id'                  => wp_generate_uuid4(),
+			'x-accesslobby-session-receipt' => '1',
 		);
 		$me      = $this->http->json( rtrim( $c['api'], '/' ) . '/v1/me', array( 'headers' => $headers ) );
 		if ( 'accesslobby.identity.v0.1' !== ( $me['contract'] ?? null ) || 'active' !== ( $me['person']['status'] ?? null ) ||
 			! is_string( $me['person']['id'] ?? null ) || ! preg_match( '/^[0-9a-f-]{36}$/Di', $me['person']['id'] ) ) {
 			throw new Failure( 'invalid_identity_response' );
+		}
+		$peer_session = $me['peerSession'] ?? null;
+		if ( array_key_exists( 'peerSession', $me ) && ( ! is_array( $peer_session ) ||
+			'accesslobby.peer-session.v0.1' !== ( $peer_session['contract'] ?? null ) ||
+			! is_string( $peer_session['receipt'] ?? null ) || ! preg_match( '/^[A-Za-z0-9_-]{43}$/D', $peer_session['receipt'] ) ||
+			! is_int( $peer_session['expiresAt'] ?? null ) || $peer_session['expiresAt'] <= time() ||
+			$peer_session['expiresAt'] > $access['exp'] || $peer_session['expiresAt'] > time() + 3600 ) ) {
+			throw new Failure( 'invalid_session_receipt' );
 		}
 		$entry = $this->http->json( rtrim( $c['api'], '/' ) . '/v1/application-entry', array( 'headers' => $headers ) );
 		if ( 'accesslobby.app-entry.v0.1' !== ( $entry['contract'] ?? null ) || true !== ( $entry['admitted'] ?? null ) ||
@@ -132,6 +141,7 @@ final class Oidc {
 			'email'          => is_string( $id['email'] ?? null ) ? $id['email'] : '',
 			'email_verified' => true === ( $id['email_verified'] ?? false ),
 			'expires'        => min( time() + 3600, $id['exp'], $access['exp'] ),
+			'peer_session'   => $peer_session,
 		);
 	}
 

@@ -2,13 +2,15 @@ import 'reflect-metadata';
 import { Body, Controller, Delete, Get, Inject, Module, Param, Patch, Post, Req, Res } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Pool } from 'pg';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { config } from './config.js';
 import { discovery, tokenVerifier, type AuthenticatedSubject, type VerifyToken } from './auth.js';
 import { PostgresIdentityStore, type IdentityStore } from './identity.js';
 import { logoutVerifier, SessionRevocations } from './logout.js';
 import { OrganizationError, OrganizationStore, validId } from './organizations.js';
 import { ApplicationError, ApplicationStore, ClientRegistryUnavailable } from './applications.js';
+import { PeerSessions, PeerSessionError } from './peer-sessions.js';
+import { ExternalProfiles } from './external-profiles.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
@@ -18,7 +20,12 @@ const verify = tokenVerifier(settings, jwksUri, clientId => applications.allowed
 const verifyLogout = logoutVerifier(settings.issuer, jwksUri, 'accesslobby-web');
 const store = new PostgresIdentityStore(pool);
 const revocations = new SessionRevocations(pool);
+const peerSessions = new PeerSessions(pool, settings.issuer, client => applications.allowedClient(client), async (person, client) => {
+  try { await applications.entry(person, client); return true; }
+  catch (error) { if (error instanceof ApplicationError && error.status === 403) return false; throw error; }
+});
 const organizations = new OrganizationStore(pool);
+const externalProfiles = new ExternalProfiles(pool);
 
 @Controller()
 class ApiController {
@@ -34,10 +41,61 @@ class ApiController {
     catch { res.status(503).json({ status: 'unavailable' }); }
   }
 
+  @Get('v1/consumer-capabilities')
+  capabilities(@Res() res: any) {
+    res.setHeader('cache-control', 'no-store');
+    return res.json({ contract: 'accesslobby.consumer-capabilities.v0.1', peerSessions: 'accesslobby.peer-session.v0.1' });
+  }
+
   @Get('v1/me')
   async me(@Req() req: any, @Res() res: any) {
-    return this.withPerson(req, res, async (id, requestId) =>
-      ({ contract: 'accesslobby.identity.v0.1', person: { id, status: 'active' }, requestId }));
+    return this.withPerson(req, res, async (id, requestId, actor) => ({
+      contract: 'accesslobby.identity.v0.1', person: { id, status: 'active' }, requestId,
+      ...(req.headers['x-accesslobby-session-receipt'] === '1' ? { peerSession: await peerSessions.issue(actor, id) } : {}),
+    }));
+  }
+
+  @Post('v1/peer-sessions/status')
+  peerSessionStatus(@Req() req: any, @Res() res: any) { return this.peerSession(req, res, false); }
+
+  @Post('v1/peer-sessions/end')
+  peerSessionEnd(@Req() req: any, @Res() res: any) { return this.peerSession(req, res, true); }
+
+  @Post('v1/session/end')
+  async endBrowserSession(@Req() req: any, @Res() res: any) {
+    const requestId = randomUUID();
+    res.setHeader('x-request-id', requestId); res.setHeader('cache-control', 'no-store');
+    const match = /^Bearer ([^\s]+)$/.exec(req.headers.authorization ?? '');
+    if (!match || Object.keys(req.body ?? {}).length) return res.status(401).json({ error: 'unauthorized', requestId });
+    let actor;
+    try { actor = await this.verifyToken(match[1]!); }
+    catch (error) {
+      const unavailable = error instanceof ClientRegistryUnavailable;
+      return res.status(unavailable ? 503 : 401).json({ error: unavailable ? 'session_service_unavailable' : 'unauthorized', requestId });
+    }
+    if (!actor.sid) return res.status(401).json({ error: 'missing_session', requestId });
+    try {
+      const event = 'self-end:' + createHash('sha256').update(JSON.stringify([actor.issuer, actor.client, actor.sid])).digest('hex');
+      await revocations.revoke(actor.issuer, actor.sid, event);
+      return res.status(200).json({ contract: 'accesslobby.browser-session.v0.1', ended: true, requestId });
+    } catch { return res.status(503).json({ error: 'session_service_unavailable', requestId }); }
+  }
+
+  private async peerSession(req: any, res: any, end: boolean) {
+    const requestId = randomUUID();
+    res.setHeader('x-request-id', requestId); res.setHeader('cache-control', 'no-store');
+    const match = /^PeerSession ([A-Za-z0-9_-]{43})$/.exec(req.headers.authorization ?? '');
+    const client = req.headers['x-accesslobby-client-id'];
+    if (!match || typeof client !== 'string' || Object.keys(req.body ?? {}).length) {
+      return res.status(401).json({ error: 'invalid_peer_session', requestId });
+    }
+    try {
+      const result = end ? await peerSessions.end(match[1]!, client) : await peerSessions.status(match[1]!, client);
+      return res.status(200).json({ ...result, requestId });
+    } catch (error) {
+      const known = error instanceof PeerSessionError;
+      return res.status(known ? error.status : 503).json({ error: known ? error.code : 'session_service_unavailable', requestId });
+    }
   }
 
   private async withPerson(req: any, res: any,
@@ -69,6 +127,7 @@ class ApiController {
     } catch (error) {
       if (error instanceof OrganizationError) return res.status(error.status).json({ error: error.code, requestId });
       if (error instanceof ApplicationError) return res.status(error.status).json({ error: error.code, requestId });
+      if (error instanceof PeerSessionError) return res.status(error.status).json({ error: error.code, requestId });
       console.error(JSON.stringify({ event: 'identity.unavailable', requestId }));
       return res.status(503).json({ error: 'identity_unavailable', requestId });
     }
@@ -93,6 +152,28 @@ class ApiController {
   @Post('v1/applications')
   requestApplication(@Req() req: any, @Res() res: any, @Body() body: any) {
     return this.withPerson(req, res, id => applications.request(id, body), true);
+  }
+
+  @Get('v1/preview/external-consents')
+  externalConsents(@Req() req: any, @Res() res: any) {
+    res.setHeader('cache-control', 'no-store');
+    if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
+    return this.withPerson(req, res, async id => ({ contract: 'accesslobby.external-preview.v0.1',
+      consents: await externalProfiles.mine(id), activationAllowed: false }), true);
+  }
+
+  @Post('v1/preview/external-consents/:applicationId')
+  grantExternalConsent(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    res.setHeader('cache-control', 'no-store');
+    if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
+    return this.withPerson(req, res, id => externalProfiles.grant(id, appId, body?.policyVersion, body?.scopes), true);
+  }
+
+  @Delete('v1/preview/external-consents/:applicationId')
+  withdrawExternalConsent(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    res.setHeader('cache-control', 'no-store');
+    if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
+    return this.withPerson(req, res, id => externalProfiles.withdraw(id, appId), true);
   }
 
   @Get('v1/applications/mine')
