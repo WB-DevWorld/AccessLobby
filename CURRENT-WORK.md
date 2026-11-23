@@ -1,5 +1,21 @@
 # Execution ledger — MVP-0
 
+## Cross-app logout and estate inventory — 2026-11-23 UTC
+
+The browser driver now keeps both site cookies, starts all-apps logout from site A, and before any new sign-in reads the protected page on each site. Both existing WordPress sessions were user 0. The other browser context stayed the original user. Site B's `backchannel_accepted` audit increased, and the gateway log gained a new `200` line for `backchannel-logout`. A malformed logout POST to site B's REST route returned 400 with `no-store`, increased `backchannel_rejected`, and left the other device signed in. The logout page's `Cache-Control` contained `private` and `no-store`; the gateway no longer replaces that application header. On the retained fixture the observed site B lines were `POST /gh/?rest_route=%2Faccesslobby%2Fv1%2Fbackchannel-logout 200` and the same route with `400`.
+
+A later clean run from an empty `alwp_browser` database printed the same flow names, including `FLOW all-apps-logout-revokes-both-sites` and `FLOW backchannel-http-negative`, then `QUALIFICATION_PASS` in 206s. Protocol assertions remained 36 and 34. Artifacts were `qualification-69327308` and were removed after the pass. Direct `Sessions::backchannel` coverage in the protocol script remains component coverage. Distinct HTTPS hostnames are not part of this run. Issue #59 stays open. Relates to #59.
+
+Read-only SSH inventory, with no configuration changes and no customer or credential output:
+
+| Site | Host | PHP | WordPress | Active theme | Commerce and relevant plugins | Guest checkout |
+| --- | --- | --- | --- | --- | --- | --- |
+| training.cetechbpa.com | cetechtrainingappserver | 8.4.24 | 7.1.4 | woodmart-child 1.0.0, parent WoodMart 8.6.6 | WooCommerce 11.2.1, B2BKing 5.6.80, WP Rocket 3.24, Redis Object Cache 3.0.0 | yes |
+| staging.cetechbpa.com | cetechstagingapp | 8.4.27 | 7.1.5 | woodmart-child 1.0.0, parent WoodMart 8.6.6 | WooCommerce 11.2.1, WP Rocket 3.24, Redis Object Cache 3.0.0, Wordfence 9.1.1 | no |
+| training.flairoc.com | flairoc-training-app-server | 8.4.25 | 7.1.1 | Kadence 1.5.2 | WooCommerce 11.1.1, WoodMart Core 1.1.9 | no |
+
+CloudPanel nginx and PHP-FPM are running on the CETECH training host. WoodMart 8.6.1 and its child are installed on FLAIROC training but inactive. The training CETECH host also has `p06-physical.cetechbpa.com`; that install was located and not inventoried. No pilot, backup, or plugin installation was performed.
+
 ## Clean WordPress qualification — 2026-11-23 UTC
 
 `f5c80a203ddb09ac215226702e27c1d06e685d79` passed one clean disposable run from an empty `alwp_browser` database. Preflight accepted the files, PHP modules and public ports. MariaDB 11.4, Keycloak 26.7.0, AccessLobby migrations 001 through 004, and the API on Postgres 17.11 came up before either WordPress site. The protocol script, byte-identical to committed `integrations/wordpress/tests/integration.php`, passed 36 assertions on WordPress 7.1.5 with WooCommerce 11.3.1 at `http://127.0.0.1:8081` and 34 assertions on WordPress 7.1.5 at `http://127.0.0.1:8082/gh`. PHP was 8.5.0 through one-shot `php-cgi`. The browser driver then printed `BROWSER_PASS`: JIT customer user 6, email collision refused, explicit link with commerce preserved, quiet SSO onto site B user 6, site-only logout with quiet re-entry, all-apps logout requiring a Keycloak username while the other browser context stayed user 6, JIT disabled, and enforced login redirect. Elapsed 197s. Artifacts were `qualification-82adb623` and were removed after the pass. Remote CI for the same revision passed: [CI 45278075086](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45278075086), [WordPress connector 45278075076](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45278075076), and [Keycloak theme 45278075677](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45278075677). This does not qualify genuine Join, unlinking, WoodMart, estate pilots, or external onboarding. Issue #59 stays open. Relates to #59.

@@ -95,9 +95,10 @@ def spawn(name, command, *, cwd=None, extra=None):
     return process
 
 def start_gateway(name, public_port, docroot, front):
-    """One-shot php-cgi. The Windows built-in server stops accepting after a login page and its assets."""
+    """One-shot php-cgi. Bind all interfaces only so a local Keycloak container can deliver backchannel logout."""
     cgi = Path(php).with_name('php-cgi.exe' if os.name == 'nt' else 'php-cgi')
-    process = spawn(name, [sys.executable, str(plugin / 'scripts/wp-gateway.py'), '--port', str(public_port),
+    bind = '0.0.0.0' if env.get('ALWP_DOCKER') == '1' else '127.0.0.1'
+    process = spawn(name, [sys.executable, str(plugin / 'scripts/wp-gateway.py'), '--bind', bind, '--port', str(public_port),
                            '--docroot', str(docroot), '--front', str(front), '--php', str(cgi)])
     wait_port(public_port, process)
     return process

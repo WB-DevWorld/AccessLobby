@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 import argparse
 import os
+import re
 import subprocess
 import sys
 import time
@@ -26,11 +27,23 @@ parser.add_argument('--port', type=int, required=True)
 parser.add_argument('--docroot', type=Path, required=True)
 parser.add_argument('--front', type=Path, required=True)
 parser.add_argument('--php', type=Path, required=True)
+parser.add_argument('--bind', default='127.0.0.1')
 args = parser.parse_args()
+if args.bind not in ('127.0.0.1', '0.0.0.0'):
+    raise SystemExit('Fixture gateway refuses this bind address')
 docroot = args.docroot.resolve()
 front = args.front.resolve()
 if not front.is_file() or not args.php.is_file() or docroot not in front.parents:
     raise SystemExit('Fixture gateway paths are not usable')
+
+HIDDEN_QUERY = {'logout_token', 'code', 'id_token', 'access_token', 'refresh_token'}
+
+def visible_target(raw):
+    parts = urlsplit(raw)
+    query = parts.query
+    for key in HIDDEN_QUERY:
+        query = re.sub('(?i)(^|&)' + re.escape(key) + '=[^&]*', r'\1' + key + '=redacted', query)
+    return parts.path + (('?' + query) if query else '')
 
 def inside(path):
     resolved = path.resolve()
@@ -51,7 +64,7 @@ class Gateway(BaseHTTPRequestHandler):
             status = 500
             body = str(error).encode()
             self.reply(500, [('Content-Type', 'text/plain; charset=utf-8'), ('Content-Length', str(len(body)))], body, False)
-        sys.stderr.write('%s %s %s %dms\n' % (self.command, urlsplit(self.path).path, status, int((time.monotonic() - started) * 1000)))
+        sys.stderr.write('%s %s %s %dms\n' % (self.command, visible_target(self.path), status, int((time.monotonic() - started) * 1000)))
         sys.stderr.flush()
 
     def dispatch(self, head_only):
@@ -67,7 +80,7 @@ class Gateway(BaseHTTPRequestHandler):
         if candidate.is_file() and candidate.suffix.lower() != '.php':
             body = candidate.read_bytes()
             headers = [('Content-Type', TYPES.get(candidate.suffix.lower(), 'application/octet-stream')),
-                       ('Content-Length', str(len(body))), ('Cache-Control', 'no-store')]
+                       ('Content-Length', str(len(body)))]
             self.reply(200, headers, body, head_only)
             return 200
         script = candidate if candidate.is_file() else front
@@ -111,10 +124,9 @@ class Gateway(BaseHTTPRequestHandler):
             field, value = line.split(':', 1)
             if field.lower() == 'status':
                 status = int(value.strip().split(' ', 1)[0])
-            elif field.lower() not in HOP | {'content-length', 'cache-control'}:
+            elif field.lower() not in HOP | {'content-length'}:
                 headers.append((field.strip(), value.strip()))
         headers.append(('Content-Length', str(len(payload))))
-        headers.append(('Cache-Control', 'no-store'))
         return status, headers, payload
 
     def reply(self, status, headers, body, head_only):
@@ -132,4 +144,4 @@ class Server(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-Server(('127.0.0.1', args.port), Gateway).serve_forever()
+Server((args.bind, args.port), Gateway).serve_forever()

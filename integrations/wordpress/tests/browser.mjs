@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
@@ -29,6 +30,22 @@ function wpEval(site, code) {
 
 function optionPatch(site, php) {
   wpEval(site, `$o=get_option('accesslobby_sso'); ${php} update_option('accesslobby_sso',$o); echo 'ok';`);
+}
+
+function backchannelDeliveries(label) {
+  const text = readFileSync(join(config.artifactDir, `wordpress-${label}.log`), 'utf8');
+  return text.split(/\r?\n/).filter(line => line.includes('backchannel-logout') && /\s200\s/.test(line)).length;
+}
+
+function auditCount(site, event) {
+  if (event !== 'backchannel_accepted' && event !== 'backchannel_rejected') throw new Error('Unexpected audit event');
+  return Number(wpEval(site, `global $wpdb; $store = new AccessLobby\\WordPress\\Store($wpdb); echo (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i WHERE event=%s', $store->table('audit'), '${event}'));`));
+}
+
+async function cookieSession(page, url) {
+  await openPage(page, url);
+  if (page.url().includes('/realms/')) throw new Error(`Cookie probe started a new sign-in at ${page.url()}`);
+  return identity(page);
 }
 
 async function identity(page) {
@@ -129,6 +146,9 @@ try {
   await keycloak(device2, 'newperson');
   const otherDevice = await identity(device2);
   if (otherDevice.user !== created.user) throw new Error('Second device did not reach the same local user');
+  const acceptedBefore = auditCount(siteB, 'backchannel_accepted');
+  const rejectedBefore = auditCount(siteB, 'backchannel_rejected');
+  const deliveriesBefore = backchannelDeliveries('b');
   await openPage(first, `${siteA.base}/wp-login.php?action=al_logout`);
   await first.getByRole('button', { name: 'Sign out of all connected apps' }).click();
   await Promise.race([
@@ -143,12 +163,40 @@ try {
     await confirmLogout.first().click();
     await first.waitForURL(url => url.port === '8081', { timeout: 20000 });
   }
+  let accepted = acceptedBefore;
+  for (let attempt = 0; attempt < 20 && accepted <= acceptedBefore; attempt += 1) {
+    accepted = auditCount(siteB, 'backchannel_accepted');
+    if (accepted <= acceptedBefore) await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  if (accepted <= acceptedBefore) throw new Error('Site B did not accept a signed backchannel through its HTTP controller');
+  if (backchannelDeliveries('b') <= deliveriesBefore) throw new Error('Gateway did not record a new successful backchannel POST to site B');
+  const siteBAfter = await cookieSession(quiet, siteB.protected);
+  if (siteBAfter.user !== 0) throw new Error(`All-apps logout left the existing site B session usable for user ${siteBAfter.user}`);
+  const siteAAfter = await cookieSession(first, siteA.protected);
+  if (siteAAfter.user !== 0) throw new Error(`All-apps logout left the existing site A session usable for user ${siteAAfter.user}`);
   await device2.reload({ waitUntil: 'domcontentloaded' });
   if ((await identity(device2)).user !== created.user) throw new Error('All-apps logout ended a different device session');
+  const logoutHeaders = await device1.request.get(`${siteA.base}/wp-login.php?action=al_logout`);
+  const logoutCache = logoutHeaders.headers()['cache-control'] || '';
+  if (!logoutCache.includes('private') || !logoutCache.includes('no-store')) {
+    throw new Error(`Logout response did not carry the application cache header: ${logoutCache}`);
+  }
   await openPage(first, `${siteA.base}/wp-login.php`);
   await first.locator('[data-accesslobby-start]').first().click();
   if (!(await first.locator('#username').isVisible())) throw new Error(`All-apps logout left the shared browser session signed in at ${first.url()}`);
-  console.log('FLOW all-apps-logout-keeps-other-device');
+  console.log('FLOW all-apps-logout-revokes-both-sites');
+  const forged = await device1.request.post(`${siteB.base}/?rest_route=/accesslobby/v1/backchannel-logout`, {
+    form: { logout_token: 'not-a-signed-logout-token' },
+    failOnStatusCode: false,
+  });
+  const forgedCache = forged.headers()['cache-control'] || '';
+  if (forged.status() !== 400 || !forgedCache.includes('no-store')) {
+    throw new Error(`Malformed logout was not refused with the application cache header: ${forged.status()} ${forgedCache}`);
+  }
+  if (auditCount(siteB, 'backchannel_rejected') <= rejectedBefore) throw new Error('Malformed logout did not reach the controller rejection audit');
+  await device2.reload({ waitUntil: 'domcontentloaded' });
+  if ((await identity(device2)).user !== created.user) throw new Error('Malformed logout changed another device');
+  console.log('FLOW backchannel-http-negative');
 
   optionPatch(siteA, `$o['jit']=false;`);
   try {
