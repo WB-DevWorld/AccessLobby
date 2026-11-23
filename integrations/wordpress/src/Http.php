@@ -14,7 +14,7 @@ final class Http {
 		);
 		$args     = array_replace( $defaults, $args );
 		// Local HTTP exists only for explicit local fixtures, never staging/production.
-		$response = 'http' === $scheme ? wp_remote_request( $url, $args ) : wp_safe_remote_request( $url, $args );
+		$response = Security::local_fixture( $url ) ? wp_remote_request( $url, $args ) : wp_safe_remote_request( $url, $args );
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			throw new Failure( 'upstream_unavailable_or_denied' );
 		}

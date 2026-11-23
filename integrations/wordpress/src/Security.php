@@ -25,6 +25,12 @@ final class Security {
 		return $url;
 	}
 
+	public static function local_fixture( string $url ): bool {
+		return defined( 'ACCESSLOBBY_ALLOW_LOCAL_HTTP' ) && true === ACCESSLOBBY_ALLOW_LOCAL_HTTP &&
+			'local' === wp_get_environment_type() &&
+			in_array( parse_url( $url, PHP_URL_HOST ), array( 'localhost', '127.0.0.1', '[::1]' ), true );
+	}
+
 	/** No allowed_redirect_hosts hook can widen this trust boundary. */
 	public static function destination( string $candidate, string $home, string $site ): string {
 		foreach ( array( $home, $site ) as $base ) {

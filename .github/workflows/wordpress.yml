@@ -40,9 +40,91 @@ jobs:
           vendor/bin/phpcs --config-set installed_paths ../../wp-coding-standards/wpcs,../../phpcsstandards/phpcsutils,../../phpcsstandards/phpcsextra
           vendor/bin/phpcs --standard=phpcs.xml
       - name: Build installable pilot ZIP (runtime installation remains a separate gate)
-        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.1.zip
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.2.zip
       - uses: actions/upload-artifact@v4
         with:
           name: accesslobby-wordpress-pilot-php-${{ matrix.php }}
           path: integrations/wordpress/dist/
+          retention-days: 14
+  runtime:
+    name: WordPress ${{ matrix.wordpress }} PHP ${{ matrix.php }} real SSO
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - wordpress: '7.1.5'
+            php: '8.4'
+          - wordpress: '6.9.12'
+            php: '8.3'
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: fixture-only-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_USER: accesslobby
+          POSTGRES_PASSWORD: fixture-only-password
+          POSTGRES_DB: accesslobby
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U accesslobby -d accesslobby"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgres://accesslobby:fixture-only-password@127.0.0.1:5432/accesslobby
+      ALWP_MYSQL_HOST: 127.0.0.1
+      ALWP_MYSQL_PORT: '3306'
+      ALWP_MYSQL_USER: root
+      ALWP_MYSQL_PASSWORD: fixture-only-password
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sodium, openssl, mysqli, mbstring, dom, xml, xmlwriter, simplexml, curl, zip
+          tools: composer:v2
+          coverage: none
+      - run: npm install -g pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Build candidate ZIP
+        working-directory: integrations/wordpress
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.2.zip
+      - name: Download official disposable runtimes
+        run: |
+          mkdir -p "$RUNNER_TEMP/alwp"
+          curl --fail --silent --show-error --location --retry 2 "https://wordpress.org/wordpress-${{ matrix.wordpress }}.zip" -o "$RUNNER_TEMP/alwp/wordpress.zip"
+          curl --fail --silent --show-error --location --retry 2 https://downloads.wordpress.org/plugin/woocommerce.11.3.1.zip -o "$RUNNER_TEMP/alwp/woocommerce.zip"
+          curl --fail --silent --show-error --location --retry 2 https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o "$RUNNER_TEMP/alwp/wp-cli.phar"
+          curl --fail --silent --show-error --location --retry 2 https://github.com/keycloak/keycloak/releases/download/26.7.0/keycloak-26.7.0.tar.gz -o "$RUNNER_TEMP/alwp/keycloak.tar.gz"
+          tar -xzf "$RUNNER_TEMP/alwp/keycloak.tar.gz" -C "$RUNNER_TEMP/alwp"
+      - name: Actual IAM API WordPress WooCommerce browser acceptance
+        run: |
+          python3 integrations/wordpress/scripts/qualify.py --runtime "$RUNNER_TEMP/alwp" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.2.zip --keycloak-home "$RUNNER_TEMP/alwp/keycloak-26.7.0"
+      - name: Retain sanitized categorical evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordpress-real-sso-${{ matrix.wordpress }}-php-${{ matrix.php }}
+          path: |
+            ${{ runner.temp }}/alwp/qualification-*/integration-*.json
+            ${{ runner.temp }}/alwp/qualification-*/browser-report.json
+            ${{ runner.temp }}/alwp/qualification-*/http-report.json
+            ${{ runner.temp }}/alwp/qualification-*/security-*.json
+          if-no-files-found: warn
           retention-days: 14

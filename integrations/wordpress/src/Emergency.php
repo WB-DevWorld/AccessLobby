@@ -31,7 +31,7 @@ final class Emergency {
 			),
 			300
 		);
-		$store->audit( 'emergency_ticket_issued', $user );
+		$store->audit( 'emergency_ticket_issued', $user, $reason );
 		return $ticket;
 	}
 

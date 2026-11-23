@@ -1,0 +1,45 @@
+{
+  "evidenceType": "HTTP_PROTOCOL_NOT_BROWSER_UI",
+  "cases": [
+    {
+      "name": "local WordPress login preserves legacy customer",
+      "status": "PASS",
+      "milliseconds": 610
+    },
+    {
+      "name": "fresh real IAM dual proof links original WP customer",
+      "status": "PASS",
+      "milliseconds": 582
+    },
+    {
+      "name": "quiet OIDC re-entry restores original protected target",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "independent subdirectory WordPress SSO creates separate local account",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "site-local roles differ and commerce ownership remains local",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "site-only logout leaves the other WordPress session active",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "actual issuer backchannel logout invalidates both participating peers",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "shared logout ends quiet re-entry for this browser session",
+      "status": "PASS",
+      "milliseconds": 0
+    }
+  ]
+}

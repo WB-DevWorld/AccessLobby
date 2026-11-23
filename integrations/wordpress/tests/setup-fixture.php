@@ -3,7 +3,7 @@
 if ( ! defined( 'ACCESSLOBBY_FIXTURE' ) || ! ACCESSLOBBY_FIXTURE ) { throw new RuntimeException( 'Fixture required' ); }
 $password = getenv( 'ALWP_FIXTURE_PASSWORD' );
 $local = wp_insert_user( array( 'user_login' => 'legacy_shopper', 'user_pass' => $password,
-	'user_email' => 'shopper@example.test', 'role' => class_exists( 'WooCommerce' ) ? 'customer' : 'subscriber' ) );
+	'user_email' => getenv( 'ALWP_FIXTURE_EMAIL' ) ?: 'shopper@example.test', 'role' => class_exists( 'WooCommerce' ) ? 'customer' : 'subscriber' ) );
 update_user_meta( $local, 'billing_address_1', 'Preserved fixture address' );
 update_user_meta( $local, 'fixture_b2b_approved', 'yes' );
 $order_id = 0;

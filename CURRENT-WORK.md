@@ -1,5 +1,13 @@
 # Execution ledger — MVP-0
 
+## Independent Codex WordPress comparison — 2026-11-23 UTC
+
+The owner explicitly resumed implementation here alongside Cursor, asking for a separate branch and evidence-based comparison. `feat/wordpress-codex-comparison` starts from the untouched handoff head `92afbb261672401426aa4d8d3ad36f2e81ac13fd`; `feat/wordpress-connector`/draft PR60 remain preserved. Comparison work stays unmerged until selection/review. Source acceptance is reused, not restarted.
+
+The previously unfinished fixture now runs actual HTTPS Keycloak, unchanged AccessLobby API source/PostgreSQL, two independent real WordPress databases/clients (root WooCommerce + `/gh/`). Local database tests PASS 36+34 assertions; adversarial audit/JIT/capability/recovery/schema checks PASS 16 per site; eight real HTTP dual-proof/quiet-SSO/local/shared-backchannel cases PASS. [Exact scope/evidence](docs/qa/wordpress-codex-2026-11-23/README.md). Chromium cannot launch under this workspace's Unix-socket restriction, so browser results are not inferred; real browser CI is a separate pending gate.
+
+Candidate alpha.2 adds fail-closed durable audit/atomic unlink, post-hook safe JIT verification/cache cleanup, capability-based privileged-user readiness and audited incident reference hashes with schema2 migration. The earlier general CI audit failure is addressed provisionally by Next16.4.6 plus narrowly pinned patched parser/multer/source-map/qs dependencies, with normal regression/audit CI still required. No API product contract/identity ownership, PWA safety code, live estate/IAM or production was changed. Whole enforced/UI/guest/emergency/estate/external gates remain open; relates to #59.
+
 ## WordPress connector development checkpoint and Cursor handoff — 2026-11-23 UTC
 
 Owner requested a reusable two-mode WordPress connector, then explicitly chose **Prepare the Cursor handoff now** because Cursor already has estate SSH access. Starting main/public staging API: `3d9220a140d61df5effe633bc72cf5142c4a8371`; live web/API/discovery returned 200/ready; five current main CI/theme/PWA/publish runs passed; no open PR at initial inspection. 28 focused source passes are recorded. A self-contained independently versioned candidate PHP plugin, isolated locked JWT dependency, docs, initial CI and deterministic ZIP packaging are on `feat/wordpress-connector`. No existing canonical connector repository was found; a separate repository could not be created through current tools/browser sign-in.

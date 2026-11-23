@@ -25,7 +25,7 @@ $denied = static function ( callable $fn, $name ) use ( $check ) {
 $c = Config::get();
 $store->migrate();
 $store->migrate();
-$check( '1' === get_option( 'accesslobby_schema' ), 'versioned migration idempotent' );
+$check( '2' === get_option( 'accesslobby_schema' ), 'versioned migration idempotent' );
 $check( str_contains( Config::route( 'callback' ), parse_url( site_url(), PHP_URL_PATH ) ?: '/' ), 'callback preserves site path' );
 
 $suffix = substr( wp_generate_uuid4(), 0, 8 );

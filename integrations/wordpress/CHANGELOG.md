@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-alpha.2 — 2026-11-23
+
+- Independent Codex comparison increment: real HTTPS IAM/API/two-WordPress fixtures, database/security tests, browser CI and HTTP protocol acceptance.
+- Fail-closed durable audit, atomic unlink, post-hook safe JIT checks and rollback cache cleanup; custom-capability readiness and schema2 incident reference hashes.
+- Exact qualification remains in the comparison evidence; no production/external activation.
+
 ## 0.1.0-alpha.1 — 2026-11-23
 
 - Public Code/PKCE S256 client with pinned discovery, isolated maintained RS256/JWKS verifier, signed ID/access-token checks and first-party identity/application-entry APIs.

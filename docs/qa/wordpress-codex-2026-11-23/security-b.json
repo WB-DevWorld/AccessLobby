@@ -1,0 +1,21 @@
+{
+    "assertions": 16,
+    "passed": [
+        "post-registration hook cannot elevate JIT user",
+        "unsafe JIT transaction leaves no orphan user",
+        "missing durable audit denies account creation",
+        "audit failure rolls back account and mapping",
+        "missing durable audit denies unlink",
+        "unlink audit failure preserves active mapping",
+        "readiness identifies custom privileged capabilities",
+        "ordinary shopper cannot receive emergency admin ticket",
+        "non-allowlisted IP cannot receive emergency ticket",
+        "host ticket binds exact existing administrator and IP",
+        "emergency ticket can be consumed only once",
+        "emergency issuance retains incident reference hash",
+        "emergency ticket excluded from audit values",
+        "enforcement fails closed before migration readiness",
+        "version-one schema upgrades idempotently",
+        "schema upgrade preserves existing identity ownership"
+    ]
+}

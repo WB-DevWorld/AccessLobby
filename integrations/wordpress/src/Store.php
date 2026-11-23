@@ -13,7 +13,7 @@ final class Store {
 	}
 
 	public function migrate(): void {
-		if ( '1' === get_option( 'accesslobby_schema' ) ) {
+		if ( '2' === get_option( 'accesslobby_schema' ) ) {
 			return;
 		}
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -71,6 +71,7 @@ final class Store {
 			event varchar(64) NOT NULL,
 			user_id bigint unsigned NOT NULL DEFAULT 0,
 			request_id char(36) NOT NULL,
+			reference_hash char(64) NOT NULL DEFAULT '',
 			created_at bigint unsigned NOT NULL,
 			PRIMARY KEY  (id),
 			KEY created_at (created_at)
@@ -82,7 +83,7 @@ final class Store {
 				throw new Failure( 'transactional_tables_required' );
 			}
 		}
-		update_option( 'accesslobby_schema', '1', false );
+		update_option( 'accesslobby_schema', '2', false );
 	}
 
 	public function lock( string $name, callable $operation ): mixed {
@@ -99,7 +100,9 @@ final class Store {
 	}
 
 	public function transaction( callable $operation ): mixed {
-		$this->db->query( 'START TRANSACTION' );
+		if ( false === $this->db->query( 'START TRANSACTION' ) ) {
+			throw new Failure( 'storage_unavailable' );
+		}
 		try {
 			$result = $operation();
 			if ( false === $this->db->query( 'COMMIT' ) ) {
@@ -153,26 +156,31 @@ final class Store {
 		}
 	}
 
-	public function audit( string $event, int $user = 0 ): void {
-		$event = preg_replace( '/[^a-z0-9_]/', '', $event );
-		$id    = wp_generate_uuid4();
-		$this->db->insert(
+	public function audit( string $event, int $user = 0, string $reference = '' ): void {
+		$event          = preg_replace( '/[^a-z0-9_]/', '', $event );
+		$id             = wp_generate_uuid4();
+		$reference_hash = '' === $reference ? '' : hash( 'sha256', $reference );
+		if ( false === $this->db->insert(
 			$this->table( 'audit' ),
 			array(
-				'event'      => substr( $event, 0, 64 ),
-				'user_id'    => $user,
-				'request_id' => $id,
-				'created_at' => time(),
+				'event'          => substr( $event, 0, 64 ),
+				'user_id'        => $user,
+				'request_id'     => $id,
+				'reference_hash' => $reference_hash,
+				'created_at'     => time(),
 			)
-		);
+		) ) {
+			throw new Failure( 'audit_storage_unavailable' );
+		}
 		do_action(
 			'accesslobby_audit',
 			array(
-				'event'     => $event,
-				'userId'    => $user,
-				'requestId' => $id,
-				'clientId'  => Config::get()['client_id'],
-				'version'   => ACCESSLOBBY_WP_VERSION,
+				'event'         => $event,
+				'userId'        => $user,
+				'requestId'     => $id,
+				'referenceHash' => $reference_hash,
+				'clientId'      => Config::get()['client_id'],
+				'version'       => ACCESSLOBBY_WP_VERSION,
 			)
 		);
 	}
@@ -184,115 +192,141 @@ final class Store {
 	}
 
 	public function resolve( array $identity, array $config, int $local_user = 0 ): int {
-		return $this->lock(
-			'links',
-			fn() => $this->transaction(
-				function () use ( $identity, $config, $local_user ) {
-					$table   = $this->table( 'links' );
-					$ik      = hash( 'sha256', $identity['issuer'] . "\0" . $identity['identity'] );
-					$sk      = hash( 'sha256', $identity['issuer'] . "\0" . $identity['subject'] );
-					$by_id   = $this->db->get_row( $this->db->prepare( "SELECT * FROM $table WHERE identity_key=%s", $ik ), ARRAY_A );
-					$by_sub  = $this->db->get_row( $this->db->prepare( "SELECT * FROM $table WHERE subject_key=%s", $sk ), ARRAY_A );
-					$by_user = $local_user ? $this->link_for_user( $local_user ) : null;
-					if ( ( $by_sub && ( $by_sub['identity_key'] !== $ik || $by_sub['subject'] !== $identity['subject'] ) ) ||
-						( $by_user && $by_user['identity_key'] !== $ik ) ||
-						( $by_id && ( $by_id['issuer'] !== $identity['issuer'] || $by_id['identity'] !== $identity['identity'] ||
-							( $local_user && (int) $by_id['user_id'] !== $local_user ) ) ) ) {
-						throw new Failure( 'account_link_conflict' );
-					}
-				if ( $by_id ) {
-					if ( ! get_userdata( (int) $by_id['user_id'] ) || ( 'active' !== $by_id['link_state'] && ! $local_user ) ) {
-						throw new Failure( 'account_link_required' );
-					}
-					if ( false === $this->db->update(
-						$table,
-						array(
-							'subject_key' => $sk,
-							'subject'     => $identity['subject'],
-							'link_state'  => 'active',
-							'updated_at'  => time(),
-						),
-						array( 'id' => $by_id['id'] )
-					) ) {
-						throw new Failure( 'account_link_conflict' );
-					}
-					if ( $by_id['subject'] !== $identity['subject'] ) {
-						$this->audit( 'subject_continuity_verified', (int) $by_id['user_id'] );
-					}
-					return (int) $by_id['user_id'];
-					}
-					$provenance = 'dual_proof';
-				if ( ! $local_user ) {
-					if ( ! $config['jit'] ) {
-						throw new Failure( 'account_link_required' );
-					}
-					Config::safe_role( $config['default_role'] );
-					if ( ! $identity['email_verified'] || ! is_email( $identity['email'] ) ) {
-						throw new Failure( 'verified_email_required' );
-					}
-					if ( email_exists( $identity['email'] ) ) {
-						throw new Failure( 'account_link_required' );
-					}
-					// No attribute-derived login names and no password/hash synchronization.
-					$local_user = wp_insert_user(
-						array(
-							'user_login'   => 'al_' . substr( $ik, 0, 28 ),
-							'user_pass'    => wp_generate_password( 64, true, true ),
-							'user_email'   => $identity['email'],
-							'role'         => $config['default_role'],
-							'display_name' => __(
-								'AccessLobby user',
-								'accesslobby-sso'
-							),
-						)
-					);
-					if ( is_wp_error( $local_user ) ) {
-						throw new Failure( 'local_account_creation_failed' );
-					}
-					$provenance = 'validated_jit';
-					}
-					if ( ! get_userdata( $local_user ) || false === $this->db->insert(
-						$table,
-						array(
-							'identity_key' => $ik,
-							'subject_key'  => $sk,
-							'issuer'       => $identity['issuer'],
-							'subject'      => $identity['subject'],
-							'identity'     => $identity['identity'],
-							'user_id'      => $local_user,
-							'link_state'   => 'active',
-							'provenance'   => $provenance,
-							'created_at'   => time(),
-							'updated_at'   => time(),
-						)
-					) ) {
-						throw new Failure( 'account_link_conflict' );
+		$created_user = 0;
+		try {
+			return $this->lock(
+				'links',
+				function () use ( $identity, $config, $local_user, &$created_user ) {
+					return $this->transaction(
+						function () use ( $identity, $config, $local_user, &$created_user ) {
+							$table   = $this->table( 'links' );
+							$ik      = hash( 'sha256', $identity['issuer'] . "\0" . $identity['identity'] );
+							$sk      = hash( 'sha256', $identity['issuer'] . "\0" . $identity['subject'] );
+							$by_id   = $this->db->get_row( $this->db->prepare( 'SELECT * FROM %i WHERE identity_key=%s', $table, $ik ), ARRAY_A );
+							$by_sub  = $this->db->get_row( $this->db->prepare( 'SELECT * FROM %i WHERE subject_key=%s', $table, $sk ), ARRAY_A );
+							$by_user = $local_user ? $this->link_for_user( $local_user ) : null;
+							if ( ( $by_sub && ( $by_sub['identity_key'] !== $ik || $by_sub['subject'] !== $identity['subject'] ) ) ||
+								( $by_user && $by_user['identity_key'] !== $ik ) ||
+								( $by_id && ( $by_id['issuer'] !== $identity['issuer'] || $by_id['identity'] !== $identity['identity'] ||
+									( $local_user && (int) $by_id['user_id'] !== $local_user ) ) ) ) {
+								throw new Failure( 'account_link_conflict' );
+							}
+							if ( $by_id ) {
+								if ( ! get_userdata( (int) $by_id['user_id'] ) || ( 'active' !== $by_id['link_state'] && ! $local_user ) ) {
+									throw new Failure( 'account_link_required' );
+								}
+								if ( false === $this->db->update(
+									$table,
+									array(
+										'subject_key' => $sk,
+										'subject'     => $identity['subject'],
+										'link_state'  => 'active',
+										'updated_at'  => time(),
+									),
+									array( 'id' => $by_id['id'] )
+								) ) {
+									throw new Failure( 'account_link_conflict' );
+								}
+								if ( $by_id['subject'] !== $identity['subject'] ) {
+									$this->audit( 'subject_continuity_verified', (int) $by_id['user_id'] );
+								}
+								if ( $local_user ) {
+									$this->audit( 'account_link_confirmed', $local_user );
+								}
+								return (int) $by_id['user_id'];
+							}
+							$provenance = 'dual_proof';
+							if ( ! $local_user ) {
+								if ( ! $config['jit'] ) {
+									throw new Failure( 'account_link_required' ); }
+								Config::safe_role( $config['default_role'] );
+								if ( ! $identity['email_verified'] || ! is_email( $identity['email'] ) ) {
+									throw new Failure( 'verified_email_required' );
+								}
+								if ( email_exists( $identity['email'] ) ) {
+									throw new Failure( 'account_link_required' ); }
+								$local_user = wp_insert_user(
+									array(
+										'user_login'   => 'al_' . substr( $ik, 0, 28 ),
+										'user_pass'    => wp_generate_password( 64, true, true ),
+										'user_email'   => $identity['email'],
+										'role'         => $config['default_role'],
+										'display_name' => __(
+											'AccessLobby user',
+											'accesslobby-sso'
+										),
+									)
+								);
+								if ( is_wp_error( $local_user ) ) {
+									throw new Failure( 'local_account_creation_failed' ); }
+								$created_user = $local_user;
+								$new_user     = get_userdata( $local_user );
+								// Enforce the result after user_register and local plugin hooks have run.
+								if ( ! $new_user || array( $config['default_role'] ) !== $new_user->roles || self::privileged( $new_user ) ) {
+									throw new Failure( 'unsafe_provisioning_result' );
+								}
+								$provenance = 'validated_jit';
+							}
+							if ( ! get_userdata( $local_user ) || false === $this->db->insert(
+								$table,
+								array(
+									'identity_key' => $ik,
+									'subject_key'  => $sk,
+									'issuer'       => $identity['issuer'],
+									'subject'      => $identity['subject'],
+									'identity'     => $identity['identity'],
+									'user_id'      => $local_user,
+									'link_state'   => 'active',
+									'provenance'   => $provenance,
+									'created_at'   => time(),
+									'updated_at'   => time(),
+								)
+							) ) {
+								throw new Failure( 'account_link_conflict' ); }
+							$this->audit( 'dual_proof' === $provenance ? 'account_linked' : 'account_provisioned', $local_user );
+							return $local_user;
 						}
-					$this->audit( 'dual_proof' === $provenance ? 'account_linked' : 'account_provisioned', $local_user );
-					return $local_user;
-					}
-			)
-		);
+					);
+				}
+			);
+		} catch ( \Throwable $error ) {
+			if ( $created_user ) {
+				clean_user_cache( $created_user ); }
+			throw $error;
+		}
+	}
+
+	public static function privileged( \WP_User $user ): bool {
+		foreach ( $user->allcaps as $capability => $enabled ) {
+			if ( $enabled && ! in_array( $capability, array( 'read', 'level_0' ), true ) &&
+				! in_array( $capability, $user->roles, true ) ) {
+				return true; }
+		}
+		return false;
 	}
 
 	public function unlink( int $user, array $identity ): void {
 		$this->lock(
 			'links',
-			function () use ( $user, $identity ) {
-				$link = $this->link_for_user( $user );
-				if ( ! $link || $link['issuer'] !== $identity['issuer'] || $link['identity'] !== $identity['identity'] ) {
-					throw new Failure( 'account_link_conflict' );
-				}
-				$this->db->update(
+			fn() => $this->transaction(
+				function () use ( $user, $identity ) {
+					$link = $this->link_for_user( $user );
+					if ( ! $link || $link['issuer'] !== $identity['issuer'] || $link['identity'] !== $identity['identity'] ) {
+						throw new Failure( 'account_link_conflict' );
+					}
+				if ( false === $this->db->update(
 					$this->table( 'links' ),
 					array(
 						'link_state' => 'unlinked',
 						'updated_at' => time(),
 					),
 					array( 'user_id' => $user )
-				);
-				$this->audit( 'account_unlinked', $user );
-			}
+				) ) {
+					throw new Failure( 'storage_unavailable' );
+					}
+					$this->audit( 'account_unlinked', $user );
+				}
+			)
 		);
 	}
 
@@ -322,25 +356,34 @@ final class Store {
 
 	public function readiness_counts(): array {
 		$table               = $this->table( 'links' );
-		$total               = (int) $this->db->get_var( "SELECT COUNT(*) FROM {$this->db->users}" );
-		$linked              = (int) $this->db->get_var( "SELECT COUNT(*) FROM $table WHERE link_state='active'" );
-		$privileged          = get_users(
-			array(
-				'role__in' => array( 'administrator', 'editor', 'shop_manager' ),
-				'fields'   => 'ID',
+		$total               = (int) $this->db->get_var( $this->db->prepare( 'SELECT COUNT(*) FROM %i', $this->db->users ) );
+		$linked_ids          = $this->db->get_col(
+			$this->db->prepare(
+				"SELECT l.user_id FROM %i l JOIN %i u ON l.user_id=u.ID WHERE l.link_state='active'",
+				$table,
+				$this->db->users
 			)
 		);
+		$linked              = array_fill_keys( $linked_ids, true );
 		$unlinked_privileged = 0;
-		foreach ( $privileged as $id ) {
-			$l = $this->link_for_user( (int) $id );
-			if ( ! $l || 'active' !== $l['link_state'] ) {
-				++$unlinked_privileged;
+		$page                = 1;
+		do {
+			$users = get_users(
+				array(
+					'number' => 200,
+					'paged'  => $page++,
+					'fields' => 'all',
+				)
+			);
+			foreach ( $users as $user ) {
+				if ( ! isset( $linked[ $user->ID ] ) && self::privileged( $user ) ) {
+					++$unlinked_privileged; }
 			}
-		}
+		} while ( count( $users ) === 200 );
 		return array(
 			'total'               => $total,
-			'linked'              => $linked,
-			'unlinked'            => max( 0, $total - $linked ),
+			'linked'              => count( $linked ),
+			'unlinked'            => $total - count( $linked ),
 			'unlinked_privileged' => $unlinked_privileged,
 		);
 	}

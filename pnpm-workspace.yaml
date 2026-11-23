@@ -6,3 +6,10 @@ onlyBuiltDependencies:
   - esbuild
 allowBuilds:
   esbuild: true
+
+# Narrow security pins for upstream exact/transitive dependency constraints.
+overrides:
+  multer: 2.5.0
+  body-parser: 2.4.0
+  source-map-js: 1.2.2
+  qs: 6.16.1

@@ -17,6 +17,8 @@ import time
 import urllib.request
 import uuid
 import zipfile
+import ssl
+import importlib.util
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--runtime', type=Path, required=True)
@@ -27,7 +29,7 @@ runtime = args.runtime.resolve()
 plugin = Path(__file__).resolve().parents[1]
 repo = plugin.parents[1]
 if not (plugin / 'tests/browser.mjs').is_file():
-    raise SystemExit('WIP harness: complete/review tests/browser.mjs before starting disposable services. No fixture started.')
+    raise SystemExit('Missing browser fixture; no service started.')
 work = runtime / ('qualification-' + uuid.uuid4().hex[:8])
 work.mkdir(parents=True)
 env = os.environ.copy()
@@ -37,6 +39,7 @@ php = env.get('ALWP_PHP', 'php')
 wp_cli = str(runtime / 'wp-cli.phar')
 children = []
 logs = []
+proxies = []
 
 def run(command, *, cwd=None, input=None, extra=None, quiet=False):
     result = subprocess.run([str(x) for x in command], cwd=cwd, input=input, text=True,
@@ -58,6 +61,8 @@ def spawn(name, command, *, cwd=None, extra=None):
     return process
 
 def cleanup():
+    for proxy in proxies:
+        proxy.shutdown()
     for process in reversed(children):
         if process.poll() is None:
             process.terminate()
@@ -81,13 +86,16 @@ def wait_url(url, process, seconds=90):
     while time.monotonic() < end:
         if process.poll() is not None: raise RuntimeError('Fixture HTTP service exited; inspect ' + str(work))
         try:
-            with urllib.request.urlopen(url, timeout=2) as response:
+            context = ssl._create_unverified_context() if url.startswith('https://127.0.0.1:') else None
+            with urllib.request.urlopen(url, timeout=2, context=context) as response:
                 if response.status == 200: return
         except Exception: time.sleep(.3)
     raise RuntimeError('Fixture HTTP startup timed out')
 
 mysql_host = env.get('ALWP_MYSQL_HOST', '127.0.0.1')
 mysql_port = int(env.get('ALWP_MYSQL_PORT', '3307'))
+if mysql_host not in {'127.0.0.1', 'localhost'}:
+    raise SystemExit('Disposable fixture databases must be loopback-only.')
 if env.get('ALWP_MARIADBD'):
     maria = spawn('mariadb', [env['ALWP_MARIADBD'], '--no-defaults',
         '--basedir=' + env['ALWP_NATIVE_USR'], '--datadir=' + str(runtime / 'db'), '--socket=',
@@ -104,9 +112,23 @@ if env.get('ALWP_INITDB'):
     database_url = 'postgres://accesslobby@127.0.0.1:5433/accesslobby'
 if not database_url: raise RuntimeError('DATABASE_URL or native PostgreSQL fixture commands required')
 
-issuer = 'http://127.0.0.1:8083/realms/accesslobby-first-party'
+issuer = 'https://127.0.0.1:8083/realms/accesslobby-first-party'
 api = 'http://127.0.0.1:8090'
 password = secrets.token_urlsafe(24)
+https_marker = secrets.token_urlsafe(32)
+cert = work / 'fixture-cert.pem'
+key = work / 'fixture-key.pem'
+run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key,
+     '-out', cert, '-days', '1', '-subj', '/CN=127.0.0.1',
+     '-addext', 'subjectAltName=IP:127.0.0.1,DNS:localhost'], quiet=True)
+key.chmod(0o600)
+truststore = work / 'fixture-trust.p12'
+keytool = str(Path(env['JAVA_HOME']) / 'bin/keytool') if env.get('JAVA_HOME') else 'keytool'
+run([keytool, '-importcert', '-noprompt', '-alias', 'fixture', '-file', cert,
+     '-keystore', truststore, '-storepass', 'fixture-only-password'], quiet=True)
+spec = importlib.util.spec_from_file_location('alwp_tls_proxy', plugin / 'tests/tls_proxy.py')
+tls_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(tls_module)
 realm = json.loads((repo / 'infra/keycloak/realm.template.json').read_text())
 realm.update({'loginTheme': 'keycloak', 'sslRequired': 'none', 'registrationAllowed': False,
               'verifyEmail': False, 'resetPasswordAllowed': False})
@@ -117,30 +139,34 @@ template['attributes']['post.logout.redirect.uris'] = 'http://127.0.0.1:8091/'
 template['attributes']['backchannel.logout.url'] = api + '/v1/backchannel-logout'
 sites = []
 for label, port, prefix, woo in [('a', 8081, '', True), ('b', 8082, '/gh', False)]:
-    base = f'http://127.0.0.1:{port}{prefix}'
+    tls_port = port + 360
+    base = f'https://127.0.0.1:{tls_port}{prefix}'
     client = copy.deepcopy(template)
     client.update({'clientId': 'wordpress-' + label, 'name': 'Disposable WordPress ' + label,
-                   'redirectUris': [base + '/wp-login.php?action=al_callback'], 'webOrigins': [f'http://127.0.0.1:{port}'],
+                   'redirectUris': [base + '/wp-login.php?action=al_callback'], 'webOrigins': [f'https://127.0.0.1:{tls_port}'],
                    'defaultClientScopes': ['basic', 'profile', 'email']})
     client['attributes'].update({'post.logout.redirect.uris': base + '/wp-login.php?action=al_signed_out',
         'backchannel.logout.url': base + '/?rest_route=/accesslobby/v1/backchannel-logout',
         'backchannel.logout.session.required': 'true'})
     realm['clients'].append(client)
-    sites.append({'label': label, 'base': base, 'port': port, 'prefix': prefix, 'woo': woo, 'client': client['clientId']})
+    sites.append({'label': label, 'base': base, 'port': port, 'tlsPort': tls_port, 'prefix': prefix, 'woo': woo, 'client': client['clientId']})
 realm['users'] = [{'id': str(uuid.uuid4()), 'username': name, 'enabled': True, 'emailVerified': True,
     'email': name + '@example.test', 'firstName': name, 'lastName': 'Fixture',
     'credentials': [{'type': 'password', 'value': password, 'temporary': False}]}
     for name in ['shopper', 'newperson', 'staff']]
 imports = args.keycloak_home / 'data/import'
 imports.mkdir(parents=True, exist_ok=True)
-(imports / 'wordpress-fixture-realm.json').write_text(json.dumps(realm))
-kc = spawn('keycloak', [args.keycloak_home / 'bin/kc.sh', 'start-dev', '--http-port=8083', '--http-host=127.0.0.1',
-    '--hostname=http://127.0.0.1:8083', '--db-url=jdbc:h2:file:' + str(work / 'iam') + ';NON_KEYWORDS=VALUE;DB_CLOSE_ON_EXIT=FALSE',
-    '--import-realm'], extra={'KC_BOOTSTRAP_ADMIN_USERNAME': 'fixture_operator', 'KC_BOOTSTRAP_ADMIN_PASSWORD': secrets.token_urlsafe(32)})
+(imports / 'wordpress-fixture-realm.json').unlink(missing_ok=True)
+(imports / 'accesslobby-first-party-realm.json').write_text(json.dumps(realm))
+kc = spawn('keycloak', [args.keycloak_home / 'bin/kc.sh', 'start-dev', '--http-enabled=false', '--https-port=8083', '--http-host=127.0.0.1',
+    '--https-certificate-file=' + str(cert), '--https-certificate-key-file=' + str(key),
+    '--hostname=https://127.0.0.1:8083', '--db-url=jdbc:h2:file:' + str(work / 'iam') + ';NON_KEYWORDS=VALUE;DB_CLOSE_ON_EXIT=FALSE',
+    '--import-realm'], extra={'KC_BOOTSTRAP_ADMIN_USERNAME': 'fixture_operator', 'KC_BOOTSTRAP_ADMIN_PASSWORD': secrets.token_urlsafe(32),
+    'JAVA_OPTS_APPEND': '-Djavax.net.ssl.trustStore=' + str(truststore) + ' -Djavax.net.ssl.trustStorePassword=fixture-only-password'})
 wait_url(issuer + '/.well-known/openid-configuration', kc, 120)
 print('FIXTURE real Keycloak ready', flush=True)
 
-api_env = {'DATABASE_URL': database_url, 'OIDC_ISSUER': issuer, 'OIDC_API_AUDIENCE': 'accesslobby-api',
+api_env = {'DATABASE_URL': database_url, 'OIDC_ISSUER': issuer, 'OIDC_API_AUDIENCE': 'accesslobby-api', 'NODE_EXTRA_CA_CERTS': str(cert),
     'ALLOWED_CLIENT_IDS': 'accesslobby-web,wordpress-a,wordpress-b', 'PORT': '8090', 'GIT_SHA': 'wordpress-disposable-fixture'}
 run(['node', '--import', 'tsx', 'src/migrate.ts'], cwd=repo / 'apps/api', extra=api_env)
 seed = """import {Pool} from 'pg'; const p=new Pool({connectionString:process.env.DATABASE_URL});
@@ -182,6 +208,9 @@ for site in sites:
        input="define('WP_ENVIRONMENT_TYPE','local');\ndefine('ACCESSLOBBY_ALLOW_LOCAL_HTTP',true);\ndefine('ACCESSLOBBY_FIXTURE',true);\ndefine('DISABLE_WP_CRON',true);\ndefine('ACCESSLOBBY_EMERGENCY_ENABLED',true);\ndefine('ACCESSLOBBY_EMERGENCY_IPS',['127.0.0.1']);\n", quiet=True)
     wp('core', 'install', '--url=' + site['base'], '--title=WordPress ' + site['label'], '--admin_user=fixture_admin',
        '--admin_password=' + password, '--admin_email=admin-' + site['label'] + '@example.test', '--skip-email', quiet=True)
+    wp('option', 'update', 'home', site['base'], quiet=True)
+    wp('option', 'update', 'siteurl', site['base'], quiet=True)
+    assert wp('option', 'get', 'siteurl', quiet=True).strip() == site['base']
     wp('plugin', 'install', str(args.package.resolve()), '--activate', quiet=True)
     wp('plugin', 'deactivate', 'accesslobby-sso', quiet=True)
     wp('plugin', 'activate', 'accesslobby-sso', quiet=True)
@@ -193,20 +222,29 @@ for site in sites:
     wp('option', 'update', 'accesslobby_sso', json.dumps(config), '--format=json', quiet=True)
     mu = path / 'wp-content/mu-plugins'; mu.mkdir(exist_ok=True)
     shutil.copyfile(plugin / 'tests/fixture-mu.php', mu / 'accesslobby-fixture.php')
-    data = wp('eval-file', str(plugin / 'tests/setup-fixture.php'), extra={'ALWP_FIXTURE_PASSWORD': password}, quiet=True)
+    (mu / 'fixture-ca.php').write_text("<?php\nadd_filter('http_request_args',static function($args,$url){if(parse_url($url,PHP_URL_HOST)==='127.0.0.1'){$args['sslcertificates']=" + repr(str(cert)) + ";}return $args;},10,2);\n")
+    data = wp('eval-file', str(plugin / 'tests/setup-fixture.php'), extra={'ALWP_FIXTURE_PASSWORD': password,
+              'ALWP_FIXTURE_EMAIL': 'shopper@example.test' if site['woo'] else 'local-only@example.test'}, quiet=True)
     site.update(json.loads(data.strip()))
     wp('eval-file', str(plugin / 'tests/integration.php'), extra={'ALWP_INTEGRATION_RESULT': str(work / ('integration-' + site['label'] + '.json'))})
+    wp('eval-file', str(plugin / 'tests/security-integration.php'), extra={'ALWP_SECURITY_RESULT': str(work / ('security-' + site['label'] + '.json'))})
     router = base_dir / 'router.php'
     docroot = path.parent if site['prefix'] else path
-    router.write_text("<?php\n$p=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);$f=realpath(__DIR__." + repr('/' + ('gh' if site['prefix'] else 'root')) + ");\n" +
+    router.write_text("<?php\nif(($_SERVER['REMOTE_ADDR']??'')==='127.0.0.1' && hash_equals(" + repr(https_marker) + ",$_SERVER['HTTP_X_ALWP_FIXTURE_HTTPS']??'')){$_SERVER['HTTPS']='on';}\n$p=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);\n" +
         "$root=" + repr(str(docroot)) + ";\nif(is_file($root.$p))return false;\nrequire " + repr(str(path / 'index.php')) + ";\n")
     http = spawn('wordpress-' + site['label'], [php, '-S', '127.0.0.1:' + str(site['port']), '-t', docroot, router])
+    wait_port(site['port'], http)
+    proxies.append(tls_module.start_proxy(site['tlsPort'], site['port'], cert, key, https_marker))
     wait_url(site['base'] + '/', http)
     print('FIXTURE WordPress ' + site['label'] + ' ready', flush=True)
 
 fixture = {'sites': sites, 'issuer': issuer, 'api': api, 'password': password, 'php': php, 'wpCli': wp_cli,
-           'artifactDir': str(work), 'package': str(args.package.resolve())}
+           'artifactDir': str(work), 'certificate': str(cert), 'package': str(args.package.resolve())}
 config_file = work / 'private-fixture-config.json'
 config_file.write_text(json.dumps(fixture)); config_file.chmod(0o600)
-run(['node', str(plugin / 'tests/browser.mjs'), str(config_file)], cwd=repo)
+driver = env.get('ALWP_FIXTURE_DRIVER', 'browser')
+if driver == 'http':
+    run(['python3', str(plugin / 'tests/http_flow.py'), str(config_file)], cwd=repo)
+else:
+    run(['node', str(plugin / 'tests/browser.mjs'), str(config_file)], cwd=repo)
 print('QUALIFICATION_PASS artifacts=' + str(work), flush=True)
