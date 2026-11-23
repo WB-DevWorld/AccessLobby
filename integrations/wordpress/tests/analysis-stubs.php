@@ -11,7 +11,12 @@ class WP_CLI {
 	public static function error( $line ) {}
 }
 function is_account_page() { return false; }
-function is_wc_endpoint_url( $endpoint ) { return false; }
+function is_wc_endpoint_url( $endpoint = '' ) { return false; }
+function is_checkout() { return false; }
+class WC_Checkout {
+	public static function instance(): self { return new self(); }
+	public function is_registration_required(): bool { return false; }
+}
 
 define('ABSPATH', __DIR__ . '/');
 define('DB_NAME', 'analysis');

@@ -2,7 +2,28 @@
 namespace AccessLobby\WordPress;
 
 final class Sessions {
+	private static bool $issuing_cookie = false;
+
 	public function __construct( private readonly Store $store ) {}
+
+	/** Trusted connector flows scope cookie issuance; ordinary password/custom frontends cannot. */
+	public static function issue_cookie( callable $operation ): mixed {
+		$previous             = self::$issuing_cookie;
+		self::$issuing_cookie = true;
+		try {
+			return $operation();
+		} finally {
+			self::$issuing_cookie = $previous;
+		}
+	}
+
+	public static function allow_cookie( bool $send, int $expire = 0, int $expiration = 0, int $user = 0 ): bool {
+		// WordPress uses this same hook to clear cookies; never suppress logout.
+		if ( 0 === $user && 0 === $expiration ) {
+			return $send;
+		}
+		return 'enforced' !== Config::get()['mode'] || self::$issuing_cookie ? $send : false;
+	}
 
 	public static function sid_key( array $c, string $sid ): string {
 		return hash( 'sha256', $c['issuer'] . "\0" . $c['client_id'] . "\0" . $sid );
@@ -34,7 +55,7 @@ final class Sessions {
 					$expiration_filter = static fn() => max( 1, $identity['expires'] - time() );
 					add_filter( 'auth_cookie_expiration', $expiration_filter );
 					try {
-						wp_set_auth_cookie( $user, false, is_ssl(), $token );
+						self::issue_cookie( static fn() => wp_set_auth_cookie( $user, false, is_ssl(), $token ) );
 					} finally {
 						remove_filter( 'auth_cookie_expiration', $expiration_filter );
 					}

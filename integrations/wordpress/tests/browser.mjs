@@ -52,6 +52,13 @@ async function localLogin(site, username, tab = page) {
   await tab.locator('#user_pass').fill(fixture.password);
   await Promise.all([tab.waitForURL(url => !url.pathname.endsWith('wp-login.php')), tab.locator('#wp-submit').click()]);
 }
+async function directLocalCookie(site, tab, context) {
+  await tab.goto(site.account);
+  const nonce = await tab.locator('#fixture-direct-nonce').inputValue();
+  await context.request.post(site.base + '/', { form: {
+    fixture_direct_local_login: '1', _wpnonce: nonce, log: 'legacy_shopper', pwd: fixture.password,
+  } });
+}
 async function iamLogin(tab, username) {
   await tab.locator('#username').waitFor();
   await tab.locator('#username').fill(username);
@@ -76,6 +83,12 @@ try {
     assert.equal(await identity(a), a.legacyUser);
     const response = await page.goto(a.account);
     assert.match(response.headers()['cache-control'], /private.*no-store/);
+  });
+  await test('hybrid custom password frontend can issue an ordinary local cookie', async () => {
+    const controlContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(controlContext);
+    const control = await controlContext.newPage();
+    await directLocalCookie(a, control, controlContext);
+    assert.equal(await identity(a, control), a.legacyUser);
   });
   await test('fresh dual proof links existing ' + (a.woo ? 'WooCommerce customer' : 'WordPress user'), async () => {
     const oldCookie = (await context.cookies()).find(c => c.name.startsWith('wordpress_logged_in_'));
@@ -245,6 +258,37 @@ try {
     await admin.getByRole('button', { name: 'Save Changes', exact: true }).click();
     assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
   });
+  await test('enforced cookie guard denies a valid local-password frontend that bypasses authenticate', async () => {
+    const deniedContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(deniedContext);
+    const denied = await deniedContext.newPage();
+    await directLocalCookie(a, denied, deniedContext);
+    assert.equal(await identity(a, denied), 0);
+    assert.equal((await deniedContext.cookies()).filter(c => c.name.startsWith('wordpress_logged_in_')).length, 0);
+  });
+  await test('host recovery can issue a short administrator cookie while enforcement is active', async () => {
+    const ticket = wp(a, '$s=new AccessLobby\\WordPress\\Store($GLOBALS["wpdb"]);echo AccessLobby\\WordPress\\Emergency::issue($s,1,"127.0.0.1","fixture-enforced-recovery");');
+    const recoveryContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(recoveryContext);
+    const recovery = await recoveryContext.newPage();
+    await recovery.goto(a.base + '/wp-login.php?action=al_emergency');
+    await recovery.locator('input[name="ticket"]').fill(ticket);
+    await recovery.getByRole('button', { name: 'Recover administrator access', exact: true }).click();
+    assert.equal(await identity(a, recovery), 1);
+  });
+  await test('Application Password REST authentication follows its explicit machine policy', async () => {
+    const created = JSON.parse(wp(a, '$r=WP_Application_Passwords::create_new_application_password(' + a.legacyUser + ',["name"=>"Disposable API acceptance"]);echo wp_json_encode(["password"=>$r[0],"uuid"=>$r[1]["uuid"]]);'));
+    const machineContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(machineContext);
+    const authorization = 'Basic ' + Buffer.from('legacy_shopper:' + created.password).toString('base64');
+    try {
+      const accepted = await machineContext.request.get(a.base + '/?rest_route=/wp/v2/users/me', { headers: { Authorization: authorization } });
+      assert.equal(accepted.status(), 200); assert.equal((await accepted.json()).id, a.legacyUser);
+      config(a, { machine_auth: false });
+      const denied = await machineContext.request.get(a.base + '/?rest_route=/wp/v2/users/me', { headers: { Authorization: authorization } });
+      assert([401, 403].includes(denied.status()));
+    } finally {
+      config(a, { machine_auth: true });
+      wp(a, 'WP_Application_Passwords::delete_application_password(' + a.legacyUser + ',' + JSON.stringify(created.uuid) + ');');
+    }
+  });
   for (const [name, target] of [['wp-login', a.base + '/wp-login.php'], ['wp-admin', a.base + '/wp-admin/'],
     ['My Account', a.wooAccount], ['generic frontend', a.frontend]]) {
     if (!target) continue;
@@ -277,6 +321,9 @@ try {
     await guest.goto(a.checkout);
     await guest.locator('form.checkout').waitFor();
     assert.equal(new URL(guest.url()).port, '8441');
+    assert.equal(await guest.locator('#createaccount').count(), 0);
+    assert.equal(wp(a, 'echo get_option("woocommerce_enable_signup_and_login_from_checkout");'), 'yes');
+    assert.equal(wp(a, 'echo get_option("woocommerce_enable_guest_checkout");'), 'yes');
     phase = 'billing_fields';
     for (const [field, value] of Object.entries({ billing_first_name: 'Guest', billing_last_name: 'Fixture',
       billing_address_1: '1 Fixture Street', billing_city: 'Los Angeles', billing_postcode: '90210',
@@ -285,6 +332,15 @@ try {
     }
     await guest.locator('#billing_country').selectOption('US', { force: true });
     await guest.locator('#billing_state').selectOption('CA', { force: true });
+    phase = 'reject_forged_local_registration';
+    const fields = await guest.locator('form.checkout').evaluate(form => Object.fromEntries(new FormData(form)));
+    const forged = await guestContext.request.post(a.base + '/?wc-ajax=checkout', {
+      form: { ...fields, createaccount: '1', payment_method: 'cod' },
+    });
+    const rejected = await forged.json();
+    assert.equal(rejected.result, 'failure');
+    assert.match(rejected.messages, /Create your account through AccessLobby/);
+    assert.equal(wp(a, 'echo count_users()["total_users"];'), count);
     phase = 'place_order';
     await guest.locator('#place_order').click();
     phase = 'thank_you';
@@ -296,6 +352,26 @@ try {
     assert.equal(wp(a, 'echo count_users()["total_users"];'), count);
     const order = JSON.parse(wp(a, '$o=wc_get_orders(["billing_email"=>"guest-checkout@example.test","limit"=>1]);echo wp_json_encode(["customer"=>$o[0]->get_customer_id(),"total"=>$o[0]->get_total()]);'));
     assert.equal(order.customer, 0); assert.equal(order.total, '19.95');
+  });
+  if (a.woo) await test('enforced anonymous Woo registration fails without creating a local account', async () => {
+    const deniedContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(deniedContext);
+    const before = wp(a, 'global $wpdb;echo $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}accesslobby_audit WHERE event=\'local_registration_rejected\'");');
+    const nonce = wp(a, 'wp_set_current_user(0);echo wp_create_nonce("woocommerce-register");');
+    await deniedContext.request.post(a.wooAccount, { form: { register: '1', 'woocommerce-register-nonce': nonce,
+      email: 'denied-local-register@example.test', password: fixture.password } });
+    assert.equal(wp(a, 'echo email_exists("denied-local-register@example.test")?1:0;'), '0');
+    const after = wp(a, 'global $wpdb;echo $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}accesslobby_audit WHERE event=\'local_registration_rejected\'");');
+    assert.equal(Number(after), Number(before) + 1);
+  });
+  if (a.woo) await test('account-required checkout starts IAM while guest policy remains a local setting', async () => {
+    wp(a, 'update_option("woocommerce_enable_guest_checkout","no");');
+    try {
+      const requiredContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(requiredContext);
+      const required = await requiredContext.newPage();
+      await required.goto(a.checkout);
+      await required.locator('#username').waitFor();
+      assert.equal(new URL(required.url()).port, '8083');
+    } finally { wp(a, 'update_option("woocommerce_enable_guest_checkout","yes");'); }
   });
   await test('identity API outage fails new enforced login closed and leaves existing sessions usable', async () => {
     wp(a, 'update_option("alwp_fixture_outage",1);');

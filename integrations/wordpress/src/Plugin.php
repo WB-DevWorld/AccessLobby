@@ -27,6 +27,7 @@ final class Plugin {
 	}
 
 	public static function boot(): void {
+		add_filter( 'send_auth_cookies', array( Sessions::class, 'allow_cookie' ), PHP_INT_MAX, 4 );
 		if ( is_multisite() || ! extension_loaded( 'sodium' ) || ! extension_loaded( 'openssl' ) ) {
 			add_action(
 				'admin_notices',

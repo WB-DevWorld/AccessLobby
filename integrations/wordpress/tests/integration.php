@@ -117,6 +117,7 @@ $surfaces = new Surfaces( $store );
 $old = get_option( 'accesslobby_sso' );
 $c['mode'] = 'hybrid'; update_option( 'accesslobby_sso', $c );
 $check( $surfaces->password_policy( $before ) === $before, 'hybrid preserves ordinary local authentication' );
+$check( apply_filters( 'send_auth_cookies', true, 0, time() + 100, $legacy ), 'hybrid preserves normal cookie issuance' );
 $c['mode'] = 'enforced';
 // Direct fixture update bypasses readiness only in the disposable fixture. Admin sanitizer is tested below.
 remove_all_actions( 'update_option_accesslobby_sso' ); update_option( 'accesslobby_sso', $c );
@@ -124,6 +125,10 @@ $saved_cli = defined( 'WP_CLI' ) && WP_CLI;
 // WP-CLI is a declared machine surface, so use explicit machine deny to check final password gate.
 $c['machine_auth'] = false; update_option( 'accesslobby_sso', $c );
 $check( is_wp_error( $surfaces->password_policy( $before ) ), 'enforced final authentication gate refuses local passwords' );
+$check( ! apply_filters( 'send_auth_cookies', true, 0, time() + 100, $legacy ), 'enforced cookie guard rejects ordinary programmatic cookie issuance' );
+$check( apply_filters( 'send_auth_cookies', true, 0, 0, 0 ), 'enforced cookie guard always permits clearing cookies' );
+$check( Sessions::issue_cookie( fn() => apply_filters( 'send_auth_cookies', true, 0, time() + 100, $legacy ) ), 'validated connector cookie scope is permitted' );
+$check( ! apply_filters( 'send_auth_cookies', true, 0, time() + 100, $legacy ), 'cookie permission scope is removed immediately afterward' );
 $c['machine_auth'] = true; update_option( 'accesslobby_sso', $c );
 $check( $surfaces->password_policy( $before ) === $before, 'explicit machine policy preserves CLI authentication' );
 update_option( 'accesslobby_sso', $old );

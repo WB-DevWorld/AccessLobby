@@ -54,8 +54,11 @@ final class Emergency {
 			wp_clear_auth_cookie();
 			$expiration = static fn() => 900;
 			add_filter( 'auth_cookie_expiration', $expiration );
-			wp_set_auth_cookie( $data['user'], false, true );
-			remove_filter( 'auth_cookie_expiration', $expiration );
+			try {
+				Sessions::issue_cookie( static fn() => wp_set_auth_cookie( $data['user'], false, true ) );
+			} finally {
+				remove_filter( 'auth_cookie_expiration', $expiration );
+			}
 			$store->audit( 'emergency_session_started', $data['user'] );
 			wp_safe_redirect( admin_url(), 303 );
 			exit;

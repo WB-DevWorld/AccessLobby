@@ -31,7 +31,8 @@ if ( class_exists( 'WooCommerce' ) ) {
 	update_option( 'woocommerce_cart_page_id', $cart );
 	update_option( 'woocommerce_enable_guest_checkout', 'yes' );
 	update_option( 'woocommerce_enable_signup_and_login_from_checkout', 'yes' );
-	update_option( 'woocommerce_enable_signup_from_checkout', 'no' );
+	update_option( 'woocommerce_enable_signup_from_checkout', 'yes' );
+	update_option( 'woocommerce_enable_myaccount_registration', 'yes' );
 	update_option( 'woocommerce_calc_taxes', 'no' );
 	update_option( 'woocommerce_cod_settings', array( 'enabled' => 'yes', 'title' => 'Fixture payment on delivery', 'enable_for_virtual' => 'yes' ) );
 	$product = new WC_Product_Simple();

@@ -11,6 +11,11 @@ final class Surfaces {
 		add_action( 'woocommerce_login_form_start', array( $this, 'button' ) );
 		add_action( 'woocommerce_register_form_start', array( $this, 'join_button' ) );
 		add_action( 'woocommerce_account_dashboard', array( $this, 'account_actions' ) );
+		add_action( 'woocommerce_before_checkout_form', array( $this, 'checkout_entry' ) );
+		add_filter( 'woocommerce_checkout_registration_enabled', fn( $enabled ) => 'enforced' === Config::get()['mode'] ? false : $enabled );
+		add_filter( 'registration_errors', array( $this, 'registration_errors' ) );
+		add_filter( 'woocommerce_registration_errors', array( $this, 'registration_errors' ) );
+		add_action( 'woocommerce_after_checkout_validation', array( $this, 'checkout_validation' ), 10, 2 );
 		add_action( 'show_user_profile', array( $this, 'own_profile' ) );
 		add_action( 'admin_footer-profile.php', array( $this, 'profile_form' ) );
 		add_action( 'accesslobby_login', array( $this, 'button' ) );
@@ -67,6 +72,28 @@ final class Surfaces {
 		echo wp_kses_post( $this->button_html() ); }
 	public function join_button(): void {
 		echo wp_kses_post( $this->button_html( 'join' ) ); }
+
+	public function checkout_entry(): void {
+		if ( 'enforced' === Config::get()['mode'] && ! is_user_logged_in() ) {
+			$this->join_button();
+		}
+	}
+
+	public function registration_errors( \WP_Error $errors ): \WP_Error {
+		$background = ( defined( 'WP_CLI' ) && WP_CLI ) || wp_doing_cron();
+		if ( 'enforced' === Config::get()['mode'] && ! is_user_logged_in() && ! $background ) {
+			$this->store->audit( 'local_registration_rejected' );
+			$errors->add( 'accesslobby_sso_required', __( 'Create your account through AccessLobby, then return to this journey.', 'accesslobby-sso' ) );
+		}
+		return $errors;
+	}
+
+	public function checkout_validation( array $data, \WP_Error $errors ): void {
+		if ( 'enforced' === Config::get()['mode'] && ! is_user_logged_in() &&
+			( ! empty( $data['createaccount'] ) || ! empty( $_POST['createaccount'] ) ) ) {
+			$errors->add( 'accesslobby_sso_required', __( 'Create your account through AccessLobby, or continue as a guest where available.', 'accesslobby-sso' ) );
+		}
+	}
 
 	public function own_profile( \WP_User $user ): void {
 		if ( get_current_user_id() === $user->ID ) {
@@ -134,8 +161,11 @@ final class Surfaces {
 		if ( is_user_logged_in() || 'enforced' !== Config::get()['mode'] || wp_doing_ajax() ) {
 			return;
 		}
-		// Do not intercept checkout: anonymous purchasing remains a local WooCommerce policy.
-		if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+		// Required-account checkout follows local commerce policy; optional guest purchasing stays anonymous.
+		$account           = function_exists( 'is_account_page' ) && is_account_page();
+		$required_checkout = function_exists( 'is_checkout' ) && is_checkout() && ! is_wc_endpoint_url() &&
+			\WC_Checkout::instance()->is_registration_required();
+		if ( $account || $required_checkout ) {
 			Security::private_headers();
 			$destination = Security::origin( home_url() ) . ( $_SERVER['REQUEST_URI'] ?? '/' );
 			wp_safe_redirect( add_query_arg( 'redirect_to', Security::destination( $destination, home_url( '/' ), site_url( '/' ) ), Config::route( 'start' ) ), 303 );
