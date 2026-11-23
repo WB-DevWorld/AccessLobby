@@ -1,4 +1,6 @@
-# AccessLobby WordPress: Codex comparison acceptance
+# AccessLobby WordPress: alpha.2 historical comparison acceptance
+
+The [alpha.3 acceptance](alpha3-acceptance.md) is the newer qualification. This file retains the exact alpha.2 checkpoint.
 
 2026-11-23 UTC. A reviewable first-party candidate is implemented and qualified in reproducible fixtures. The first-party estate MVP and universal external support remain incomplete. No winner is selected.
 

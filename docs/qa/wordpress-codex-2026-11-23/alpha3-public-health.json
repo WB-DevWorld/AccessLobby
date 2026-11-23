@@ -1,0 +1,16 @@
+{
+  "recordedAt": "2026-11-23T22:13:25.237585+00:00",
+  "evidenceType": "PUBLIC_READ_ONLY_HTTP_NOT_PRIVATE_DEPLOYMENT_INVENTORY",
+  "web": {
+    "httpStatus": 200
+  },
+  "ready": {
+    "httpStatus": 200,
+    "status": "ready",
+    "version": "3d9220a140d61df5effe633bc72cf5142c4a8371"
+  },
+  "discovery": {
+    "httpStatus": 200,
+    "issuerMatches": true
+  }
+}
