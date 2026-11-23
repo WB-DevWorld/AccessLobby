@@ -51,18 +51,32 @@ async function identity(site, tab = page) {
 async function localLogin(site, username, tab = page) {
   try {
     await tab.goto(site.base + '/wp-login.php?redirect_to=' + encodeURIComponent(site.account));
+    // Core schedules autofocus after 200ms and can clear the password of a prefilled username.
+    // Wait for that actual UI event before automation fills the form.
+    await tab.waitForFunction(() => ['user_login', 'user_pass'].includes(document.activeElement?.id));
     await tab.locator('#user_login').fill(username);
     await tab.locator('#user_pass').fill(fixture.password);
-    await Promise.all([tab.waitForURL(site.account), tab.locator('#wp-submit').click()]);
+    await Promise.all([tab.waitForURL(url => url.href === site.account || url.searchParams.get('action') === 'confirm_admin_email'), tab.locator('#wp-submit').click()]);
+    if (new URL(tab.url()).searchParams.get('action') === 'confirm_admin_email') {
+      // Confirm only the disposable fixture administrator's own configured email through the real nonce form.
+      await Promise.all([tab.waitForURL(site.account), tab.locator('#correct-admin-email').click()]);
+    }
   } catch (error) {
     // Synthetic fixture messages only; never retain input values, cookies, query strings or form actions.
     try {
-      let message = await tab.locator('#login_error').innerText({ timeout: 1000 }).catch(() => '');
+      let message = (await tab.locator('#login_error, #login .notice').allTextContents()).join(' ');
       message = message.replaceAll(fixture.password, '[redacted]').replace(/https?:\/\/\S+/g, '[url]').slice(0, 400);
       const url = new URL(tab.url());
       const action = url.searchParams.get('action');
       diagnostic = { pathname: url.pathname, coreAction: ['confirm_admin_email', 'login', 'rp', 'resetpass', 'lostpassword'].includes(action) ? action : '', localForms: await tab.locator('#loginform').count(),
         iamForms: await tab.locator('#kc-form-login').count(), message,
+        inputState: await tab.locator('#loginform').evaluate(form => ({
+          userFilled: Boolean(form.querySelector('#user_login')?.value),
+          passwordFilled: Boolean(form.querySelector('#user_pass')?.value),
+          invalidFields: [...form.querySelectorAll(':invalid')].map(element => element.id),
+          actionHttps: new URL(form.action).protocol === 'https:',
+          actionSameOrigin: new URL(form.action).origin === location.origin,
+        })).catch(() => ({})),
         activePlugins: JSON.parse(wp(site, 'echo wp_json_encode(get_option("active_plugins"));')) };
     } catch {}
     throw error;
