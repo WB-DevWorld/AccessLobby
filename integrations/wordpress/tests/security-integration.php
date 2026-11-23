@@ -45,6 +45,14 @@ add_filter( 'query', $disable_audit );
 try { $denied( fn() => $store->resolve( $identity(), $config ), 'missing durable audit denies account creation' ); }
 finally { remove_filter( 'query', $disable_audit ); $wpdb->suppress_errors( $prior_suppression ); }
 $check( $count === count_users()['total_users'], 'audit failure rolls back account and mapping' );
+$state_table = $store->table( 'state' );
+$disable_state_read = static function ( string $sql ) use ( $state_table ): string {
+	return str_starts_with( $sql, 'SELECT * FROM ' . $state_table . ' WHERE state_key=' ) ? str_replace( $state_table, 'missing_fixture_state', $sql ) : $sql;
+};
+$prior_suppression = $wpdb->suppress_errors( true );
+add_filter( 'query', $disable_state_read );
+try { $denied( fn() => $store->has_state( 'unreadable-fixture', 'revoked_sid' ), 'unreadable revocation state fails closed rather than meaning absent' ); }
+finally { remove_filter( 'query', $disable_state_read ); $wpdb->suppress_errors( $prior_suppression ); }
 
 $item = $identity();
 $user = $store->resolve( $item, $config );
@@ -78,6 +86,13 @@ $check( 'hybrid' === $result['mode'], 'enforcement fails closed before migration
 $link_before = $store->link_for_user( $user );
 $wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN reference_hash', $audit_table ) );
 update_option( 'accesslobby_schema', '1' );
+$block_upgrade = static function ( string $sql ) use ( $audit_table ): string {
+	return str_starts_with( $sql, 'ALTER TABLE ' . $audit_table ) && str_contains( $sql, 'reference_hash' ) ? 'SELECT 1' : $sql;
+};
+add_filter( 'query', $block_upgrade );
+try { $denied( fn() => $store->migrate(), 'incomplete database upgrade cannot report successful schema' ); }
+finally { remove_filter( 'query', $block_upgrade ); }
+$check( '1' === get_option( 'accesslobby_schema' ), 'failed schema upgrade retains prior version for repair' );
 $store->migrate(); $store->migrate();
 $columns = $wpdb->get_col( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $audit_table ) );
 $check( in_array( 'reference_hash', $columns, true ) && '2' === get_option( 'accesslobby_schema' ), 'version-one schema upgrades idempotently' );

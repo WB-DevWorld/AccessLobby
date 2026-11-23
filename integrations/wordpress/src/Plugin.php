@@ -29,6 +29,23 @@ final class Plugin {
 					echo '<div class="notice notice-error"><p>' . esc_html__( 'AccessLobby is inactive on this unsupported environment. Review its PHP extension and standalone-site requirements.', 'accesslobby-sso' ) . '</p></div>';
 				}
 			);
+			if ( 'enforced' === Config::get()['mode'] ) {
+				// Missing runtime prerequisites must never reopen interactive local passwords.
+				global $wpdb;
+				$policy = new Surfaces( new Store( $wpdb ) );
+				add_filter( 'authenticate', array( $policy, 'password_policy' ), PHP_INT_MAX, 3 );
+				if ( ! Config::get()['machine_auth'] ) {
+					add_filter( 'wp_is_application_passwords_available', '__return_false' );
+				}
+				add_action(
+					'login_init',
+					static function () {
+						Security::private_headers();
+						wp_die( esc_html__( 'Authentication is unavailable on this environment. Contact the host operator for recovery.', 'accesslobby-sso' ), '', array( 'response' => 503 ) );
+					},
+					0
+				);
+			}
 			return;
 		}
 		global $wpdb;

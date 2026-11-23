@@ -44,14 +44,14 @@ children = []
 logs = []
 proxies = []
 
-def run(command, *, cwd=None, input=None, extra=None, quiet=False):
+def run(command, *, cwd=None, input=None, extra=None, quiet=False, stream=False):
     result = subprocess.run([str(x) for x in command], cwd=cwd, input=input, text=True,
-                            env={**env, **(extra or {})}, capture_output=True)
+                            env={**env, **(extra or {})}, capture_output=not stream)
     if result.returncode:
         # Test-only output; never print command lines that carry fixture credentials.
-        print(result.stdout[-4000:], result.stderr[-4000:], flush=True)
+        if not stream: print(result.stdout[-4000:], result.stderr[-4000:], flush=True)
         raise RuntimeError('Fixture command failed: ' + str(command[0]))
-    if not quiet and result.stdout.strip():
+    if not stream and not quiet and result.stdout.strip():
         print(result.stdout[-4000:], flush=True)
     return result.stdout
 
@@ -236,6 +236,7 @@ for site in sites:
     wp('option', 'update', 'accesslobby_sso', json.dumps(config), '--format=json', quiet=True)
     mu = path / 'wp-content/mu-plugins'; mu.mkdir(exist_ok=True)
     shutil.copyfile(plugin / 'tests/fixture-mu.php', mu / 'accesslobby-fixture.php')
+    shutil.copyfile(plugin / 'tests/unavailable-fixture.php', mu / 'accesslobby-unavailable-fixture.php')
     (mu / 'fixture-ca.php').write_text("<?php\nadd_filter('http_request_args',static function($args,$url){if(parse_url($url,PHP_URL_HOST)==='127.0.0.1'){$args['sslcertificates']=" + repr(str(cert)) + ";}return $args;},10,2);\n")
     data = wp('eval-file', str(plugin / 'tests/setup-fixture.php'), extra={'ALWP_FIXTURE_PASSWORD': password,
               'ALWP_FIXTURE_EMAIL': 'shopper@example.test' if site['label'] == 'a' else 'local-only@example.test'}, quiet=True)
@@ -256,12 +257,12 @@ fixture = {'sites': sites, 'issuer': issuer, 'api': api, 'password': password, '
            'artifactDir': str(work), 'certificate': str(cert), 'package': str(args.package.resolve()), 'mailbox': str(mailbox)}
 config_file = work / 'private-fixture-config.json'
 config_file.write_text(json.dumps(fixture)); config_file.chmod(0o600)
-run(['python3', str(plugin / 'tests/concurrency.py'), str(config_file)], cwd=repo)
+run(['python3', str(plugin / 'tests/concurrency.py'), str(config_file)], cwd=repo, stream=True)
 driver = env.get('ALWP_FIXTURE_DRIVER', 'browser')
 if driver == 'http':
-    run(['python3', str(plugin / 'tests/http_flow.py'), str(config_file)], cwd=repo)
+    run(['python3', str(plugin / 'tests/http_flow.py'), str(config_file)], cwd=repo, stream=True)
 else:
-    run(['node', str(plugin / 'tests/browser.mjs'), str(config_file)], cwd=repo)
+    run(['node', str(plugin / 'tests/browser.mjs'), str(config_file)], cwd=repo, stream=True)
 for site in sites:
     def final_wp(*command):
         return run([php, wp_cli, '--path=' + site['path'], *command], quiet=True).strip()

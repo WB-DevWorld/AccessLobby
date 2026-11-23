@@ -83,7 +83,51 @@ final class Store {
 				throw new Failure( 'transactional_tables_required' );
 			}
 		}
+		$this->verify_schema();
 		update_option( 'accesslobby_schema', '2', false );
+	}
+
+	private function verify_schema(): void {
+		$definitions = array(
+			'links'    => array(
+				'columns' => array( 'id', 'identity_key', 'subject_key', 'issuer', 'subject', 'identity', 'user_id', 'link_state', 'provenance', 'created_at', 'updated_at' ),
+				'unique'  => array(
+					'PRIMARY'      => 'id',
+					'identity_key' => 'identity_key',
+					'subject_key'  => 'subject_key',
+					'user_id'      => 'user_id',
+				),
+			),
+			'state'    => array(
+				'columns' => array( 'state_key', 'kind', 'payload', 'expires' ),
+				'unique'  => array( 'PRIMARY' => 'state_key' ),
+			),
+			'sessions' => array(
+				'columns' => array( 'token_key', 'sid_key', 'subject_key', 'user_id', 'sealed_token', 'expires' ),
+				'unique'  => array( 'PRIMARY' => 'token_key' ),
+			),
+			'audit'    => array(
+				'columns' => array( 'id', 'event', 'user_id', 'request_id', 'reference_hash', 'created_at' ),
+				'unique'  => array( 'PRIMARY' => 'id' ),
+			),
+		);
+		foreach ( $definitions as $suffix => $definition ) {
+			$table   = $this->table( $suffix );
+			$columns = $this->db->get_col( $this->db->prepare( 'SHOW COLUMNS FROM %i', $table ) );
+			if ( array_diff( $definition['columns'], $columns ) ) {
+				throw new Failure( 'incomplete_schema_migration' );
+			}
+			$indexes = array();
+			foreach ( $this->db->get_results( $this->db->prepare( 'SHOW INDEX FROM %i', $table ), ARRAY_A ) as $index ) {
+				$indexes[ $index['Key_name'] ][] = $index;
+			}
+			foreach ( $definition['unique'] as $name => $column ) {
+				$rows = $indexes[ $name ] ?? array();
+				if ( 1 !== count( $rows ) || '0' !== (string) $rows[0]['Non_unique'] || $column !== $rows[0]['Column_name'] ) {
+					throw new Failure( 'incomplete_schema_migration' );
+				}
+			}
+		}
 	}
 
 	public function lock( string $name, callable $operation ): mixed {
@@ -132,6 +176,9 @@ final class Store {
 	public function state_get( string $key, string $kind, bool $consume = false ): array {
 		$table = $this->table( 'state' );
 		$row   = $this->db->get_row( $this->db->prepare( "SELECT * FROM $table WHERE state_key=%s AND kind=%s AND expires>%d", hash( 'sha256', $key ), $kind, time() ), ARRAY_A );
+		if ( '' !== $this->db->last_error ) {
+			throw new Failure( 'storage_unavailable' );
+		}
 		if ( ! $row ) {
 			throw new Failure( 'expired_or_replayed_flow' );
 		}
@@ -152,7 +199,10 @@ final class Store {
 			$this->state_get( $key, $kind );
 			return true;
 		} catch ( Failure $e ) {
-			return false;
+			if ( 'expired_or_replayed_flow' === $e->getMessage() ) {
+				return false;
+			}
+			throw $e;
 		}
 	}
 

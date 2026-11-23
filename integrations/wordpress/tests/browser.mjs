@@ -16,6 +16,7 @@ const context = await browser.newContext({ ignoreHTTPSErrors: true }); // One-da
 browsers.push(context);
 const page = await context.newPage();
 page.setDefaultTimeout(20000);
+let phase = 'start';
 
 function wp(site, code) {
   return execFileSync(fixture.php, [fixture.wpCli, '--path=' + site.path, 'eval', code],
@@ -27,13 +28,14 @@ function config(site, changes) {
     'update_option("accesslobby_sso",array_merge($c,$v));');
 }
 async function test(name, operation) {
+  phase = 'start';
   const start = performance.now();
   try { await operation(); cases.push({ name, status: 'PASS', milliseconds: Math.round(performance.now() - start) });
     console.log('BROWSER_PASS ' + name); }
   catch (error) {
     // Assertion/Playwright errors can contain cookie values, callback or verification URLs.
-    cases.push({ name, status: 'FAIL', errorClass: error.name });
-    throw new Error('Browser acceptance failed: ' + name);
+    cases.push({ name, status: 'FAIL', phase, errorClass: error.name });
+    throw new Error('Browser acceptance failed: ' + name + ' at ' + phase);
   }
 }
 async function identity(site, tab = page) {
@@ -265,10 +267,13 @@ try {
     const guestContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(guestContext);
     const guest = await guestContext.newPage();
     const count = wp(a, 'echo count_users()["total_users"];');
+    phase = 'add_to_cart';
     await guest.goto(a.base + '/?add-to-cart=' + a.productId);
+    phase = 'checkout_form';
     await guest.goto(a.checkout);
     await guest.locator('form.checkout').waitFor();
     assert.equal(new URL(guest.url()).port, '8441');
+    phase = 'billing_fields';
     for (const [field, value] of Object.entries({ billing_first_name: 'Guest', billing_last_name: 'Fixture',
       billing_address_1: '1 Fixture Street', billing_city: 'Los Angeles', billing_postcode: '90210',
       billing_phone: '2025550101', billing_email: 'guest-checkout@example.test' })) {
@@ -276,8 +281,11 @@ try {
     }
     await guest.locator('#billing_country').selectOption('US', { force: true });
     await guest.locator('#billing_state').selectOption('CA', { force: true });
+    phase = 'place_order';
     await guest.locator('#place_order').click();
+    phase = 'thank_you';
     await guest.locator('.woocommerce-thankyou-order-received').waitFor({ timeout: 30000 });
+    phase = 'commerce_assertions';
     assert.equal(await identity(a, guest), 0);
     assert.equal(wp(a, 'echo count_users()["total_users"];'), count);
     const order = JSON.parse(wp(a, '$o=wc_get_orders(["billing_email"=>"guest-checkout@example.test","limit"=>1]);echo wp_json_encode(["customer"=>$o[0]->get_customer_id(),"total"=>$o[0]->get_total()]);'));
@@ -297,6 +305,19 @@ try {
       assert.equal(await identity(a, outage), 0);
       assert.equal(await identity(a, admin), 1);
     } finally { wp(a, 'delete_option("alwp_fixture_outage");'); }
+  });
+  await test('missing prerequisite fault cannot reopen enforced local password login', async () => {
+    wp(a, 'update_option("alwp_fixture_unavailable",1);');
+    try {
+      const faultContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(faultContext);
+      const fault = await faultContext.newPage();
+      const response = await fault.goto(a.base + '/wp-login.php');
+      assert.equal(response.status(), 503);
+      assert.equal(await fault.locator('#user_pass').count(), 0);
+      const posted = await faultContext.request.post(a.base + '/wp-login.php', { form: { log: 'fixture_admin', pwd: fixture.password } });
+      assert.equal(posted.status(), 503);
+      assert.equal(await identity(a, fault), 0);
+    } finally { wp(a, 'delete_option("alwp_fixture_unavailable");'); }
   });
 } finally {
   writeFileSync(fixture.artifactDir + '/browser-report.json', JSON.stringify({

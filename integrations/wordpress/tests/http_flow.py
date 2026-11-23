@@ -30,7 +30,7 @@ class Forms(HTMLParser):
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         if tag == 'form':
-            self.form = {'id': attrs.get('id'), 'action': attrs.get('action', ''), 'fields': {}}
+            self.form = {'id': attrs.get('id'), 'class': attrs.get('class', ''), 'action': attrs.get('action', ''), 'fields': {}}
             self.forms.append(self.form)
         elif self.form is not None and tag in {'input', 'button'} and attrs.get('name'):
             self.form['fields'][attrs['name']] = attrs.get('value', '')
@@ -199,6 +199,15 @@ try:
     assert page[0] == a['protected'] and account(a) == a['legacyUser']
     assert request(a['restricted'])[2] == 403
     check('enforced original destination and peer-local denial remain distinct', lambda: None)
+    authenticated_client = client
+    if a['woo']:
+        client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+        request(a['base'] + '/?add-to-cart=' + str(a['productId']))
+        page = request(a['checkout'])
+        form(page, lambda f: 'checkout' in f['class'].split())
+        assert account(a) == 0
+        check('enforced guest HTTP journey reaches actual WooCommerce checkout form', lambda: None)
+    client = authenticated_client
     logout(a)
     wp(a, 'update_option("alwp_fixture_outage",1);')
     try:
@@ -211,6 +220,16 @@ try:
     finally:
         wp(a, 'delete_option("alwp_fixture_outage");')
     check('API outage fails new enforced sign-in closed and preserves existing local session policy', lambda: None)
+    wp(a, 'update_option("alwp_fixture_unavailable",1);')
+    try:
+        client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+        page = request(a['base'] + '/wp-login.php')
+        assert page[2] == 503 and 'id="user_pass"' not in page[1]
+        page = request(a['base'] + '/wp-login.php', {'log': 'fixture_admin', 'pwd': fixture['password']})
+        assert page[2] == 503 and account(a) == 0
+    finally:
+        wp(a, 'delete_option("alwp_fixture_unavailable");')
+    check('missing prerequisite fault keeps enforced local authentication closed', lambda: None)
 finally:
     Path(fixture['artifactDir'], 'http-report.json').write_text(json.dumps({
         'evidenceType': 'HTTP_PROTOCOL_NOT_BROWSER_UI', 'cases': cases}, indent=2) + '\n')
