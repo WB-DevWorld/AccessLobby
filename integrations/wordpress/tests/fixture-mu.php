@@ -19,6 +19,9 @@ add_action( 'template_redirect', static function () {
 	}
 } );
 add_filter( 'pre_http_request', static function ( $result, $args, $url ) {
+	if ( ! in_array( wp_parse_url( $url, PHP_URL_HOST ), array( '127.0.0.1', 'localhost' ), true ) ) {
+		return new WP_Error( 'fixture_external_service_blocked', 'Disposable fixtures do not use external updates or feeds' );
+	}
 	if ( get_option( 'alwp_fixture_outage' ) && str_contains( $url, '/v1/me' ) ) {
 		return new WP_Error( 'fixture_outage', 'Disposable identity API outage' );
 	}

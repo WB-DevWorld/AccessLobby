@@ -47,10 +47,10 @@ async function identity(site, tab = page) {
   return Number(await tab.locator('#fixture-identity').getAttribute('data-user'));
 }
 async function localLogin(site, username, tab = page) {
-  await tab.goto(site.base + '/wp-login.php');
+  await tab.goto(site.base + '/wp-login.php?redirect_to=' + encodeURIComponent(site.account));
   await tab.locator('#user_login').fill(username);
   await tab.locator('#user_pass').fill(fixture.password);
-  await Promise.all([tab.waitForURL(url => !url.pathname.endsWith('wp-login.php')), tab.locator('#wp-submit').click()]);
+  await Promise.all([tab.waitForURL(site.account), tab.locator('#wp-submit').click()]);
 }
 async function directLocalCookie(site, tab, context) {
   await tab.goto(site.account);
@@ -408,12 +408,16 @@ try {
     } finally { wp(a, 'delete_option("alwp_fixture_unavailable");'); }
   });
   await test('authorized rollback restores local login and enforced reactivation ends rollback sessions', async () => {
+    phase = 'rollback_deactivate';
     wpCommand(a, ['plugin', 'deactivate', 'accesslobby-sso']);
     const rollbackContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(rollbackContext);
     const rollback = await rollbackContext.newPage();
+    phase = 'rollback_local_login';
     await localLogin(a, 'fixture_admin', rollback);
     assert.equal(await identity(a, rollback), 1);
+    phase = 'rollback_reactivate';
     wpCommand(a, ['plugin', 'activate', 'accesslobby-sso']);
+    phase = 'rollback_verify';
     assert.equal(await identity(a, rollback), 0);
     assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
   });
