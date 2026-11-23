@@ -10,6 +10,11 @@ final class Plugin {
 		$store = new Store( $wpdb );
 		$store->migrate();
 		$store->audit( 'plugin_activated', get_current_user_id() );
+		if ( 'enforced' === Config::get()['mode'] ) {
+			// Local sessions created during an authorized rollback cannot bypass re-enabled SSO.
+			\WP_Session_Tokens::destroy_all_for_all_users();
+			$store->audit( 'reactivation_sessions_invalidated', get_current_user_id() );
+		}
 		if ( ! wp_next_scheduled( 'accesslobby_cleanup' ) ) {
 			wp_schedule_event( time() + 3600, 'hourly', 'accesslobby_cleanup' );
 		}

@@ -22,6 +22,10 @@ function wp(site, code) {
   return execFileSync(fixture.php, [fixture.wpCli, '--path=' + site.path, 'eval', code],
     { encoding: 'utf8', timeout: 30000, env: process.env }).trim();
 }
+function wpCommand(site, args) {
+  return execFileSync(fixture.php, [fixture.wpCli, '--path=' + site.path, ...args],
+    { encoding: 'utf8', timeout: 30000, env: process.env }).trim();
+}
 function config(site, changes) {
   const encoded = Buffer.from(JSON.stringify(changes)).toString('base64');
   wp(site, '$c=get_option("accesslobby_sso");$v=json_decode(base64_decode("' + encoded + '"),true);' +
@@ -284,7 +288,9 @@ try {
     phase = 'place_order';
     await guest.locator('#place_order').click();
     phase = 'thank_you';
-    await guest.locator('.woocommerce-thankyou-order-received').waitFor({ timeout: 30000 });
+    // The current block theme uses Woo order-confirmation blocks, not the classic thank-you CSS class.
+    await guest.waitForURL(url => url.searchParams.has('order-received') || url.pathname.includes('/order-received/'), { timeout: 30000 });
+    assert.equal(await guest.locator('#fixture-identity').getAttribute('data-order-received'), 'yes');
     phase = 'commerce_assertions';
     assert.equal(await identity(a, guest), 0);
     assert.equal(wp(a, 'echo count_users()["total_users"];'), count);
@@ -318,6 +324,16 @@ try {
       assert.equal(posted.status(), 503);
       assert.equal(await identity(a, fault), 0);
     } finally { wp(a, 'delete_option("alwp_fixture_unavailable");'); }
+  });
+  await test('authorized rollback restores local login and enforced reactivation ends rollback sessions', async () => {
+    wpCommand(a, ['plugin', 'deactivate', 'accesslobby-sso']);
+    const rollbackContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(rollbackContext);
+    const rollback = await rollbackContext.newPage();
+    await localLogin(a, 'fixture_admin', rollback);
+    assert.equal(await identity(a, rollback), 1);
+    wpCommand(a, ['plugin', 'activate', 'accesslobby-sso']);
+    assert.equal(await identity(a, rollback), 0);
+    assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
   });
 } finally {
   writeFileSync(fixture.artifactDir + '/browser-report.json', JSON.stringify({

@@ -15,7 +15,7 @@ add_filter( 'pre_http_request', static function ( $result, $args, $url ) {
 	return $result;
 }, 10, 3 );
 add_action( 'wp_footer', static function () {
-	echo '<output id="fixture-identity" data-user="' . esc_attr( (string) get_current_user_id() ) . '" data-admin="' . esc_attr( current_user_can( 'manage_options' ) ? 'yes' : 'no' ) . '"></output>';
+	echo '<output id="fixture-identity" data-user="' . esc_attr( (string) get_current_user_id() ) . '" data-admin="' . esc_attr( current_user_can( 'manage_options' ) ? 'yes' : 'no' ) . '" data-order-received="' . esc_attr( function_exists( 'is_order_received_page' ) && is_order_received_page() ? 'yes' : 'no' ) . '"></output>';
 } );
 // Prevent real mail from disposable fixtures; never relax authentication/authorization.
 add_filter( 'pre_wp_mail', '__return_false' );
