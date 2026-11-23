@@ -12,6 +12,7 @@ final class Surfaces {
 		add_action( 'woocommerce_register_form_start', array( $this, 'join_button' ) );
 		add_action( 'woocommerce_account_dashboard', array( $this, 'account_actions' ) );
 		add_action( 'show_user_profile', array( $this, 'own_profile' ) );
+		add_action( 'admin_footer-profile.php', array( $this, 'profile_form' ) );
 		add_action( 'accesslobby_login', array( $this, 'button' ) );
 		add_action( 'accesslobby_account_actions', array( $this, 'account_actions' ) );
 		add_shortcode( 'accesslobby_login', fn( $atts ) => $this->button_html( 'join' === ( $atts['intent'] ?? '' ) ? 'join' : 'login' ) );
@@ -28,6 +29,7 @@ final class Surfaces {
 		add_filter( 'register_url', fn( $url ) => 'enforced' === Config::get()['mode'] ? add_query_arg( 'intent', 'join', Config::route( 'start' ) ) : $url );
 		add_filter( 'lostpassword_url', fn( $url ) => 'enforced' === Config::get()['mode'] ? Config::route( 'start' ) : $url );
 		add_action( 'template_redirect', array( $this, 'frontend_redirect' ), 1 );
+		add_action( 'template_redirect', array( $this, 'private_surfaces' ), 0 );
 		add_filter( 'authenticate', array( $this, 'password_policy' ), PHP_INT_MAX, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'assets' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'assets' ) );
@@ -68,11 +70,15 @@ final class Surfaces {
 
 	public function own_profile( \WP_User $user ): void {
 		if ( get_current_user_id() === $user->ID ) {
-			$this->account_actions();
+			$this->render_account( true );
 		}
 	}
 
 	public function account_actions(): void {
+		$this->render_account( false );
+	}
+
+	private function render_account( bool $profile ): void {
 		if ( ! is_user_logged_in() ) {
 			return;
 		}
@@ -81,11 +87,36 @@ final class Surfaces {
 		echo '<section class="accesslobby-account"><h2>' . esc_html__( 'AccessLobby', 'accesslobby-sso' ) . '</h2><p>' . esc_html( $active ? __( 'Connected. Your site account and permissions stay here.', 'accesslobby-sso' ) : __( 'Connect your existing account to use AccessLobby next time.', 'accesslobby-sso' ) ) . '</p>';
 		if ( ! $active || 'hybrid' === Config::get()['mode'] ) {
 			$intent = $active ? 'unlink' : 'link';
-			echo '<form method="post" action="' . esc_url( Config::route( 'start' ) ) . '"><input type="hidden" name="intent" value="' . esc_attr( $intent ) . '"><input type="hidden" name="redirect_to" value="' . esc_url( get_edit_profile_url() ) . '">';
-			wp_nonce_field( 'alwp_' . $intent );
-			echo '<button class="button">' . esc_html( $active ? __( 'Disconnect AccessLobby', 'accesslobby-sso' ) : __( 'Connect AccessLobby', 'accesslobby-sso' ) ) . '</button></form>';
+			if ( $profile ) {
+				// Native form association avoids nesting a second form inside WordPress's profile form.
+				echo '<button type="submit" class="button" form="alwp-profile-link">' . esc_html( $active ? __( 'Disconnect AccessLobby', 'accesslobby-sso' ) : __( 'Connect AccessLobby', 'accesslobby-sso' ) ) . '</button>';
+			} else {
+				$destination = Security::origin( home_url() ) . ( $_SERVER['REQUEST_URI'] ?? '/' );
+				$this->link_form( $intent, '', Security::destination( $destination, home_url( '/' ), site_url( '/' ) ) );
+			}
 		}
 		echo '</section>';
+	}
+
+	public function profile_form(): void {
+		if ( ! is_user_logged_in() ) {
+			return; }
+		$link   = $this->store->link_for_user( get_current_user_id() );
+		$active = $link && 'active' === $link['link_state'];
+		if ( ! $active || 'hybrid' === Config::get()['mode'] ) {
+			$this->link_form( $active ? 'unlink' : 'link', 'alwp-profile-link', get_edit_profile_url() );
+		}
+	}
+
+	private function link_form( string $intent, string $id, string $destination ): void {
+		$external = '' !== $id;
+		echo '<form method="post" action="' . esc_url( Config::route( 'start' ) ) . '"' . ( $external ? ' id="' . esc_attr( $id ) . '" hidden' : '' ) . '>';
+		echo '<input type="hidden" name="intent" value="' . esc_attr( $intent ) . '"><input type="hidden" name="redirect_to" value="' . esc_url( $destination ) . '">';
+		wp_nonce_field( 'alwp_' . $intent );
+		if ( ! $external ) {
+			echo '<button class="button">' . esc_html( 'unlink' === $intent ? __( 'Disconnect AccessLobby', 'accesslobby-sso' ) : __( 'Connect AccessLobby', 'accesslobby-sso' ) ) . '</button>';
+		}
+		echo '</form>';
 	}
 
 	public function login_url( string $url, string $redirect = '', bool $reauth = false ): string {
@@ -109,6 +140,17 @@ final class Surfaces {
 			$destination = Security::origin( home_url() ) . ( $_SERVER['REQUEST_URI'] ?? '/' );
 			wp_safe_redirect( add_query_arg( 'redirect_to', Security::destination( $destination, home_url( '/' ), site_url( '/' ) ), Config::route( 'start' ) ), 303 );
 			exit;
+		}
+	}
+
+	public function private_surfaces(): void {
+		$post    = get_queried_object();
+		$account = function_exists( 'is_account_page' ) && is_account_page();
+		$content = $post instanceof \WP_Post ? $post->post_content : '';
+		$known   = $account || has_shortcode( $content, 'accesslobby_account' ) ||
+			has_shortcode( $content, 'accesslobby_login' ) || has_block( 'accesslobby/login', $content );
+		if ( apply_filters( 'accesslobby_is_auth_surface', $known ) ) {
+			Security::private_headers();
 		}
 	}
 

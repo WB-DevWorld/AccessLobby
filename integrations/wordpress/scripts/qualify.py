@@ -139,6 +139,7 @@ template['attributes']['post.logout.redirect.uris'] = 'http://127.0.0.1:8091/'
 template['attributes']['backchannel.logout.url'] = api + '/v1/backchannel-logout'
 sites = []
 for label, port, prefix, woo in [('a', 8081, '', True), ('b', 8082, '/gh', False)]:
+    woo = woo and env.get('ALWP_WITH_WOO', 'true') == 'true'
     tls_port = port + 360
     base = f'https://127.0.0.1:{tls_port}{prefix}'
     client = copy.deepcopy(template)
@@ -224,14 +225,14 @@ for site in sites:
     shutil.copyfile(plugin / 'tests/fixture-mu.php', mu / 'accesslobby-fixture.php')
     (mu / 'fixture-ca.php').write_text("<?php\nadd_filter('http_request_args',static function($args,$url){if(parse_url($url,PHP_URL_HOST)==='127.0.0.1'){$args['sslcertificates']=" + repr(str(cert)) + ";}return $args;},10,2);\n")
     data = wp('eval-file', str(plugin / 'tests/setup-fixture.php'), extra={'ALWP_FIXTURE_PASSWORD': password,
-              'ALWP_FIXTURE_EMAIL': 'shopper@example.test' if site['woo'] else 'local-only@example.test'}, quiet=True)
+              'ALWP_FIXTURE_EMAIL': 'shopper@example.test' if site['label'] == 'a' else 'local-only@example.test'}, quiet=True)
     site.update(json.loads(data.strip()))
     wp('eval-file', str(plugin / 'tests/integration.php'), extra={'ALWP_INTEGRATION_RESULT': str(work / ('integration-' + site['label'] + '.json'))})
     wp('eval-file', str(plugin / 'tests/security-integration.php'), extra={'ALWP_SECURITY_RESULT': str(work / ('security-' + site['label'] + '.json'))})
     router = base_dir / 'router.php'
     docroot = path.parent if site['prefix'] else path
     router.write_text("<?php\nif(($_SERVER['REMOTE_ADDR']??'')==='127.0.0.1' && hash_equals(" + repr(https_marker) + ",$_SERVER['HTTP_X_ALWP_FIXTURE_HTTPS']??'')){$_SERVER['HTTPS']='on';}\n$p=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);\n" +
-        "$root=" + repr(str(docroot)) + ";\nif(is_file($root.$p))return false;\nrequire " + repr(str(path / 'index.php')) + ";\n")
+        "$root=" + repr(str(docroot)) + ";\nif(is_file($root.$p)||is_dir($root.$p))return false;\nrequire " + repr(str(path / 'index.php')) + ";\n")
     http = spawn('wordpress-' + site['label'], [php, '-S', '127.0.0.1:' + str(site['port']), '-t', docroot, router])
     wait_port(site['port'], http)
     proxies.append(tls_module.start_proxy(site['tlsPort'], site['port'], cert, key, https_marker))
@@ -247,4 +248,20 @@ if driver == 'http':
     run(['python3', str(plugin / 'tests/http_flow.py'), str(config_file)], cwd=repo)
 else:
     run(['node', str(plugin / 'tests/browser.mjs'), str(config_file)], cwd=repo)
+for site in sites:
+    def final_wp(*command):
+        return run([php, wp_cli, '--path=' + site['path'], *command], quiet=True).strip()
+    snapshot_code = '''global $wpdb;
+    $data=['users'=>count_users()['total_users'],'links'=>$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}accesslobby_links")];
+    if(function_exists('wc_get_orders')){$data['orders']=count(wc_get_orders(['limit'=>-1,'return'=>'ids']));}
+    echo wp_json_encode($data);'''
+    before = final_wp('eval', snapshot_code)
+    final_wp('plugin', 'uninstall', 'accesslobby-sso', '--deactivate')
+    after = final_wp('eval', snapshot_code)
+    assert json.loads(before) == json.loads(after), 'Uninstall changed local identity or commerce data'
+    final_wp('plugin', 'install', str(args.package.resolve()), '--activate')
+    assert json.loads(final_wp('eval', snapshot_code)) == json.loads(before)
+    (work / ('lifecycle-' + site['label'] + '.json')).write_text(json.dumps({
+        'install': 'PASS', 'activate': 'PASS', 'deactivateReactivate': 'PASS',
+        'schemaUpgrade': 'PASS', 'uninstallDataPreservation': 'PASS', 'reinstallDataPreservation': 'PASS'}, indent=2) + '\n')
 print('QUALIFICATION_PASS artifacts=' + str(work), flush=True)

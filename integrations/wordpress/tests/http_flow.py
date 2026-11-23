@@ -123,6 +123,64 @@ try:
     page = request(b['base'] + '/wp-login.php?action=al_start')
     assert 'kc-form-login' in page[1]
     check('shared logout ends quiet re-entry for this browser session', lambda: None)
+    page = request(a['base'] + '/wp-login.php')
+    item = form(page, lambda f: f['id'] == 'loginform')
+    page = submit(page, item, {'log': 'fixture_admin', 'pwd': fixture['password'], 'redirect_to': a['account'], 'testcookie': '1'})
+    assert account(a) == 1
+    page = request(a['base'] + '/wp-admin/profile.php')
+    item = form(page, lambda f: f['fields'].get('intent') == 'link')
+    page = submit(page, item)
+    item = form(page, lambda f: f['id'] == 'kc-form-login')
+    page = submit(page, item, {'username': 'staff', 'password': fixture['password']})
+    assert page[2] == 200 and account(a) == 1
+    check('privileged existing account links by fresh dual proof without role mapping', lambda: None)
+    administrator_client = client
+    ticket = wp(a, '$s=new AccessLobby\\WordPress\\Store($GLOBALS["wpdb"]);echo AccessLobby\\WordPress\\Emergency::issue($s,1,"127.0.0.1","fixture-http-rehearsal");')
+    client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+    page = request(a['base'] + '/wp-login.php?action=al_emergency')
+    page = submit(page, form(page, lambda f: 'ticket' in f['fields']), {'ticket': ticket})
+    assert page[2] == 200 and account(a) == 1
+    check('HTTPS host ticket redeems to the intended administrator', lambda: None)
+    client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+    page = request(a['base'] + '/wp-login.php?action=al_emergency')
+    page = submit(page, form(page, lambda f: 'ticket' in f['fields']), {'ticket': ticket})
+    assert page[2] == 400 and account(a) == 0
+    check('HTTPS emergency replay creates no administrator session', lambda: None)
+    client = administrator_client
+    page = request(a['base'] + '/wp-admin/options-general.php?page=accesslobby-sso')
+    page = submit(page, form(page, lambda f: f['fields'].get('action') == 'alwp_test'))
+    assert 'metadata_validated' in page[0]
+    item = form(page, lambda f: 'options.php' in f['action'])
+    changes = {key: str(value) for key, value in {
+        'issuer': fixture['issuer'], 'api': fixture['api'], 'client_id': a['client'], 'mode': 'enforced',
+        'jit': 1, 'default_role': 'customer', 'machine_auth': 1, 'migration_reference': 'fixture-backup-rollback',
+        'recovery_reference': 'fixture-http-rehearsal', 'ack_unlinked': 1, 'ack_privileged': 1, 'ack_invalidate': 1}.items()}
+    page = submit(page, item, {'accesslobby_sso[' + key + ']': value for key, value in changes.items()})
+    assert wp(a, 'echo get_option("accesslobby_sso")["mode"];') == 'enforced'
+    check('real admin settings enable enforced mode only after readiness proof', lambda: None)
+    for target in [a['base'] + '/wp-login.php', a['base'] + '/wp-admin/', a['wooAccount']]:
+        client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+        page = request(target)
+        assert 'kc-form-login' in page[1] and 'id="user_pass"' not in page[1]
+    check('enforced core admin and Woo account surfaces initiate IAM automatically', lambda: None)
+    client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+    page = request(a['protected'])
+    page = submit(page, form(page, lambda f: f['id'] == 'kc-form-login'), {'username': 'shopper', 'password': fixture['password']})
+    assert page[0] == a['protected'] and account(a) == a['legacyUser']
+    assert request(a['restricted'])[2] == 403
+    check('enforced original destination and peer-local denial remain distinct', lambda: None)
+    logout(a)
+    wp(a, 'update_option("alwp_fixture_outage",1);')
+    try:
+        page = request(a['base'] + '/wp-login.php')
+        assert page[2] == 400 and account(a) == 0
+        failed_client = client
+        client = administrator_client
+        assert account(a) == 1
+        client = failed_client
+    finally:
+        wp(a, 'delete_option("alwp_fixture_outage");')
+    check('API outage fails new enforced sign-in closed and preserves existing local session policy', lambda: None)
 finally:
     Path(fixture['artifactDir'], 'http-report.json').write_text(json.dumps({
         'evidenceType': 'HTTP_PROTOCOL_NOT_BROWSER_UI', 'cases': cases}, indent=2) + '\n')

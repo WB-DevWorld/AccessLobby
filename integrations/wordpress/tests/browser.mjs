@@ -63,18 +63,20 @@ try {
   await test('hybrid local customer login retains original local account', async () => {
     await localLogin(a, 'legacy_shopper');
     assert.equal(await identity(a), a.legacyUser);
+    const response = await page.goto(a.account);
+    assert.match(response.headers()['cache-control'], /private.*no-store/);
   });
-  await test('fresh dual proof links existing WooCommerce customer', async () => {
+  await test('fresh dual proof links existing ' + (a.woo ? 'WooCommerce customer' : 'WordPress user'), async () => {
     await page.getByRole('button', { name: 'Connect AccessLobby', exact: true }).click();
     await iamLogin(page, 'shopper');
     assert.equal(await identity(a), a.legacyUser);
     const data = JSON.parse(wp(a, '$s=new AccessLobby\\WordPress\\Store($GLOBALS["wpdb"]);' +
-      '$u=get_userdata(' + a.legacyUser + ');$o=wc_get_order(' + a.orderId + ');' +
+      '$u=get_userdata(' + a.legacyUser + ');$o=' + (a.woo ? 'wc_get_order(' + a.orderId + ')' : 'null') + ';' +
       'echo wp_json_encode(["linked"=>$s->link_for_user($u->ID)["link_state"],"roles"=>$u->roles,' +
-      '"customer"=>$o->get_customer_id(),"total"=>$o->get_total(),"address"=>get_user_meta($u->ID,"billing_address_1",true),' +
+      '"customer"=>$o?$o->get_customer_id():null,"total"=>$o?$o->get_total():null,"address"=>get_user_meta($u->ID,"billing_address_1",true),' +
       '"b2b"=>get_user_meta($u->ID,"fixture_b2b_approved",true)]);'));
-    assert.equal(data.linked, 'active'); assert.deepEqual(data.roles, ['customer']);
-    assert.equal(data.customer, a.legacyUser); assert.equal(data.total, '73.00');
+    assert.equal(data.linked, 'active'); assert.deepEqual(data.roles, [a.woo ? 'customer' : 'editor']);
+    if (a.woo) { assert.equal(data.customer, a.legacyUser); assert.equal(data.total, '73.00'); }
     assert.equal(data.address, 'Preserved fixture address'); assert.equal(data.b2b, 'yes');
   });
   await test('site-only logout clears WP without automatically re-entering', async () => {
@@ -93,7 +95,7 @@ try {
     bUser = Number(await page.locator('#fixture-identity').getAttribute('data-user'));
     assert(bUser > 0);
     assert.equal(wp(b, 'echo implode(",",get_userdata(' + bUser + ')->roles);'), 'subscriber');
-    assert.equal(wp(a, 'echo implode(",",get_userdata(' + a.legacyUser + ')->roles);'), 'customer');
+    assert.equal(wp(a, 'echo implode(",",get_userdata(' + a.legacyUser + ')->roles);'), a.woo ? 'customer' : 'editor');
     assert.notEqual(bUser, a.legacyUser);
   });
   await test('site-only logout on A leaves independent B session active', async () => {
@@ -143,6 +145,108 @@ try {
     await page.goto(b.base + '/wp-login.php?action=al_start');
     await page.locator('#username').waitFor();
     assert.equal(new URL(page.url()).port, '8083');
+  });
+  const adminContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(adminContext);
+  const admin = await adminContext.newPage();
+  await test('enforced migration gate refuses an unprepared administrator', async () => {
+    await localLogin(a, 'fixture_admin', admin);
+    await admin.goto(a.base + '/wp-admin/options-general.php?page=accesslobby-sso');
+    await admin.locator('select[name="accesslobby_sso[mode]"]').selectOption('enforced');
+    await admin.getByRole('button', { name: 'Save Changes', exact: true }).click();
+    assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'hybrid');
+  });
+  await test('existing administrator links explicitly without claim-based elevation', async () => {
+    await admin.goto(a.base + '/wp-admin/profile.php');
+    await admin.getByRole('button', { name: 'Connect AccessLobby', exact: true }).click();
+    await iamLogin(admin, 'staff');
+    assert.equal(await identity(a, admin), 1);
+    assert.equal(wp(a, 'echo implode(",",get_userdata(1)->roles);'), 'administrator');
+  });
+  await test('HTTPS emergency ticket creates only the intended short admin session', async () => {
+    const ticket = wp(a, '$s=new AccessLobby\\WordPress\\Store($GLOBALS["wpdb"]);echo AccessLobby\\WordPress\\Emergency::issue($s,1,"127.0.0.1","fixture-browser-rehearsal");');
+    const recoveryContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(recoveryContext);
+    const recovery = await recoveryContext.newPage();
+    await recovery.goto(a.base + '/wp-login.php?action=al_emergency');
+    await recovery.locator('input[name="ticket"]').fill(ticket);
+    await recovery.getByRole('button', { name: 'Recover administrator access', exact: true }).click();
+    assert.equal(await identity(a, recovery), 1);
+    const replayContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(replayContext);
+    const replay = await replayContext.newPage();
+    await replay.goto(a.base + '/wp-login.php?action=al_emergency');
+    await replay.locator('input[name="ticket"]').fill(ticket);
+    await replay.getByRole('button', { name: 'Recover administrator access', exact: true }).click();
+    assert.equal(await identity(a, replay), 0);
+  });
+  await test('linked admin enables enforced mode only after readiness acknowledgements', async () => {
+    await admin.goto(a.base + '/wp-admin/options-general.php?page=accesslobby-sso');
+    await admin.getByRole('button', { name: 'Test connection metadata', exact: true }).click();
+    await admin.locator('input[name="accesslobby_sso[migration_reference]"]').fill('fixture-backup-and-rollback');
+    await admin.locator('input[name="accesslobby_sso[recovery_reference]"]').fill('fixture-browser-rehearsal');
+    for (const key of ['ack_unlinked', 'ack_privileged', 'ack_invalidate']) {
+      await admin.locator('input[name="accesslobby_sso[' + key + ']"]').check();
+    }
+    await admin.locator('select[name="accesslobby_sso[mode]"]').selectOption('enforced');
+    await admin.getByRole('button', { name: 'Save Changes', exact: true }).click();
+    assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
+  });
+  for (const [name, target] of [['wp-login', a.base + '/wp-login.php'], ['wp-admin', a.base + '/wp-admin/'],
+    ['My Account', a.wooAccount], ['generic frontend', a.frontend]]) {
+    if (!target) continue;
+    await test('enforced ' + name + ' automatically initiates AccessLobby', async () => {
+      const isolated = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(isolated);
+      const tab = await isolated.newPage();
+      await tab.goto(target);
+      await tab.locator('#username').waitFor();
+      assert.equal(new URL(tab.url()).port, '8083');
+      assert.equal(await tab.locator('#user_pass').count(), 0);
+    });
+  }
+  await test('enforced protected journey preserves its original destination and local permission', async () => {
+    const isolated = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(isolated);
+    const tab = await isolated.newPage();
+    await tab.goto(a.protected);
+    await iamLogin(tab, 'shopper');
+    await tab.waitForURL(a.protected);
+    assert.equal(await tab.locator('#fixture-identity').getAttribute('data-user'), String(a.legacyUser));
+    const denied = await tab.goto(a.restricted);
+    assert.equal(denied.status(), 403);
+  });
+  if (a.woo) await test('enforced mode keeps WooCommerce guest checkout and guest purchasing intact', async () => {
+    const guestContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(guestContext);
+    const guest = await guestContext.newPage();
+    const count = wp(a, 'echo count_users()["total_users"];');
+    await guest.goto(a.base + '/?add-to-cart=' + a.productId);
+    await guest.goto(a.checkout);
+    await guest.locator('form.checkout').waitFor();
+    assert.equal(new URL(guest.url()).port, '8441');
+    for (const [field, value] of Object.entries({ billing_first_name: 'Guest', billing_last_name: 'Fixture',
+      billing_address_1: '1 Fixture Street', billing_city: 'Los Angeles', billing_postcode: '90210',
+      billing_phone: '2025550101', billing_email: 'guest-checkout@example.test' })) {
+      await guest.locator('#' + field).fill(value);
+    }
+    await guest.locator('#billing_country').selectOption('US', { force: true });
+    await guest.locator('#billing_state').selectOption('CA', { force: true });
+    await guest.locator('#place_order').click();
+    await guest.locator('.woocommerce-thankyou-order-received').waitFor({ timeout: 30000 });
+    assert.equal(await identity(a, guest), 0);
+    assert.equal(wp(a, 'echo count_users()["total_users"];'), count);
+    const order = JSON.parse(wp(a, '$o=wc_get_orders(["billing_email"=>"guest-checkout@example.test","limit"=>1]);echo wp_json_encode(["customer"=>$o[0]->get_customer_id(),"total"=>$o[0]->get_total()]);'));
+    assert.equal(order.customer, 0); assert.equal(order.total, '19.95');
+  });
+  await test('identity API outage fails new enforced login closed and leaves existing sessions usable', async () => {
+    wp(a, 'update_option("alwp_fixture_outage",1);');
+    try {
+      const outageContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(outageContext);
+      const outage = await outageContext.newPage();
+      await outage.goto(a.base + '/wp-login.php');
+      await outage.locator('#username').fill('shopper');
+      await outage.locator('#password').fill(fixture.password);
+      await outage.locator('#kc-login').click();
+      await outage.waitForURL(url => url.searchParams.get('action') === 'al_callback');
+      await outage.getByText('upstream_unavailable_or_denied', { exact: true }).waitFor();
+      assert.equal(await identity(a, outage), 0);
+      assert.equal(await identity(a, admin), 1);
+    } finally { wp(a, 'delete_option("alwp_fixture_outage");'); }
   });
 } finally {
   writeFileSync(fixture.artifactDir + '/browser-report.json', JSON.stringify({

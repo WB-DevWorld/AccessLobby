@@ -4,12 +4,12 @@
     {
       "name": "local WordPress login preserves legacy customer",
       "status": "PASS",
-      "milliseconds": 610
+      "milliseconds": 648
     },
     {
       "name": "fresh real IAM dual proof links original WP customer",
       "status": "PASS",
-      "milliseconds": 582
+      "milliseconds": 667
     },
     {
       "name": "quiet OIDC re-entry restores original protected target",
@@ -38,6 +38,41 @@
     },
     {
       "name": "shared logout ends quiet re-entry for this browser session",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "privileged existing account links by fresh dual proof without role mapping",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "HTTPS host ticket redeems to the intended administrator",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "HTTPS emergency replay creates no administrator session",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "real admin settings enable enforced mode only after readiness proof",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "enforced core admin and Woo account surfaces initiate IAM automatically",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "enforced original destination and peer-local denial remain distinct",
+      "status": "PASS",
+      "milliseconds": 0
+    },
+    {
+      "name": "API outage fails new enforced sign-in closed and preserves existing local session policy",
       "status": "PASS",
       "milliseconds": 0
     }
