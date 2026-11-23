@@ -36,7 +36,7 @@ async function test(name, operation) {
   phase = 'start';
   diagnostic = {};
   const start = performance.now();
-  try { await operation(); cases.push({ name, status: 'PASS', milliseconds: Math.round(performance.now() - start) });
+  try { await operation(); cases.push({ name, status: 'PASS', milliseconds: Math.round(performance.now() - start), ...(Object.keys(diagnostic).length ? { diagnostic } : {}) });
     console.log('BROWSER_PASS ' + name); }
   catch (error) {
     // Assertion/Playwright errors can contain cookie values, callback or verification URLs.
@@ -50,12 +50,20 @@ async function identity(site, tab = page) {
 }
 async function localLogin(site, username, tab = page) {
   const network = [];
+  const dialogs = [];
+  const handleDialog = async dialog => {
+    dialogs.push(dialog.type());
+    // Only the explicit navigation from a synthetic login is accepted; all other dialogs retain dismissal.
+    if (dialog.type() === 'beforeunload') await dialog.accept();
+    else await dialog.dismiss();
+  };
   const trace = response => {
     const url = new URL(response.url());
     if (url.pathname.endsWith('/wp-login.php')) network.push({ method: response.request().method(), status: response.status(),
       action: /^[a-z_]{1,40}$/.test(url.searchParams.get('action') || '') ? url.searchParams.get('action') : '' });
   };
   tab.on('response', trace);
+  tab.on('dialog', handleDialog);
   try {
     wp(site, 'delete_option("alwp_fixture_local_failed");delete_option("alwp_fixture_local_success");');
     await tab.goto(site.base + '/wp-login.php?redirect_to=' + encodeURIComponent(site.account));
@@ -93,7 +101,10 @@ async function localLogin(site, username, tab = page) {
         activePlugins: JSON.parse(wp(site, 'echo wp_json_encode(get_option("active_plugins"));')) };
     } catch {}
     throw error;
-  } finally { tab.off('response', trace); }
+  } finally {
+    if (dialogs.length) diagnostic = { ...diagnostic, dialogs };
+    tab.off('response', trace); tab.off('dialog', handleDialog);
+  }
 }
 async function directLocalCookie(site, tab, context) {
   await tab.goto(site.account);
