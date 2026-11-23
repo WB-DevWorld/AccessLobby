@@ -179,7 +179,7 @@ VALUES($1,$2,$3,$4,$5,$6,$7,'hidden','authenticated_open','first_party','active'
 [s.id,s.client,s.client,owner,s.base+'/wp-login.php?action=al_callback',s.base+'/wp-login.php?action=al_signed_out',s.base+'/?rest_route=/accesslobby/v1/backchannel-logout']);}
 await p.end();"""
 for site in sites: site['id'] = str(uuid.uuid4())
-run(['node', '--input-type=module', '-e', seed], cwd=repo,
+run(['node', '--input-type=module', '-e', seed], cwd=repo / 'apps/api',
     extra={**api_env, 'ALWP_SITE_CLIENTS': json.dumps(sites)}, quiet=True)
 api_process = spawn('api', ['node', '--import', 'tsx', 'src/main.ts'], cwd=repo / 'apps/api', extra=api_env)
 wait_url(api + '/health/ready', api_process)
