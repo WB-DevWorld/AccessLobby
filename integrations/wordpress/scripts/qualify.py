@@ -196,6 +196,13 @@ for label in ['one', 'two']:
              'config': {'included.custom.audience': 'external-api-pilot', 'access.token.claim': 'true', 'id.token.claim': 'false'}}]})
     realm['clients'].append(external)
     privacy_clients.append({'clientId': external['clientId'], 'callback': callback})
+reference_origin = 'http://127.0.0.1:8093'
+reference_client = copy.deepcopy(template)
+reference_client.update({'clientId': 'wordpress-reference-peer', 'name': 'Independent reference consumer',
+    'redirectUris': [reference_origin + '/callback'], 'webOrigins': [reference_origin]})
+reference_client['attributes'].update({'post.logout.redirect.uris': reference_origin + '/',
+    'backchannel.logout.url': reference_origin + '/backchannel-logout', 'backchannel.logout.session.required': 'true'})
+realm['clients'].append(reference_client)
 realm['users'] = [{'id': str(uuid.uuid4()), 'username': name, 'enabled': True, 'emailVerified': True,
     'email': name + '@example.test', 'firstName': name, 'lastName': 'Fixture',
     'credentials': [{'type': 'password', 'value': password, 'temporary': False}]}
@@ -228,9 +235,22 @@ await p.end();"""
 for site in sites: site['id'] = str(uuid.uuid4())
 run(['node', '--input-type=module', '-e', seed], cwd=repo / 'apps/api',
     extra={**api_env, 'ALWP_SITE_CLIENTS': json.dumps(sites)}, quiet=True)
+run(['node', '--input-type=module', '-e', """import {Pool} from 'pg';const p=new Pool({connectionString:process.env.DATABASE_URL});
+await p.query(`INSERT INTO applications(id,client_id,name,owner_person_id,redirect_uri,logout_uri,backchannel_logout_uri,
+visibility,admission,trust_class,status,activated_at,origin_challenge,origin_verified_at,origin_verified_host,review_reference)
+VALUES(gen_random_uuid(),'wordpress-reference-peer','Reference peer','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+'http://127.0.0.1:8093/callback','http://127.0.0.1:8093/','http://127.0.0.1:8093/backchannel-logout',
+'hidden','authenticated_open','first_party','active',now(),'synthetic-proof',now(),'127.0.0.1','disposable-fixture')`);await p.end();"""],
+    cwd=repo / 'apps/api', extra=api_env, quiet=True)
 api_process = spawn('api', ['node', '--import', 'tsx', 'src/main.ts'], cwd=repo / 'apps/api', extra=api_env)
 wait_url(api + '/health/ready', api_process)
 print('FIXTURE AccessLobby API and PostgreSQL ready', flush=True)
+reference = spawn('reference-peer', ['node', 'examples/reference-consumer/server.mjs'], cwd=repo,
+    extra={'CONSUMER_ORIGIN': reference_origin, 'OIDC_ISSUER': issuer, 'OIDC_CLIENT_ID': 'wordpress-reference-peer',
+           'ACCESSLOBBY_API_URL': api, 'APP_ENTRY_REQUIRED': 'true', 'PUBLIC_REGISTRATION_ENABLED': 'false',
+           'PORT': '8093', 'NODE_EXTRA_CA_CERTS': str(cert)})
+wait_url(reference_origin + '/health/ready', reference)
+print('FIXTURE independent reference consumer ready', flush=True)
 
 for site in sites:
     base_dir = work / ('site-' + site['label'])
@@ -310,7 +330,7 @@ for site in sites:
 fixture = {'sites': sites, 'issuer': issuer, 'api': api, 'password': password, 'php': php, 'wpCli': wp_cli,
            'artifactDir': str(work), 'certificate': str(cert), 'package': str(args.package.resolve()),
            'upgradePackage': str(args.upgrade_from.resolve()), 'mailbox': str(mailbox),
-           'privacyClients': privacy_clients, 'privateProviderSubject': realm['users'][0]['id']}
+           'privacyClients': privacy_clients, 'privateProviderSubject': realm['users'][0]['id'], 'referencePeer': reference_origin}
 config_file = work / 'private-fixture-config.json'
 config_file.write_text(json.dumps(fixture)); config_file.chmod(0o600)
 run(['node', '--import', 'tsx', 'test/external-privacy-live.mjs', str(config_file)], cwd=repo / 'apps/api',

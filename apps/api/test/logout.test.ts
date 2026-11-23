@@ -28,5 +28,8 @@ test('first-party backchannel accepts signed session event and rejects mismatche
     await assert.rejects(verify(await sign(valid, 'other-client')));
     await assert.rejects(verify(await sign({ ...valid, nonce: 'invalid' })));
     await assert.rejects(verify(await sign({ events: valid.events })));
+    for (const value of [[], { unexpected: true }, null, 'logout']) {
+      await assert.rejects(verify(await sign({ ...valid, events: { 'http://schemas.openid.net/event/backchannel-logout': value } })));
+    }
   } finally { server.close(); await once(server, 'close'); }
 });

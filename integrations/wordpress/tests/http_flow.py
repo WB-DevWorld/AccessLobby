@@ -39,8 +39,8 @@ class Forms(HTMLParser):
         if tag == 'form': self.form = None
 
 
-def request(url, data=None):
-    req = Request(url, data=urlencode(data).encode() if data is not None else None)
+def request(url, data=None, headers=None):
+    req = Request(url, data=urlencode(data).encode() if data is not None else None, headers=headers or {})
     try:
         with client.open(req, timeout=30) as response:
             return response.geturl(), response.read().decode(), response.status, response.headers
@@ -284,6 +284,36 @@ try:
     finally:
         wp(a, 'delete_option("alwp_fixture_unavailable");')
     check('missing prerequisite fault keeps enforced local authentication closed', lambda: None)
+    client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+    peer = fixture['referencePeer']
+    page = request(a['protected'])
+    page = submit(page, form(page, lambda f: f['id'] == 'kc-form-login'), {'username': 'shopper', 'password': fixture['password']})
+    request(b['base'] + '/wp-login.php?action=al_start')
+    page = request(peer + '/login')
+    assert 'Create my account for this app' in page[1] and 'kc-form-login' not in page[1], 'Reference peer did not quietly reuse IAM'
+    page = request(peer + '/join', {}, {'Origin': peer})
+    assert 'You are signed into the reference app' in page[1] and request(peer + '/private')[2] == 403
+    assert account(a) == a['legacyUser'] and account(b) == b_user
+    check('real independent reference consumer quietly joins its own local account without resource permission', lambda: None)
+    page = request(peer + '/logout', {'scope': 'current'}, {'Origin': peer})
+    assert 'Sign in to the reference app' in page[1] and account(a) == a['legacyUser']
+    assert 'You are signed into the reference app' in request(peer + '/login')[1]
+    logout(a)
+    assert account(a) == 0 and 'You are signed into the reference app' in request(peer + '/')[1]
+    request(a['base'] + '/wp-login.php?action=al_start')
+    assert account(a) == a['legacyUser']
+    check('local-only logout preserves WordPress and reference peer independently with quiet re-entry', lambda: None)
+    page = request(peer + '/logout', {'scope': 'all'}, {'Origin': peer})
+    if urlparse(page[0]).port == 8083:
+        page = submit(page, form(page, lambda f: True))
+    assert account(a) == 0 and account(b) == 0 and request(peer + '/private')[2] == 401
+    page = request(a['base'] + '/wp-login.php?action=al_start')
+    page = submit(page, form(page, lambda f: f['id'] == 'kc-form-login'), {'username': 'shopper', 'password': fixture['password']})
+    request(b['base'] + '/wp-login.php?action=al_start')
+    assert 'You are signed into the reference app' in request(peer + '/login')[1]
+    logout(a, 'all')
+    assert account(a) == 0 and account(b) == 0 and request(peer + '/private')[2] == 401
+    check('shared logout works in both directions between two WordPress sites and the independent reference consumer', lambda: None)
 finally:
     Path(fixture['artifactDir'], 'http-report.json').write_text(json.dumps({
         'evidenceType': 'HTTP_PROTOCOL_NOT_BROWSER_UI', 'cases': cases}, indent=2) + '\n')

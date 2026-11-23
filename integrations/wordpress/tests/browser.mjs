@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { qualifyHybrid, qualifyEditor, qualifyEnforced, qualifyUpgrade } from './frontend-linking.mjs';
+import { qualifyCrossApp } from './cross-app.mjs';
 
 const fixture = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const [a, b] = fixture.sites;
@@ -601,6 +602,8 @@ try {
     const recovered = (await isolated.cookies(a.base)).find(c => c.name === cookie.name);
     assert(recovered && recovered.value === cookie.value);
   });
+  await qualifyCrossApp({ test, browser, browsers, fixture, a, b, wp, iamLogin, identity, siteLogout, allLogout,
+    stage: value => { phase = value; } });
   await qualifyUpgrade({ test, browser, browsers, fixture, a, wp, wpCommand, iamLogin, identity,
     stage: value => { phase = value; }, diagnose: value => { diagnostic = value; } });
 } finally {
