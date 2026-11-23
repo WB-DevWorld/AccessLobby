@@ -71,6 +71,12 @@ async function siteLogout(site, tab = page) {
   await tab.getByRole('button', { name: 'Sign out of this site', exact: true }).click();
   await tab.getByText('You are signed out of this site.', { exact: true }).waitFor();
 }
+async function allLogout(site, tab) {
+  await tab.goto(site.base + '/wp-login.php?action=al_logout');
+  await tab.getByRole('button', { name: 'Sign out of all connected apps', exact: true }).click();
+  if (new URL(tab.url()).port === '8083') await tab.locator('#kc-logout').click();
+  await tab.waitForURL(url => url.port === new URL(site.base).port && url.searchParams.get('action') === 'al_signed_out');
+}
 
 try {
   await test('hybrid core login exposes AccessLobby and preserves local form', async () => {
@@ -430,6 +436,43 @@ try {
     await tab.waitForURL(b.protected);
     assert.equal(Number(await tab.locator('#fixture-identity').getAttribute('data-user')), bUser);
     assert.equal(wp(b, 'echo implode(",",get_userdata(' + bUser + ')->roles);'), 'subscriber');
+    await siteLogout(b, tab);
+    assert.equal(await identity(b, tab), 0);
+    await tab.goto(b.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(b.protected));
+    await tab.waitForURL(b.protected);
+    assert.equal(Number(await tab.locator('#fixture-identity').getAttribute('data-user')), bUser);
+  });
+  await test('enforced shared logout ends matching peer sessions and preserves another IAM browser device', async () => {
+    const otherContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(otherContext);
+    const other = await otherContext.newPage();
+    await other.goto(a.protected); await iamLogin(other, 'shopper');
+    assert.equal(await identity(a, other), a.legacyUser);
+    const sharedContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(sharedContext);
+    const shared = await sharedContext.newPage();
+    await shared.goto(b.protected); await iamLogin(shared, 'shopper');
+    await shared.goto(a.protected); await shared.waitForURL(a.protected);
+    assert.equal(await identity(a, shared), a.legacyUser);
+    await allLogout(b, shared);
+    assert.equal(await identity(a, shared), 0); assert.equal(await identity(b, shared), 0);
+    assert.equal(await identity(a, other), a.legacyUser);
+  });
+  await test('unavailable backchannel peer retains a bounded session and shared IAM still ends', async () => {
+    const outageContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(outageContext);
+    const outage = await outageContext.newPage();
+    await outage.goto(b.protected); await iamLogin(outage, 'shopper');
+    await outage.goto(a.protected); await outage.waitForURL(a.protected);
+    wp(b, 'update_option("alwp_fixture_delivery_attempts",0);update_option("alwp_fixture_backchannel_outage",1);');
+    try {
+      await allLogout(a, outage);
+      assert(Number(wp(b, 'echo get_option("alwp_fixture_delivery_attempts");')) >= 1);
+      assert.equal(await identity(a, outage), 0);
+      assert.equal(await identity(b, outage), bUser);
+      const bound = JSON.parse(wp(b, '$sessions=WP_Session_Tokens::get_instance(' + bUser + ')->get_all();echo wp_json_encode(["now"=>time(),"max"=>max(array_column($sessions,"expiration"))]);'));
+      assert(bound.max > bound.now && bound.max <= bound.now + 3600);
+    } finally { wp(b, 'delete_option("alwp_fixture_backchannel_outage");'); }
+    await siteLogout(b, outage);
+    await outage.goto(b.base + '/wp-login.php?action=al_start');
+    await outage.locator('#username').waitFor();
   });
 } finally {
   writeFileSync(fixture.artifactDir + '/browser-report.json', JSON.stringify({

@@ -24,6 +24,13 @@ add_filter( 'pre_http_request', static function ( $result, $args, $url ) {
 	}
 	return $result;
 }, 10, 3 );
+add_filter( 'rest_pre_dispatch', static function ( $result, $server, $request ) {
+	if ( get_option( 'alwp_fixture_backchannel_outage' ) && '/accesslobby/v1/backchannel-logout' === $request->get_route() ) {
+		update_option( 'alwp_fixture_delivery_attempts', (int) get_option( 'alwp_fixture_delivery_attempts' ) + 1 );
+		return new WP_Error( 'fixture_delivery_unavailable', 'Disposable delivery outage', array( 'status' => 503 ) );
+	}
+	return $result;
+}, 10, 3 );
 add_action( 'wp_footer', static function () {
 	echo '<output id="fixture-identity" data-user="' . esc_attr( (string) get_current_user_id() ) . '" data-admin="' . esc_attr( current_user_can( 'manage_options' ) ? 'yes' : 'no' ) . '" data-order-received="' . esc_attr( function_exists( 'is_order_received_page' ) && is_order_received_page() ? 'yes' : 'no' ) . '"></output>';
 	echo '<input id="fixture-direct-nonce" type="hidden" value="' . esc_attr( wp_create_nonce( 'fixture_direct_local_login' ) ) . '">';
