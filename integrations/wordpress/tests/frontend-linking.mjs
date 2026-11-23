@@ -13,8 +13,9 @@ function linkState(suite) {
     (suite.a.woo ? ',"orderCustomer"=>wc_get_order(' + suite.a.orderId + ')->get_customer_id(),"orderTotal"=>wc_get_order(' + suite.a.orderId + ')->get_total()' : '') + ']);'));
 }
 async function submitProof(suite, tab, username) {
-  await tab.locator('#username').waitFor();
-  await tab.locator('#username').fill(username);
+  await tab.locator('#password').waitFor();
+  if (await tab.locator('#username').isVisible()) await tab.locator('#username').fill(username);
+  else assert.equal((await tab.locator('#kc-attempted-username').innerText()).trim(), username);
   await tab.locator('#password').fill(suite.fixture.password);
   await tab.locator('#kc-login').click();
 }
@@ -106,14 +107,17 @@ export async function qualifyHybrid(s) {
   let retained;
   await test('fresh disconnect invalidates linked sessions while preserving commerce and the peer site', async () => {
     const other = await isolated(s);
+    stage('other_linked_session');
     await other.tab.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.account));
     await iamLogin(other.tab, 'shopper');
     assert.equal(await identity(a, other.tab), a.legacyUser);
     retained = linkState(s);
+    stage('disconnect_form');
     await page.goto(a.account);
     await page.getByRole('button', { name: 'Disconnect AccessLobby', exact: true }).click();
-    await page.locator('#username').waitFor();
-    stage('fresh_disconnect'); await iamLogin(page, 'shopper');
+    // Keycloak's fresh reauthentication retains the current username and asks for its password.
+    stage('fresh_disconnect'); await submitProof(s, page, 'shopper');
+    await page.waitForURL(a.account);
     assert.equal(await identity(a), 0);
     assert.equal(await identity(a, other.tab), 0);
     assert.equal(await identity(a, localControl.tab), a.legacyUser);

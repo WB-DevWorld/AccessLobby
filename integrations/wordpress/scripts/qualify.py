@@ -261,6 +261,18 @@ for site in sites:
     site.update(json.loads(data.strip()))
     wp('eval-file', str(plugin / 'tests/integration.php'), extra={'ALWP_INTEGRATION_RESULT': str(work / ('integration-' + site['label'] + '.json'))})
     wp('eval-file', str(plugin / 'tests/security-integration.php'), extra={'ALWP_SECURITY_RESULT': str(work / ('security-' + site['label'] + '.json'))})
+    inventory_snapshot = '''$d=['users'=>count_users()['total_users'],'config'=>get_option('accesslobby_sso'),
+        'guest'=>get_option('woocommerce_enable_guest_checkout')];
+        if(function_exists('wc_get_orders')){$d['orders']=count(wc_get_orders(['limit'=>-1,'return'=>'ids']));}
+        echo wp_json_encode($d);'''
+    before_inventory = wp('eval', inventory_snapshot, quiet=True)
+    inventory = wp('eval-file', str(plugin / 'scripts/site-inventory.php'), '--skip-plugins', '--skip-themes', quiet=True)
+    report = json.loads(inventory)
+    assert report['authenticationQualification'] == 'NOT_RUN'
+    assert report['siteUrl'].rstrip('/') == site['base']
+    assert all(value not in inventory for value in [password, 'legacy_shopper', 'shopper@example.test', 'local-only@example.test'])
+    assert wp('eval', inventory_snapshot, quiet=True) == before_inventory, 'Inventory changed local state'
+    (work / ('inventory-' + site['label'] + '.json')).write_text(json.dumps(report, indent=2) + '\n')
     router = base_dir / 'router.php'
     docroot = path.parent if site['prefix'] else path
     router.write_text("<?php\nif(($_SERVER['REMOTE_ADDR']??'')==='127.0.0.1' && hash_equals(" + repr(https_marker) + ",$_SERVER['HTTP_X_ALWP_FIXTURE_HTTPS']??'')){$_SERVER['HTTPS']='on';}\n$p=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);\n" +

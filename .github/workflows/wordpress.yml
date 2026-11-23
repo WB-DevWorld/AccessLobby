@@ -135,6 +135,7 @@ jobs:
           name: wordpress-real-sso-${{ matrix.wordpress }}-php-${{ matrix.php }}
           path: |
             ${{ runner.temp }}/alwp/qualification-*/integration-*.json
+            ${{ runner.temp }}/alwp/qualification-*/inventory-*.json
             ${{ runner.temp }}/alwp/qualification-*/browser-report.json
             ${{ runner.temp }}/alwp/qualification-*/http-report.json
             ${{ runner.temp }}/alwp/qualification-*/security-*.json
