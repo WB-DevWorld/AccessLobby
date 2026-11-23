@@ -231,12 +231,14 @@ export async function qualifyUpgrade(s) {
       const { tab } = await isolated(s);
       await tab.goto(a.protected); await iamLogin(tab, 'shopper');
       assert.equal(await identity(a, tab), a.legacyUser);
+      assert.equal(await tab.locator('#fixture-runtime').getAttribute('data-plugin-version'), '0.1.0-alpha.2');
       const before = linkState(s);
       stage('upgrade_current_zip');
       wpCommand(a, ['plugin', 'install', fixture.package, '--force']);
       wpCommand(a, ['plugin', 'is-active', 'accesslobby-sso']);
       assert.equal(version(), '0.1.0-alpha.3');
       assert.equal(await identity(a, tab), a.legacyUser);
+      assert.equal(await tab.locator('#fixture-runtime').getAttribute('data-plugin-version'), '0.1.0-alpha.3');
       const after = linkState(s);
       assert.equal(after.link.id, before.link.id); assert.equal(after.link.link_state, 'active');
       for (const key of ['roles', 'count', 'address', 'business', ...(a.woo ? ['orderCustomer', 'orderTotal'] : [])]) assert.deepEqual(after[key], before[key]);

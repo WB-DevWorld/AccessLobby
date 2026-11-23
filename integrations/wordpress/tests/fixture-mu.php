@@ -61,6 +61,7 @@ add_filter( 'rest_pre_dispatch', static function ( $result, $server, $request ) 
 	return $result;
 }, 10, 3 );
 add_action( 'wp_footer', static function () {
+	echo '<output id="fixture-runtime" data-plugin-version="' . esc_attr( defined( 'ACCESSLOBBY_WP_VERSION' ) ? ACCESSLOBBY_WP_VERSION : '' ) . '"></output>';
 	echo '<output id="fixture-identity" data-user="' . esc_attr( (string) get_current_user_id() ) . '" data-admin="' . esc_attr( current_user_can( 'manage_options' ) ? 'yes' : 'no' ) . '" data-order-received="' . esc_attr( function_exists( 'is_order_received_page' ) && is_order_received_page() ? 'yes' : 'no' ) . '"></output>';
 	echo '<input id="fixture-direct-nonce" type="hidden" value="' . esc_attr( wp_create_nonce( 'fixture_direct_local_login' ) ) . '">';
 	echo '<input id="fixture-unlink-nonce" type="hidden" value="' . esc_attr( wp_create_nonce( 'alwp_unlink' ) ) . '">';
