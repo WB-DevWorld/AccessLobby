@@ -1,0 +1,81 @@
+{
+  "candidateRevision": "7c9ec8c8985939addb17ccf1e25bd8313c652eb3",
+  "runs": [
+    {
+      "id": 45289597984,
+      "name": "CI",
+      "url": "https://github.com/WB-DevWorld/AccessLobby/actions/runs/45289597984",
+      "jobs": [
+        {
+          "id": 138094655836,
+          "name": "verify",
+          "conclusion": "success"
+        },
+        {
+          "id": 138094656370,
+          "name": "iam-smoke",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 45289597912,
+      "name": "WordPress connector",
+      "url": "https://github.com/WB-DevWorld/AccessLobby/actions/runs/45289597912",
+      "jobs": [
+        {
+          "id": 138094655077,
+          "name": "PHP 8.4 protocol and package",
+          "conclusion": "success"
+        },
+        {
+          "id": 138094655531,
+          "name": "WP 6.9.12 PHP 8.3 Woo none default SSO",
+          "conclusion": "success"
+        },
+        {
+          "id": 138094655558,
+          "name": "WP 7.1.4 PHP 8.4 Woo 11.2.1 default SSO",
+          "conclusion": "success"
+        },
+        {
+          "id": 138094655606,
+          "name": "WP 7.1.5 PHP 8.3 Woo 11.3.1 default SSO",
+          "conclusion": "success"
+        },
+        {
+          "id": 138094655625,
+          "name": "WP 7.1.1 PHP 8.4 Woo 11.1.1 kadence SSO",
+          "conclusion": "success"
+        },
+        {
+          "id": 138094655825,
+          "name": "WP 7.1.5 PHP 8.4 Woo 11.3.1 default SSO",
+          "conclusion": "success"
+        },
+        {
+          "id": 138094655838,
+          "name": "PHP 8.3 protocol and package",
+          "conclusion": "success"
+        },
+        {
+          "id": 138094656080,
+          "name": "PHP 8.5 protocol and package",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 45289597963,
+      "name": "Keycloak theme",
+      "url": "https://github.com/WB-DevWorld/AccessLobby/actions/runs/45289597963",
+      "jobs": [
+        {
+          "id": 138094655793,
+          "name": "iam-theme",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

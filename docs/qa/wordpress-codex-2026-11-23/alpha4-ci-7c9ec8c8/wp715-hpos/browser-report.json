@@ -1,0 +1,332 @@
+{
+  "engine": "actual Keycloak + AccessLobby API + real WordPress/WooCommerce",
+  "sites": [
+    {
+      "label": "a",
+      "base": "https://127.0.0.1:8441",
+      "client": "wordpress-a"
+    },
+    {
+      "label": "b",
+      "base": "https://127.0.0.1:8442/gh",
+      "client": "wordpress-b"
+    }
+  ],
+  "cases": [
+    {
+      "name": "hybrid core login exposes AccessLobby and preserves local form",
+      "status": "PASS",
+      "milliseconds": 210
+    },
+    {
+      "name": "hybrid local customer login retains original local account",
+      "status": "PASS",
+      "milliseconds": 1413
+    },
+    {
+      "name": "hybrid custom password frontend can issue an ordinary local cookie",
+      "status": "PASS",
+      "milliseconds": 498
+    },
+    {
+      "name": "fresh dual proof links existing WooCommerce customer",
+      "status": "PASS",
+      "milliseconds": 1871
+    },
+    {
+      "name": "site-only logout clears WP without automatically re-entering",
+      "status": "PASS",
+      "milliseconds": 387
+    },
+    {
+      "name": "quiet SSO re-entry preserves original protected destination",
+      "status": "PASS",
+      "milliseconds": 268
+    },
+    {
+      "name": "second independent subdirectory WP reuses IAM session without credentials",
+      "status": "PASS",
+      "milliseconds": 1015
+    },
+    {
+      "name": "site-only logout on A leaves independent B session active",
+      "status": "PASS",
+      "milliseconds": 488
+    },
+    {
+      "name": "subdirectory repeat login resolves exactly one local account",
+      "status": "PASS",
+      "milliseconds": 867
+    },
+    {
+      "name": "WordPress sessions use Secure and HttpOnly cookies over HTTPS",
+      "status": "PASS",
+      "milliseconds": 1
+    },
+    {
+      "name": "callback rejects missing state without creating a session",
+      "status": "PASS",
+      "milliseconds": 240
+    },
+    {
+      "name": "shortcode and dynamic block preserve private entry URLs on independent site a",
+      "status": "PASS",
+      "milliseconds": 372
+    },
+    {
+      "name": "shortcode and dynamic block preserve private entry URLs on independent site b",
+      "status": "PASS",
+      "milliseconds": 199
+    },
+    {
+      "name": "shortcode Join reaches real registration without creating an unvalidated local user",
+      "status": "PASS",
+      "milliseconds": 1459
+    },
+    {
+      "name": "mobile mounted login adapter inserts one action and completes the original journey",
+      "status": "PASS",
+      "milliseconds": 970
+    },
+    {
+      "name": "disconnect rejects a missing WordPress nonce and preserves the active mapping",
+      "status": "PASS",
+      "milliseconds": 945
+    },
+    {
+      "name": "a different freshly authenticated person cannot disconnect the existing local account",
+      "status": "PASS",
+      "milliseconds": 2206
+    },
+    {
+      "name": "disconnect loses authority when the original local browser proof disappears",
+      "status": "PASS",
+      "milliseconds": 1992
+    },
+    {
+      "name": "bounded OIDC denial leaves the original account link and local session intact",
+      "status": "PASS",
+      "milliseconds": 2091
+    },
+    {
+      "name": "fresh disconnect invalidates linked sessions while preserving commerce and the peer site",
+      "status": "PASS",
+      "milliseconds": 2837
+    },
+    {
+      "name": "unlinked SSO cannot silently recreate or reactivate a local account",
+      "status": "PASS",
+      "milliseconds": 800
+    },
+    {
+      "name": "explicit fresh reconnect reuses the original local user and mapping without duplicates",
+      "status": "PASS",
+      "milliseconds": 1673
+    },
+    {
+      "name": "unsigned backchannel cannot destroy another WP session",
+      "status": "PASS",
+      "milliseconds": 143
+    },
+    {
+      "name": "older API without receipts retains bounded SSO compatibility",
+      "status": "PASS",
+      "milliseconds": 3207
+    },
+    {
+      "name": "malformed advertised receipt fails closed before a WordPress session",
+      "status": "PASS",
+      "milliseconds": 2563
+    },
+    {
+      "name": "actual issuer logout invalidates matching sessions on both WP peers",
+      "status": "PASS",
+      "milliseconds": 1088
+    },
+    {
+      "name": "all-app logout ends quiet IAM re-entry",
+      "status": "PASS",
+      "milliseconds": 129
+    },
+    {
+      "name": "peer Join verifies email before creating exactly one safe local account",
+      "status": "PASS",
+      "milliseconds": 4124
+    },
+    {
+      "name": "enforced migration gate refuses an unprepared administrator",
+      "status": "PASS",
+      "milliseconds": 20856
+    },
+    {
+      "name": "existing administrator links explicitly without claim-based elevation",
+      "status": "PASS",
+      "milliseconds": 2203
+    },
+    {
+      "name": "real Gutenberg Journey control saves and reloads a Join block that reaches IAM",
+      "status": "PASS",
+      "milliseconds": 8621
+    },
+    {
+      "name": "HTTPS emergency ticket creates only the intended short admin session",
+      "status": "PASS",
+      "milliseconds": 1506
+    },
+    {
+      "name": "linked admin enables enforced mode only after readiness acknowledgements",
+      "status": "PASS",
+      "milliseconds": 2121
+    },
+    {
+      "name": "an unrelated form named login remains usable in enforced mode",
+      "status": "PASS",
+      "milliseconds": 512
+    },
+    {
+      "name": "mobile mounted login starts enforced SSO without an extra AccessLobby click",
+      "status": "PASS",
+      "milliseconds": 964
+    },
+    {
+      "name": "enforced unlink is hidden and rejected even with a valid current WordPress nonce",
+      "status": "PASS",
+      "milliseconds": 1528
+    },
+    {
+      "name": "enforced cookie guard denies a valid local-password frontend that bypasses authenticate",
+      "status": "PASS",
+      "milliseconds": 589
+    },
+    {
+      "name": "host recovery can issue a short administrator cookie while enforcement is active",
+      "status": "PASS",
+      "milliseconds": 1036
+    },
+    {
+      "name": "Application Password REST authentication follows its explicit machine policy",
+      "status": "PASS",
+      "milliseconds": 2117
+    },
+    {
+      "name": "enforced wp-login automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 179
+    },
+    {
+      "name": "enforced wp-admin automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 218
+    },
+    {
+      "name": "enforced My Account automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 192
+    },
+    {
+      "name": "enforced generic frontend automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 330
+    },
+    {
+      "name": "enforced protected journey preserves its original destination and local permission",
+      "status": "PASS",
+      "milliseconds": 622
+    },
+    {
+      "name": "enforced mode keeps WooCommerce guest checkout and guest purchasing intact",
+      "status": "PASS",
+      "milliseconds": 4339
+    },
+    {
+      "name": "enforced anonymous Woo registration fails without creating a local account",
+      "status": "PASS",
+      "milliseconds": 2096
+    },
+    {
+      "name": "account-required checkout starts IAM while guest policy remains a local setting",
+      "status": "PASS",
+      "milliseconds": 1215
+    },
+    {
+      "name": "identity API outage fails new enforced login closed and leaves existing sessions usable",
+      "status": "PASS",
+      "milliseconds": 1780
+    },
+    {
+      "name": "missing prerequisite fault cannot reopen enforced local password login",
+      "status": "PASS",
+      "milliseconds": 1311
+    },
+    {
+      "name": "authorized rollback restores local login and enforced reactivation ends rollback sessions",
+      "status": "PASS",
+      "milliseconds": 3216
+    },
+    {
+      "name": "subdirectory enforced core starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 158
+    },
+    {
+      "name": "subdirectory enforced admin starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 202
+    },
+    {
+      "name": "subdirectory enforced frontend starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 260
+    },
+    {
+      "name": "subdirectory enforced callback preserves protected destination and original local account",
+      "status": "PASS",
+      "milliseconds": 1081
+    },
+    {
+      "name": "enforced shared logout ends matching peer sessions and preserves another IAM browser device",
+      "status": "PASS",
+      "milliseconds": 2627
+    },
+    {
+      "name": "missed backchannel is reconciled on the next due check before the WordPress cookie expires",
+      "status": "PASS",
+      "milliseconds": 2917
+    },
+    {
+      "name": "receipt outage grants bounded grace, then denies access and resumes the same cookie after recovery",
+      "status": "PASS",
+      "milliseconds": 10639
+    },
+    {
+      "name": "WordPress to independent reference app reuses SSO but retains peer-local account and authorization",
+      "status": "PASS",
+      "milliseconds": 1674
+    },
+    {
+      "name": "local logout in either WordPress or the reference peer preserves the other app and quiet re-entry",
+      "status": "PASS",
+      "milliseconds": 1627
+    },
+    {
+      "name": "reference-origin shared logout ends both WordPress sessions and preserves another browser",
+      "status": "PASS",
+      "milliseconds": 1626
+    },
+    {
+      "name": "WordPress-origin shared logout ends the reference session and retains its local account on later SSO",
+      "status": "PASS",
+      "milliseconds": 1789
+    },
+    {
+      "name": "real alpha.2 to alpha.4 ZIP upgrade preserves an established SSO session and local data",
+      "status": "PASS",
+      "milliseconds": 7117,
+      "diagnostic": {
+        "headerVersion": "0.1.0-alpha.4",
+        "runtimeStatus": 200,
+        "runningVersion": "0.1.0-alpha.4"
+      }
+    }
+  ]
+}

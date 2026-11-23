@@ -1,0 +1,13 @@
+# Focused retrieval acceptance addendum
+
+The original 28 pre-implementation passes remain in the plugin's source-acceptance.md. These are materially new implementation-specific findings, not a restart or invented owner decisions.
+
+| Pass | Evidence / consequence | Classification |
+|---|---|---|
+| 29 | Actual registry, Python renderer and private provisioner rejected all queries, while core WordPress callbacks and plain REST need fixed queries. Directly seeded runtime fixtures had bypassed real registration. Typed platform fixes that mismatch; generic web stays strict. | CURRENT-REPO-FACT; NEW-RECOMMENDATION implemented, ADR010 |
+| 30 | Cursor PR60 CURRENT-WORK.md at 948018e9 reports read-only inventory of three non-production sites. CETECH uses WoodMart; FLAIROC training uses active Kadence. Our SSH route remains errno101 before authentication. | CURRENT-REPO-FACT, reported inventory attributed; own site qualification BLOCKED |
+| 31 | Official Woo release index confirms historical 11.1.1/11.2.1 and current 11.3.1; official Kadence directory now lists 1.6.0.1. Version-matched 1.5.2 is a historical estate fixture, not an upgrade recommendation. | SOURCE-CONFIRMED; fixture qualification per exact CI |
+| 32 | Real Keycloak 26.7.0 Code/PKCE pairwise probe: two subjects differ and one browser SSO is reused, but sid is shared across token surfaces. First-party API rejects both synthetic clients. Changing sub alone cannot satisfy external privacy. | SOURCE-CONFIRMED bounded runtime; external activation DEFERRED, ADR011 |
+| 33 | Actual WordPress session APIs support attach_session_information, determine_current_user and targeted token destruction. The connector tags only its own tokens, seals optional capabilities and checks admission/revocation without retaining access tokens. Real outage, missed delivery, upgrade and unrelated-device tests qualify the bounded behavior. | SOURCE-CONFIRMED APIs/runtime; MVP-PROVISIONAL intervals and rollout policy |
+
+Primary documentation: [WordPress session hooks](https://developer.wordpress.org/reference/classes/wp_session_tokens/create/), [current-user filter](https://developer.wordpress.org/reference/hooks/determine_current_user/), [Woo releases](https://developer.woocommerce.com/releases/), [Kadence directory](https://wordpress.org/themes/kadence/), [OIDC Core §8](https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes), [backchannel logout](https://openid.net/specs/openid-connect-backchannel-1_0.html), [Keycloak mapper contract](https://www.keycloak.org/admin-api/protocol-mappers). Runtime archives and source revisions/hashes are retained in build.json. Current docs do not retroactively certify a deployed version.

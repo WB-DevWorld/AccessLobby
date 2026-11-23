@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-11-23T23:33:39.695406+00:00",
+  "readOnly": true,
+  "observations": {
+    "web": {
+      "httpStatus": 200
+    },
+    "apiReady": {
+      "httpStatus": 200,
+      "status": "ready",
+      "version": "3d9220a140d61df5effe633bc72cf5142c4a8371"
+    },
+    "apiLive": {
+      "httpStatus": 200,
+      "status": "ok",
+      "version": "3d9220a140d61df5effe633bc72cf5142c4a8371"
+    },
+    "discovery": {
+      "httpStatus": 200,
+      "issuerMatches": true
+    }
+  }
+}

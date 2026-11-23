@@ -1,3 +1,7 @@
+# Latest WordPress qualification
+
+[Alpha.4 acceptance and remaining delivery](alpha4-acceptance.md) is current: tested implementation 7c9ec8c, package 906f9044, all 11 CI jobs, five two-WordPress/reference-app matrices and supplementary native HTTP 24 cases. Exact clean source/package evidence is in alpha4-ci-7c9ec8c8. Historical alpha.2/alpha.3 records below remain their own snapshots; they do not describe current receipt/onboarding/external-preview behavior.
+
 # Codex comparison: WordPress runtime evidence — 2026-11-23
 
 Common starting head: `92afbb261672401426aa4d8d3ad36f2e81ac13fd`; independent branch `feat/wordpress-codex-comparison`, draft PR61. The owner explicitly authorized continued work alongside Cursor. PR60/handoff remains preserved; neither candidate is selected, merged or deployed by these results.

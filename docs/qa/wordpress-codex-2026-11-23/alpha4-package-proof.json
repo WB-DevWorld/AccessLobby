@@ -1,0 +1,9 @@
+{
+  "implementationRevision": "7c9ec8c8985939addb17ccf1e25bd8313c652eb3",
+  "version": "0.1.0-alpha.4",
+  "packageSha256": "906f904449dc23a1d5bfaeab07c77365bd09c5cdf57a094a00676cb2d33cb4f5",
+  "bytes": 87809,
+  "files": 49,
+  "everyPackagedFileMatchesImplementation": true,
+  "ciArtifactInnerZipMatches": true
+}
