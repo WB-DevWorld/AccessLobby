@@ -7,14 +7,13 @@ from pathlib import Path
 import argparse
 import atexit
 import copy
-import itertools
 import json
 import os
 import secrets
 import shutil
 import socket
 import subprocess
-import threading
+import sys
 import time
 import urllib.request
 import uuid
@@ -59,9 +58,12 @@ def preflight():
     absent = [name for name in ('mysqli', 'curl', 'openssl', 'sodium', 'mbstring') if name not in available]
     if absent:
         raise SystemExit('PREFLIGHT PHP is missing: ' + ', '.join(absent))
-    ports = [3307, 8081, 8082, 8083, 8090] + [18000 + index for index in range(8)]
+    cgi = Path(php).with_name('php-cgi.exe' if os.name == 'nt' else 'php-cgi')
+    if not cgi.is_file():
+        raise SystemExit('PREFLIGHT PHP CGI binary is missing: ' + str(cgi))
+    ports = [3307, 8081, 8082, 8083, 8090]
     if any(port < 1 or port > 65535 for port in ports):
-        raise SystemExit('PREFLIGHT worker port is outside 1-65535')
+        raise SystemExit('PREFLIGHT public port is outside 1-65535')
     busy = []
     for port in (3307, 8081, 8082, 8083, 8090):
         try:
@@ -92,79 +94,13 @@ def spawn(name, command, *, cwd=None, extra=None):
     children.append(process)
     return process
 
-def header_value(head, name):
-    prefix = name.lower() + ':'
-    for line in head.split(b'\r\n')[1:]:
-        if line.lower().startswith(prefix.encode()):
-            return line.split(b':', 1)[1].strip()
-    return b''
-
-def read_http_request(client):
-    data = b''
-    while b'\r\n\r\n' not in data:
-        chunk = client.recv(65536)
-        if not chunk:
-            return data
-        data += chunk
-        if len(data) > 1048576:
-            raise RuntimeError('Fixture request exceeded 1 MiB before the header ended')
-    head, _, rest = data.partition(b'\r\n\r\n')
-    length = int(header_value(head, 'content-length') or b'0')
-    while len(rest) < length:
-        chunk = client.recv(65536)
-        if not chunk:
-            break
-        rest += chunk
-    lines = [line for line in head.split(b'\r\n') if not line.lower().startswith(b'connection:')]
-    return b'\r\n'.join(lines) + b'\r\nConnection: close\r\n\r\n' + rest[:length]
-
-def bridge(client, backend):
-    upstream = None
-    try:
-        request = read_http_request(client)
-        if not request:
-            return
-        upstream = socket.create_connection(backend, timeout=20)
-        upstream.sendall(request)
-        while True:
-            chunk = upstream.recv(65536)
-            if not chunk:
-                break
-            client.sendall(chunk)
-    except OSError:
-        pass
-    finally:
-        if upstream is not None:
-            upstream.close()
-        client.close()
-
-def start_php_pool(name, public_port, docroot, router, workers=4):
-    """PHP's built-in server handles one request at a time. A login page deadlocks when its script uses that same server."""
-    backends = []
-    for index in range(workers):
-        port = 18000 + (public_port - 8081) * 4 + index
-        if port < 1 or port > 65535:
-            raise RuntimeError('Refusing PHP worker port ' + str(port))
-        process = spawn(name + '-' + str(index), [php, '-S', '127.0.0.1:' + str(port), '-t', str(docroot), str(router)])
-        wait_port(port, process)
-        backends.append(('127.0.0.1', port))
-    listener = socket.socket()
-    listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    listener.bind(('127.0.0.1', public_port))
-    listener.listen(128)
-    listeners.append(listener)
-    cycle = itertools.cycle(backends)
-    lock = threading.Lock()
-    def accept_loop():
-        while True:
-            try:
-                client, _ = listener.accept()
-            except OSError:
-                return
-            with lock:
-                backend = next(cycle)
-            threading.Thread(target=bridge, args=(client, backend), daemon=True).start()
-    threading.Thread(target=accept_loop, daemon=True).start()
+def start_gateway(name, public_port, docroot, front):
+    """One-shot php-cgi. The Windows built-in server stops accepting after a login page and its assets."""
+    cgi = Path(php).with_name('php-cgi.exe' if os.name == 'nt' else 'php-cgi')
+    process = spawn(name, [sys.executable, str(plugin / 'scripts/wp-gateway.py'), '--port', str(public_port),
+                           '--docroot', str(docroot), '--front', str(front), '--php', str(cgi)])
+    wait_port(public_port, process)
+    return process
 
 def cleanup():
     if args.keep or retain:
@@ -356,12 +292,8 @@ for site in sites:
     site.update(json.loads(data.strip()))
     checks = next(path for path in (plugin / 'tests/integration.php', plugin / 'tests/fixture-checks.php') if path.is_file())
     wp('eval-file', str(checks), extra={'ALWP_INTEGRATION_RESULT': str(work / ('integration-' + site['label'] + '.json'))})
-    router = base_dir / 'router.php'
     docroot = path.parent if site['prefix'] else path
-    router.write_text("<?php\n$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);\n$root = " + repr(str(docroot)) +
-        ";\n$file = $root . str_replace('/', DIRECTORY_SEPARATOR, rawurldecode((string) $path));\nif (is_file($file)) return false;\nrequire " +
-        repr(str(path / 'index.php')) + ";\n")
-    start_php_pool('wordpress-' + site['label'], site['port'], docroot, router)
+    start_gateway('wordpress-' + site['label'], site['port'], docroot, path / 'index.php')
     wait_url(site['base'] + '/', children[-1])
     print('FIXTURE WordPress ' + site['label'] + ' ready', flush=True)
 
