@@ -335,6 +335,26 @@ try {
     assert.equal(await identity(a, rollback), 0);
     assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
   });
+  // The readiness UI is exercised on A. A host-only fixture setting isolates B's path-prefixed routing behavior.
+  config(b, { mode: 'enforced' });
+  for (const [name, target] of [['core', b.base + '/wp-login.php'], ['admin', b.base + '/wp-admin/'], ['frontend', b.frontend]]) {
+    await test('subdirectory enforced ' + name + ' starts IAM automatically', async () => {
+      const isolated = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(isolated);
+      const tab = await isolated.newPage();
+      await tab.goto(target);
+      await tab.locator('#username').waitFor();
+      assert.equal(new URL(tab.url()).port, '8083');
+    });
+  }
+  await test('subdirectory enforced callback preserves protected destination and original local account', async () => {
+    const isolated = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(isolated);
+    const tab = await isolated.newPage();
+    await tab.goto(b.protected);
+    await iamLogin(tab, 'shopper');
+    await tab.waitForURL(b.protected);
+    assert.equal(Number(await tab.locator('#fixture-identity').getAttribute('data-user')), bUser);
+    assert.equal(wp(b, 'echo implode(",",get_userdata(' + bUser + ')->roles);'), 'subscriber');
+  });
 } finally {
   writeFileSync(fixture.artifactDir + '/browser-report.json', JSON.stringify({
     engine: 'actual Keycloak + unchanged AccessLobby API + real WordPress/WooCommerce',

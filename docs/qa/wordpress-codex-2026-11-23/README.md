@@ -25,6 +25,8 @@ These native reports test package SHA256 `2d0fcea9cba31a02782327b63896291863bb53
 
 Local Chromium cannot launch under this workspace's Unix-socket restriction. Native HTTP results are explicitly labeled `HTTP_PROTOCOL_NOT_BROWSER_UI`; browser evidence comes from actual remote Chromium CI. Only categorical JSON is retained/uploaded. Private credentials, realm imports, mail verification links and raw runtime logs are excluded.
 
+The current browser harness also checks four enforced `/gh/` entry/return cases. The root site exercises the actual readiness UI; the second site uses an explicit host-only fixture setting to isolate path-prefix behavior. These results must be read from the exact run, separately from the earlier counts above.
+
 ## Limits
 
 No live CETECH/FLAIROC host, client/IAM configuration, production storefront or main branch was changed. Licensed WoodMart/B2BKing/mobile/cache/security-plugin qualification and controlled real-host backup/recovery remain outstanding. Arbitrary external publisher activation remains closed; token-wide pairwise identity/consent/onboarding and independent external pilot are not implemented. Multisite is unsupported. This is a reviewable first-party candidate, not a completed estate rollout or universal WordPress release. [Fair comparison criteria](../../wordpress-candidate-comparison.md).
