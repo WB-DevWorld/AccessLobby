@@ -4,7 +4,7 @@ Tags: sso, openid-connect, accesslobby, authentication, woocommerce
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 8.3
-Stable tag: 0.1.0-alpha.2
+Stable tag: 0.1.0-alpha.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,5 +27,9 @@ The plugin does not change WooCommerce guest-checkout settings.
 Not yet. The current AccessLobby identity contract is first-party only; external publisher privacy/onboarding is a separate gate.
 
 == Changelog ==
+= 0.1.0-alpha.3 =
+* Restrict frontend submit interception to actual supported credential forms.
+* Expand real editor, modal and account disconnect/reconnect qualification.
+
 = 0.1.0-alpha.2 =
 Initial first-party pilot connector. See CHANGELOG.md and bundled compatibility/qualification records.

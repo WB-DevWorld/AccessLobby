@@ -4,6 +4,8 @@
   const config = window.accessLobbyWordPress;
   if (!config) return;
   const selector = 'form#loginform, form.woocommerce-form-login, form.login';
+  const isLoginForm = (form) => form instanceof HTMLFormElement && form.matches(selector) &&
+    Boolean(form.querySelector('input[type="password"]') && form.querySelector('[name="log"], [name="username"]'));
   const start = () => {
     const url = new URL(config.start);
     url.searchParams.set('redirect_to', window.location.href);
@@ -17,7 +19,7 @@
   const mount = () => {
     document.querySelectorAll(selector).forEach((form) => {
       // A generic class name alone cannot turn an unrelated form into a login surface.
-      if (!form.querySelector('input[type="password"]') || !form.querySelector('[name="log"], [name="username"]')) return;
+      if (!isLoginForm(form)) return;
       let link = form.querySelector('[data-accesslobby-start]');
       if (!link) {
         link = document.createElement('a');
@@ -30,7 +32,7 @@
     });
   };
   document.addEventListener('submit', (event) => {
-    if (config.mode === 'enforced' && event.target.matches(selector)) {
+    if (config.mode === 'enforced' && isLoginForm(event.target)) {
       event.preventDefault(); event.stopImmediatePropagation(); redirect();
     }
   }, true);

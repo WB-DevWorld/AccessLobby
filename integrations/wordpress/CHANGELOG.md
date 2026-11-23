@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-alpha.3 — 2026-11-23
+
+- Restrict enforced-mode frontend submit interception to supported forms with credential fields; an unrelated form class cannot initiate SSO.
+- Add actual mounted-modal/mobile, shortcode/block/editor and bounded account disconnect/reconnect browser qualification. Exact passing revisions remain separately recorded.
+
 ## 0.1.0-alpha.2 — 2026-11-23
 
 - Independent Codex comparison increment: real HTTPS IAM/API/two-WordPress fixtures, database/security tests, browser CI and HTTP protocol acceptance.

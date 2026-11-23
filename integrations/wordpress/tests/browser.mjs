@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { qualifyHybrid, qualifyEditor, qualifyEnforced } from './frontend-linking.mjs';
 
 const fixture = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const [a, b] = fixture.sites;
@@ -218,6 +219,8 @@ try {
     assert.match(response.headers()['cache-control'], /no-store/);
     assert.equal(await identity(a, tab), 0);
   });
+  await qualifyHybrid({ test, browser, browsers, fixture, a, b, page, context, bUser, wp, iamLogin, identity, localLogin,
+    stage: value => { phase = value; } });
   await test('unsigned backchannel cannot destroy another WP session', async () => {
     const response = await context.request.post(b.base + '/?rest_route=/accesslobby/v1/backchannel-logout', { form: { logout_token: 'unauthenticated.fake.logout' } });
     assert.equal(response.status(), 400);
@@ -298,6 +301,7 @@ try {
     assert.equal(await identity(a, admin), 1);
     assert.equal(wp(a, 'echo implode(",",get_userdata(1)->roles);'), 'administrator');
   });
+  await qualifyEditor({ test, browser, browsers, fixture, a, admin, wp, stage: value => { phase = value; } });
   await test('HTTPS emergency ticket creates only the intended short admin session', async () => {
     const ticket = wp(a, '$s=new AccessLobby\\WordPress\\Store($GLOBALS["wpdb"]);echo AccessLobby\\WordPress\\Emergency::issue($s,1,"127.0.0.1","fixture-browser-rehearsal");');
     const recoveryContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(recoveryContext);
@@ -325,6 +329,7 @@ try {
     await admin.getByRole('button', { name: 'Save Changes', exact: true }).click();
     assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
   });
+  await qualifyEnforced({ test, browser, browsers, fixture, a, page, context, wp, iamLogin, identity });
   await test('enforced cookie guard denies a valid local-password frontend that bypasses authenticate', async () => {
     const deniedContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(deniedContext);
     const denied = await deniedContext.newPage();

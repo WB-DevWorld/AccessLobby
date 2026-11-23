@@ -1,5 +1,9 @@
 # Execution ledger — MVP-0
 
+## Continued WordPress frontend/account qualification — 2026-11-23 UTC
+
+The owner asked whether the previous increment was all. Continue independently in PR61; do not treat fixture qualification as the completed mission. Alpha.3 fixes enforced submit interception of unrelated forms that happen to use class `login`, and adds actual browser coverage for generic/mobile mounted forms, shortcode/block/real editor persistence, fresh disconnect and reconnect, wrong identity/lost local proof/denied flow, and enforced unlink refusal. Local syntax/package checks pass; this increment's actual CI is pending. Alpha.2 evidence below remains revision-bounded. Main, staging and the estate are unchanged by this increment; external privacy/onboarding and controlled real-site qualification remain open.
+
 ## Independent Codex WordPress comparison — 2026-11-23 UTC
 
 The owner resumed implementation alongside Cursor. Independent branch `feat/wordpress-codex-comparison` / draft PR61 extends common handoff `92afbb261672401426aa4d8d3ad36f2e81ac13fd`. Cursor independently advances `feat/wordpress-connector` / PR60; its later code is not overwritten or assessed here. The existing 28 source passes are reused. Neither candidate is selected, merged or promoted by this comparison.

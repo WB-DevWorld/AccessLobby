@@ -2,6 +2,26 @@
 /** Test-only hooks, never packaged. The bypass probe still requires valid local password proof. */
 if ( ! defined( 'ACCESSLOBBY_FIXTURE' ) || ! ACCESSLOBBY_FIXTURE ) { return; }
 add_shortcode( 'fixture_local_login', static fn() => wp_login_form( array( 'echo' => false ) ) );
+add_shortcode( 'fixture_login_modal', static function () {
+	ob_start();
+	?>
+	<form class="login" id="fixture-unrelated-form" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
+		<input type="hidden" name="page_id" value="<?php echo esc_attr( (string) get_queried_object_id() ); ?>">
+		<label>Search fixture<input name="fixture_query" required></label><button>Search fixture</button>
+	</form>
+	<button id="fixture-open-modal" type="button">Open sign in</button><div id="fixture-modal-mount"></div>
+	<template id="fixture-modal-template"><section role="dialog" aria-label="Fixture sign in">
+		<form class="login" method="post" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>">
+			<label>Username<input name="log" autocomplete="username"></label>
+			<label>Password<input name="pwd" type="password" autocomplete="current-password"></label><button>Local sign in</button>
+		</form>
+	</section></template>
+	<script>document.getElementById('fixture-open-modal').addEventListener('click', () => {
+		if (!document.querySelector('#fixture-modal-mount form')) document.getElementById('fixture-modal-mount').append(document.getElementById('fixture-modal-template').content.cloneNode(true));
+	});</script>
+	<?php
+	return ob_get_clean();
+} );
 add_action( 'wp_login_failed', static function ( $username, $error ) {
 	update_option( 'alwp_fixture_local_failed', $error instanceof WP_Error ? $error->get_error_codes() : array( 'unknown' ) );
 }, 10, 2 );
@@ -43,6 +63,7 @@ add_filter( 'rest_pre_dispatch', static function ( $result, $server, $request ) 
 add_action( 'wp_footer', static function () {
 	echo '<output id="fixture-identity" data-user="' . esc_attr( (string) get_current_user_id() ) . '" data-admin="' . esc_attr( current_user_can( 'manage_options' ) ? 'yes' : 'no' ) . '" data-order-received="' . esc_attr( function_exists( 'is_order_received_page' ) && is_order_received_page() ? 'yes' : 'no' ) . '"></output>';
 	echo '<input id="fixture-direct-nonce" type="hidden" value="' . esc_attr( wp_create_nonce( 'fixture_direct_local_login' ) ) . '">';
+	echo '<input id="fixture-unlink-nonce" type="hidden" value="' . esc_attr( wp_create_nonce( 'alwp_unlink' ) ) . '">';
 } );
 // Prevent real mail from disposable fixtures; never relax authentication/authorization.
 add_filter( 'pre_wp_mail', '__return_false' );

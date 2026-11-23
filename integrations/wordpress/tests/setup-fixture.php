@@ -15,6 +15,9 @@ $account = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publi
 $protected = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Fixture protected', 'post_content' => 'Fixture protected content' ) );
 $restricted = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Fixture local authorization', 'post_content' => 'Staff-only local resource' ) );
 $frontend = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Fixture frontend login', 'post_content' => '[fixture_local_login]' ) );
+$shortcodes = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Fixture login shortcode', 'post_content' => '[accesslobby_login] [accesslobby_login intent="join"]' ) );
+$login_block = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Fixture login block', 'post_content' => '<!-- wp:accesslobby/login /-->' ) );
+$modal = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Fixture mounted login', 'post_content' => '[fixture_login_modal]' ) );
 $woo_account = 0;
 $checkout = 0;
 $product_id = 0;
@@ -46,6 +49,7 @@ update_option( 'alwp_fixture_protected', $protected );
 update_option( 'alwp_fixture_restricted', $restricted );
 $data = array( 'legacyUser' => $local, 'orderId' => $order_id, 'account' => get_permalink( $account ),
 	'protected' => get_permalink( $protected ), 'restricted' => get_permalink( $restricted ), 'frontend' => get_permalink( $frontend ),
+	'shortcodes' => get_permalink( $shortcodes ), 'loginBlock' => get_permalink( $login_block ), 'modal' => get_permalink( $modal ),
 	'checkout' => $checkout ? get_permalink( $checkout ) : null, 'productId' => $product_id,
 	'wooAccount' => $woo_account ? get_permalink( $woo_account ) : null );
 update_option( 'alwp_fixture_data', $data );
