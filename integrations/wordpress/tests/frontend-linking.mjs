@@ -220,15 +220,30 @@ export async function qualifyEnforced(s) {
 }
 
 export async function qualifyUpgrade(s) {
-  const { test, a, fixture, wp, wpCommand, iamLogin, identity, stage } = s;
+  const { test, a, fixture, wp, wpCommand, iamLogin, identity, stage, diagnose } = s;
   const version = () => wp(a, 'echo get_file_data(WP_PLUGIN_DIR . "/accesslobby-sso/accesslobby-sso.php",["Version"=>"Version"])["Version"];');
+  const observed = {};
+  const runningVersion = async (tab, expected, target) => {
+    // A host's CLI updater and web PHP process may have separate opcode caches.
+    for (let attempt = 0; attempt < 20; attempt++) {
+      await tab.goto(target);
+      observed.runningVersion = await tab.locator('#fixture-runtime').getAttribute('data-plugin-version');
+      diagnose({ ...observed });
+      if (observed.runningVersion === expected) return;
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+    assert.equal(observed.runningVersion, expected);
+  };
   await test('real alpha.2 to alpha.3 ZIP upgrade preserves an established SSO session and local data', async () => {
     try {
       stage('install_previous_qualified_zip');
       wpCommand(a, ['plugin', 'install', fixture.upgradePackage, '--force']);
       wpCommand(a, ['plugin', 'is-active', 'accesslobby-sso']);
-      assert.equal(version(), '0.1.0-alpha.2');
+      observed.headerVersion = version(); diagnose({ ...observed });
+      assert.equal(observed.headerVersion, '0.1.0-alpha.2');
       const { tab } = await isolated(s);
+      stage('previous_web_runtime'); await runningVersion(tab, '0.1.0-alpha.2', a.modal);
+      stage('previous_session_login');
       await tab.goto(a.protected); await iamLogin(tab, 'shopper');
       assert.equal(await identity(a, tab), a.legacyUser);
       assert.equal(await tab.locator('#fixture-runtime').getAttribute('data-plugin-version'), '0.1.0-alpha.2');
@@ -236,7 +251,9 @@ export async function qualifyUpgrade(s) {
       stage('upgrade_current_zip');
       wpCommand(a, ['plugin', 'install', fixture.package, '--force']);
       wpCommand(a, ['plugin', 'is-active', 'accesslobby-sso']);
-      assert.equal(version(), '0.1.0-alpha.3');
+      observed.headerVersion = version(); diagnose({ ...observed });
+      assert.equal(observed.headerVersion, '0.1.0-alpha.3');
+      stage('upgraded_web_runtime'); await runningVersion(tab, '0.1.0-alpha.3', a.account);
       assert.equal(await identity(a, tab), a.legacyUser);
       assert.equal(await tab.locator('#fixture-runtime').getAttribute('data-plugin-version'), '0.1.0-alpha.3');
       const after = linkState(s);
