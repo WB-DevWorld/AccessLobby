@@ -176,6 +176,7 @@ try {
     const logout = 'https://wordpress.example.test/gh/wp-login.php?action=al_signed_out';
     const backchannel = 'https://wordpress.example.test/gh/?rest_route=/accesslobby/v1/backchannel-logout';
     await page.locator('#app-callback').fill(callback); await page.locator('#app-logout').fill(logout);
+    await page.getByText('Advanced: shared sign-out endpoint', { exact: true }).click();
     await page.locator('#app-backchannel').fill(backchannel);
     const count = mutations.length;
     await page.getByRole('button', { name: 'Save app request', exact: true }).click();

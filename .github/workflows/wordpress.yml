@@ -47,7 +47,7 @@ jobs:
           path: integrations/wordpress/dist/
           retention-days: 14
   runtime:
-    name: WordPress ${{ matrix.wordpress }} PHP ${{ matrix.php }} real SSO
+    name: WP ${{ matrix.wordpress }} PHP ${{ matrix.php }} Woo ${{ matrix.woo }} ${{ matrix.theme }} SSO
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -58,14 +58,33 @@ jobs:
             php: '8.4'
             with_woo: 'true'
             hpos: 'false'
+            woo: '11.3.1'
+            theme: 'default'
           - wordpress: '7.1.5'
             php: '8.3'
             with_woo: 'true'
             hpos: 'true'
+            woo: '11.3.1'
+            theme: 'default'
           - wordpress: '6.9.12'
             php: '8.3'
             with_woo: 'false'
             hpos: 'false'
+            woo: 'none'
+            theme: 'default'
+          # Reproduce reported estate versions on disposable data; these are not estate pilots.
+          - wordpress: '7.1.4'
+            php: '8.4'
+            with_woo: 'true'
+            hpos: 'false'
+            woo: '11.2.1'
+            theme: 'default'
+          - wordpress: '7.1.1'
+            php: '8.4'
+            with_woo: 'true'
+            hpos: 'false'
+            woo: '11.1.1'
+            theme: 'kadence'
     services:
       mariadb:
         image: mariadb:11.8
@@ -96,6 +115,7 @@ jobs:
       NEXT_TELEMETRY_DISABLED: '1'
       ALWP_WITH_WOO: ${{ matrix.with_woo }}
       ALWP_HPOS: ${{ matrix.hpos }}
+      ALWP_THEME: ${{ matrix.theme }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -127,7 +147,12 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/alwp"
           curl --fail --silent --show-error --location --retry 2 "https://wordpress.org/wordpress-${{ matrix.wordpress }}.zip" -o "$RUNNER_TEMP/alwp/wordpress.zip"
-          curl --fail --silent --show-error --location --retry 2 https://downloads.wordpress.org/plugin/woocommerce.11.3.1.zip -o "$RUNNER_TEMP/alwp/woocommerce.zip"
+          if [ '${{ matrix.with_woo }}' = 'true' ]; then
+            curl --fail --silent --show-error --location --retry 2 "https://downloads.wordpress.org/plugin/woocommerce.${{ matrix.woo }}.zip" -o "$RUNNER_TEMP/alwp/woocommerce.zip"
+          fi
+          if [ '${{ matrix.theme }}' = 'kadence' ]; then
+            curl --fail --silent --show-error --location --retry 2 https://downloads.wordpress.org/theme/kadence.1.5.2.zip -o "$RUNNER_TEMP/alwp/kadence.zip"
+          fi
           curl --fail --silent --show-error --location --retry 2 https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o "$RUNNER_TEMP/alwp/wp-cli.phar"
           curl --fail --silent --show-error --location --retry 2 https://github.com/keycloak/keycloak/releases/download/26.7.0/keycloak-26.7.0.tar.gz -o "$RUNNER_TEMP/alwp/keycloak.tar.gz"
           tar -xzf "$RUNNER_TEMP/alwp/keycloak.tar.gz" -C "$RUNNER_TEMP/alwp"

@@ -57,6 +57,9 @@ metadata = {
     'wooEnabled': env.get('ALWP_WITH_WOO', 'true') == 'true',
     'hposRequested': env.get('ALWP_HPOS', 'false') == 'true',
     'keycloakDistribution': args.keycloak_home.name,
+    'themeRequested': env.get('ALWP_THEME', 'default'),
+    'woocommerceArchiveSha256': hashlib.sha256((runtime / 'woocommerce.zip').read_bytes()).hexdigest() if (runtime / 'woocommerce.zip').is_file() else None,
+    'themeArchiveSha256': hashlib.sha256((runtime / 'kadence.zip').read_bytes()).hexdigest() if env.get('ALWP_THEME') == 'kadence' else None,
 }
 (work / 'build.json').write_text(json.dumps(metadata, indent=2) + '\n')
 
@@ -255,6 +258,9 @@ for site in sites:
     wp('option', 'update', 'home', site['base'], quiet=True)
     wp('option', 'update', 'siteurl', site['base'], quiet=True)
     assert wp('option', 'get', 'siteurl', quiet=True).strip() == site['base']
+    if env.get('ALWP_THEME') == 'kadence' and site['label'] == 'a':
+        wp('theme', 'install', str(runtime / 'kadence.zip'), '--activate', quiet=True)
+        assert wp('option', 'get', 'template', quiet=True).strip() == 'kadence', 'Requested theme did not activate'
     wp('plugin', 'install', str(args.package.resolve()), '--activate', quiet=True)
     wp('plugin', 'deactivate', 'accesslobby-sso', quiet=True)
     wp('plugin', 'activate', 'accesslobby-sso', quiet=True)
