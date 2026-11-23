@@ -5,8 +5,9 @@ This alpha supports reviewed first-party pilots. QUALIFIED below means the liste
 | Surface/environment | Status | Evidence / remaining gate |
 |---|---|---|
 | PHP 8.3 / 8.4 / 8.5 protocol, static, coding and packaging | QUALIFIED (bounded) | 39 unit tests / 44 assertions per job, locked dependency audit, PHPStan5 and WordPress coding/security rules in CI |
-| WP7.1.5 / PHP8.4 / Woo11.3.1 root + independent plain `/gh/` installation | QUALIFIED (fixture) | Actual HTTPS IAM/API/Chromium; 27 browser cases at `1802e18bb1f86992428b61c8db6ba44412944a76` |
-| WP6.9.12 / PHP8.3 plain root + independent `/gh/` | QUALIFIED (fixture) | Real IAM/API/browser matrix; enforced/Join/link/SSO/logout/recovery/fault checks pass at `93eae64e0e73c895058e832b4de74420ba4cd175`; latest job includes rollback |
+| WP7.1.5 / PHP8.4 / Woo11.3.1 classic CPT root + independent plain `/gh/` installation | QUALIFIED (fixture) | Actual HTTPS IAM/API/Chromium; 39 browser cases at `59f559aebfe651cbaeb5391e498f08798e29ae72` |
+| WP6.9.12 / PHP8.3 plain root + independent `/gh/` | QUALIFIED (fixture) | 35 real IAM/API/browser cases at `59f559aebfe651cbaeb5391e498f08798e29ae72`; includes enforced/Join/link/SSO/logout/recovery/fault/rollback |
+| WP7.1.5 / PHP8.3 / Woo11.3.1 HPOS root + independent plain `/gh/` | PARTIALLY QUALIFIED | Public compatibility declaration and explicit CI storage lane added; consult the latest retained CI report before treating HPOS as qualified |
 | Current Woo11.3.1 on WP6.9 | UNSUPPORTED | Woo's own package requires WP7.0+; plain WP6.9 is tested separately |
 | Hybrid and enforced core/admin/protected/frontend login | QUALIFIED (fixture) | Real local login, fresh linking, automatic SSO, safe original destination and local 403 authorization |
 | Existing customer/order/address ownership, safe JIT, explicit linking | QUALIFIED (fixture) | Real WP/Woo APIs; no email merge, unchanged local IDs/roles/metadata and orders |
@@ -27,3 +28,5 @@ This alpha supports reviewed first-party pilots. QUALIFIED below means the liste
 | Arbitrary external WordPress activation | UNSUPPORTED | Token-wide pairwise privacy, internal-person continuity, consent and publisher lifecycle/onboarding remain closed |
 
 Exact current source/package hashes are in each CI runtime artifact's `build.json`; detailed reports are under repository `docs/qa/wordpress-codex-2026-11-23`. Later source changes need their own passing run. The latest green candidate still requires controlled estate adoption, independent security review and promotion approval before production. First-party MVP and universal external support are not declared complete.
+
+The HPOS declaration uses WooCommerce's [official compatibility API](https://developer.woocommerce.com/docs/features/orders/high-performance-order-storage/recipe-book/). Fixture order creation, guest checkout and uninstall retention use WooCommerce CRUD in both storage modes; no order-table SQL is part of the connector.

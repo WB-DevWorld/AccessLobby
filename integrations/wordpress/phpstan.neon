@@ -8,4 +8,5 @@ parameters:
     scanFiles:
         - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
         - tests/analysis-stubs.php
+        - tests/woocommerce-stubs.php
     tmpDir: .phpstan-cache

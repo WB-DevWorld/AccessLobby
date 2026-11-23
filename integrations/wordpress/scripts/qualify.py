@@ -51,6 +51,7 @@ metadata = {
     'packageSha256': hashlib.sha256(args.package.read_bytes()).hexdigest(),
     'wordpressArchiveSha256': hashlib.sha256((runtime / 'wordpress.zip').read_bytes()).hexdigest(),
     'wooEnabled': env.get('ALWP_WITH_WOO', 'true') == 'true',
+    'hposRequested': env.get('ALWP_HPOS', 'false') == 'true',
     'keycloakDistribution': args.keycloak_home.name,
 }
 (work / 'build.json').write_text(json.dumps(metadata, indent=2) + '\n')
@@ -242,6 +243,12 @@ for site in sites:
     if site['woo']:
         wp('plugin', 'install', str(runtime / 'woocommerce.zip'), '--activate', quiet=True)
         wp('eval', 'WC_Install::install();', quiet=True)
+        # Fresh disposable stores only: make each storage lane explicit before any order exists.
+        hpos = env.get('ALWP_HPOS', 'false') == 'true'
+        wp('option', 'update', 'woocommerce_custom_orders_table_data_sync_enabled', 'no', quiet=True)
+        wp('option', 'update', 'woocommerce_custom_orders_table_enabled', 'yes' if hpos else 'no', quiet=True)
+        actual_hpos = wp('eval', 'echo Automattic\\WooCommerce\\Utilities\\OrderUtil::custom_orders_table_usage_is_enabled() ? "yes" : "no";', quiet=True).strip()
+        assert actual_hpos == ('yes' if hpos else 'no'), 'Requested Woo order storage is not active'
     config = {'issuer': issuer, 'api': api, 'client_id': site['client'], 'mode': 'hybrid', 'jit': True,
               'default_role': 'customer' if site['woo'] else 'subscriber', 'machine_auth': True}
     wp('option', 'update', 'accesslobby_sso', json.dumps(config), '--format=json', quiet=True)

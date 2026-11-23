@@ -54,6 +54,14 @@ final class Plugin {
 			}
 			return;
 		}
+		add_action(
+			'before_woocommerce_init',
+			static function () {
+				if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+					\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', ACCESSLOBBY_WP_FILE, true );
+				}
+			}
+		);
 		global $wpdb;
 		$store = new Store( $wpdb );
 		$store->migrate();

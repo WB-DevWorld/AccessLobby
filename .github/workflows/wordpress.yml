@@ -57,9 +57,15 @@ jobs:
           - wordpress: '7.1.5'
             php: '8.4'
             with_woo: 'true'
+            hpos: 'false'
+          - wordpress: '7.1.5'
+            php: '8.3'
+            with_woo: 'true'
+            hpos: 'true'
           - wordpress: '6.9.12'
             php: '8.3'
             with_woo: 'false'
+            hpos: 'false'
     services:
       mariadb:
         image: mariadb:11.8
@@ -89,6 +95,7 @@ jobs:
       ALWP_MYSQL_PASSWORD: fixture-only-password
       NEXT_TELEMETRY_DISABLED: '1'
       ALWP_WITH_WOO: ${{ matrix.with_woo }}
+      ALWP_HPOS: ${{ matrix.hpos }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

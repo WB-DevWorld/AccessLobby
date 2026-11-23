@@ -6,6 +6,7 @@
 - Fail-closed durable audit, atomic unlink, post-hook safe JIT checks and rollback cache cleanup; custom-capability readiness and schema2 incident reference hashes.
 - Successful dual-proof linking rotates the current local session and binds it to the issuer session immediately. Native profile form association avoids nested forms; dynamic account/connector surfaces send private no-store headers.
 - Enforced cookie issuance is limited to validated SSO/host recovery; core/Woo local registration and forged checkout signup fail closed while guest purchasing and explicit Application Password API policy remain available.
+- Use WooCommerce's public HPOS compatibility API; CI explicitly separates classic CPT and HPOS order storage before creating orders. Order access remains through WooCommerce CRUD.
 - Real fixture coverage includes enforced mode/readiness, privileged linking, host recovery/replay, concurrent JIT/link/state operations, synthetic email verification, guest purchasing and data-preserving lifecycle. Exact passing revisions are reported separately.
 - Exact qualification remains in the comparison evidence; no production/external activation.
 
