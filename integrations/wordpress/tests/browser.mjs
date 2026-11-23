@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { qualifyHybrid, qualifyEditor, qualifyEnforced } from './frontend-linking.mjs';
+import { qualifyHybrid, qualifyEditor, qualifyEnforced, qualifyUpgrade } from './frontend-linking.mjs';
 
 const fixture = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const [a, b] = fixture.sites;
@@ -544,6 +544,7 @@ try {
     await outage.goto(b.base + '/wp-login.php?action=al_start');
     await outage.locator('#username').waitFor();
   });
+  await qualifyUpgrade({ test, browser, browsers, fixture, a, wp, wpCommand, iamLogin, identity, stage: value => { phase = value; } });
 } finally {
   writeFileSync(fixture.artifactDir + '/browser-report.json', JSON.stringify({
     engine: 'actual Keycloak + unchanged AccessLobby API + real WordPress/WooCommerce',

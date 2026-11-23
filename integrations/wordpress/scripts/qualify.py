@@ -25,10 +25,13 @@ from urllib.parse import urlparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--runtime', type=Path, required=True)
 parser.add_argument('--package', type=Path, required=True)
+parser.add_argument('--upgrade-from', type=Path, required=True)
 parser.add_argument('--keycloak-home', type=Path, required=True)
 args = parser.parse_args()
 if os.environ.get('ALWP_DISPOSABLE_FIXTURE') != '1':
     raise SystemExit('Set ALWP_DISPOSABLE_FIXTURE=1 only for isolated throwaway databases; no service started.')
+if hashlib.sha256(args.upgrade_from.read_bytes()).hexdigest() != '3fd9652455522eb23d50f04b161f529b0a656805bebddf5b0c69a3f489fba81c':
+    raise SystemExit('Upgrade requires the exact previously qualified alpha.2 ZIP; no service started.')
 runtime = args.runtime.resolve()
 plugin = Path(__file__).resolve().parents[1]
 repo = plugin.parents[1]
@@ -49,6 +52,7 @@ metadata = {
     'candidateRevision': env.get('ALWP_CANDIDATE_SHA'),
     'sourceDirty': bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=repo, text=True).strip()),
     'packageSha256': hashlib.sha256(args.package.read_bytes()).hexdigest(),
+    'upgradeFromPackageSha256': hashlib.sha256(args.upgrade_from.read_bytes()).hexdigest(),
     'wordpressArchiveSha256': hashlib.sha256((runtime / 'wordpress.zip').read_bytes()).hexdigest(),
     'wooEnabled': env.get('ALWP_WITH_WOO', 'true') == 'true',
     'hposRequested': env.get('ALWP_HPOS', 'false') == 'true',
@@ -284,7 +288,8 @@ for site in sites:
     print('FIXTURE WordPress ' + site['label'] + ' ready', flush=True)
 
 fixture = {'sites': sites, 'issuer': issuer, 'api': api, 'password': password, 'php': php, 'wpCli': wp_cli,
-           'artifactDir': str(work), 'certificate': str(cert), 'package': str(args.package.resolve()), 'mailbox': str(mailbox)}
+           'artifactDir': str(work), 'certificate': str(cert), 'package': str(args.package.resolve()),
+           'upgradePackage': str(args.upgrade_from.resolve()), 'mailbox': str(mailbox)}
 config_file = work / 'private-fixture-config.json'
 config_file.write_text(json.dumps(fixture)); config_file.chmod(0o600)
 run(['python3', str(plugin / 'tests/concurrency.py'), str(config_file)], cwd=repo, stream=True)

@@ -186,7 +186,7 @@ export async function qualifyEditor(s) {
 }
 
 export async function qualifyEnforced(s) {
-  const { test, a, page, context, identity, iamLogin } = s;
+  const { test, a, identity, iamLogin } = s;
   await test('an unrelated form named login remains usable in enforced mode', async () => {
     const { tab } = await isolated(s);
     await tab.goto(a.modal);
@@ -206,13 +206,43 @@ export async function qualifyEnforced(s) {
     assert.equal(await identity(a, tab), a.legacyUser);
   });
   await test('enforced unlink is hidden and rejected even with a valid current WordPress nonce', async () => {
-    await page.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.account));
-    await page.waitForURL(a.account);
-    assert.equal(await page.getByRole('button', { name: 'Disconnect AccessLobby', exact: true }).count(), 0);
-    const nonce = await page.locator('#fixture-unlink-nonce').inputValue();
+    const { tab, context } = await isolated(s);
+    await tab.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.account));
+    await iamLogin(tab, 'shopper');
+    assert.equal(await identity(a, tab), a.legacyUser);
+    assert.equal(await tab.getByRole('button', { name: 'Disconnect AccessLobby', exact: true }).count(), 0);
+    const nonce = await tab.locator('#fixture-unlink-nonce').inputValue();
     const response = await context.request.post(a.base + '/wp-login.php?action=al_start', { form: { intent: 'unlink', _wpnonce: nonce } });
     assert.equal(response.status(), 400);
     assert.match(await response.text(), /host_recovery_required/);
-    assert.equal(linkState(s).link.link_state, 'active'); assert.equal(await identity(a), a.legacyUser);
+    assert.equal(linkState(s).link.link_state, 'active'); assert.equal(await identity(a, tab), a.legacyUser);
+  });
+}
+
+export async function qualifyUpgrade(s) {
+  const { test, a, fixture, wp, wpCommand, iamLogin, identity, stage } = s;
+  const version = () => wp(a, 'echo get_file_data(WP_PLUGIN_DIR . "/accesslobby-sso/accesslobby-sso.php",["Version"=>"Version"])["Version"];');
+  await test('real alpha.2 to alpha.3 ZIP upgrade preserves an established SSO session and local data', async () => {
+    try {
+      stage('install_previous_qualified_zip');
+      wpCommand(a, ['plugin', 'install', fixture.upgradePackage, '--force']);
+      wpCommand(a, ['plugin', 'is-active', 'accesslobby-sso']);
+      assert.equal(version(), '0.1.0-alpha.2');
+      const { tab } = await isolated(s);
+      await tab.goto(a.protected); await iamLogin(tab, 'shopper');
+      assert.equal(await identity(a, tab), a.legacyUser);
+      const before = linkState(s);
+      stage('upgrade_current_zip');
+      wpCommand(a, ['plugin', 'install', fixture.package, '--force']);
+      wpCommand(a, ['plugin', 'is-active', 'accesslobby-sso']);
+      assert.equal(version(), '0.1.0-alpha.3');
+      assert.equal(await identity(a, tab), a.legacyUser);
+      const after = linkState(s);
+      assert.equal(after.link.id, before.link.id); assert.equal(after.link.link_state, 'active');
+      for (const key of ['roles', 'count', 'address', 'business', ...(a.woo ? ['orderCustomer', 'orderTotal'] : [])]) assert.deepEqual(after[key], before[key]);
+    } finally {
+      // Restore the disposable site's candidate even if an upgrade assertion fails.
+      if (version() !== '0.1.0-alpha.3') wpCommand(a, ['plugin', 'install', fixture.package, '--force', '--activate']);
+    }
   });
 }
