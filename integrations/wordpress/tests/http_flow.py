@@ -151,10 +151,14 @@ try:
     try:
         receipt_age(a, a['legacyUser'], 45)
         assert account(a) == a['legacyUser'], 'Bounded receipt grace unavailable'
+        wp(a, 'update_option("alwp_fixture_receipt_delay",1);')
+        receipt_age(a, a['legacyUser'], 88)
+        assert account(a) == 0, 'Slow failed status check extended the grace deadline'
+        wp(a, 'delete_option("alwp_fixture_receipt_delay");')
         receipt_age(a, a['legacyUser'], 95)
         assert account(a) == 0, 'Receipt outage did not fail closed after grace'
     finally:
-        wp(a, 'delete_option("alwp_fixture_receipt_outage");')
+        wp(a, 'delete_option("alwp_fixture_receipt_outage");delete_option("alwp_fixture_receipt_delay");')
     receipt_age(a, a['legacyUser'], 95)
     assert account(a) == a['legacyUser'], 'Same cookie did not recover'
     check('receipt outage grace expires and the same session recovers without a new sign-in', lambda: None)

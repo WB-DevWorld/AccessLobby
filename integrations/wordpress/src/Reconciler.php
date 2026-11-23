@@ -62,7 +62,7 @@ final class Reconciler {
 			$now = time();
 			$age = $now - (int) ( $data['last_checked'] ?? 0 );
 			if ( $age < 30 || $now - (int) ( $data['last_attempt'] ?? 0 ) < 15 ) {
-				return $age <= 90 ? $user : 0;
+				return time() - (int) ( $data['last_checked'] ?? 0 ) <= 90 ? $user : 0;
 			}
 			$data['last_attempt'] = $now;
 			if ( ! $this->store->update_session_private( $key, $data ) ) {
@@ -72,7 +72,7 @@ final class Reconciler {
 				$result = $this->request( $c, $peer['receipt'], 'status' );
 			} catch ( \Throwable $error ) {
 				// A short explicit grace never extends the cookie/token expiry; then protected access fails closed.
-				return $age <= 90 ? $user : 0;
+				return time() - (int) ( $data['last_checked'] ?? 0 ) <= 90 ? $user : 0;
 			}
 			if ( 401 === $result['status'] && 'invalid_peer_session' === ( $result['data']['error'] ?? '' ) ) {
 				return $this->retire( $user, $token );
@@ -80,7 +80,7 @@ final class Reconciler {
 			$body = $result['data'];
 			if ( 200 !== $result['status'] || 'accesslobby.peer-session.v0.1' !== ( $body['contract'] ?? null ) ||
 				! is_bool( $body['active'] ?? null ) ) {
-				return $age <= 90 ? $user : 0;
+				return time() - (int) ( $data['last_checked'] ?? 0 ) <= 90 ? $user : 0;
 			}
 			if ( ! $body['active'] ) {
 				return $this->retire( $user, $token );

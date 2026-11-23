@@ -569,7 +569,7 @@ try {
       assert.equal(await identity(b, outage), 0);
       assert(Number(wp(b, 'global $wpdb;echo $wpdb->get_var("SELECT count(*) FROM {$wpdb->prefix}accesslobby_audit WHERE event=\'session_reconciled_ended\'");')) >= 1);
     } finally { wp(b, 'delete_option("alwp_fixture_backchannel_outage");'); }
-    await siteLogout(b, outage);
+    phase = 'issuer_session_ended';
     await outage.goto(b.base + '/wp-login.php?action=al_start');
     await outage.locator('#username').waitFor();
   });
@@ -586,12 +586,15 @@ try {
     try {
       phase = 'within_grace'; receiptAge(a, a.legacyUser, 45);
       assert.equal(await identity(a, tab), a.legacyUser);
+      phase = 'timeout_crosses_grace'; wp(a, 'update_option("alwp_fixture_receipt_delay",1);');
+      receiptAge(a, a.legacyUser, 88); assert.equal(await identity(a, tab), 0);
+      wp(a, 'delete_option("alwp_fixture_receipt_delay");');
       phase = 'grace_expired'; receiptAge(a, a.legacyUser, 95);
       assert.equal(await identity(a, tab), 0);
       const still = (await isolated.cookies(a.base)).find(c => c.name === cookie.name);
       assert(still && still.value === cookie.value);
       assert.equal(wp(a, 'echo hash("sha256",wp_json_encode(WP_Session_Tokens::get_instance(' + a.legacyUser + ')->get_all()));'), sessionsBefore);
-    } finally { wp(a, 'delete_option("alwp_fixture_receipt_outage");'); }
+    } finally { wp(a, 'delete_option("alwp_fixture_receipt_outage");delete_option("alwp_fixture_receipt_delay");'); }
     phase = 'service_recovered'; receiptAge(a, a.legacyUser, 95);
     assert.equal(await identity(a, tab), a.legacyUser);
     assert.equal(wp(a, 'echo hash("sha256",wp_json_encode(WP_Session_Tokens::get_instance(' + a.legacyUser + ')->get_all()));'), sessionsBefore);

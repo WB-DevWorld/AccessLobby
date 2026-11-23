@@ -52,6 +52,7 @@ add_filter( 'pre_http_request', static function ( $result, $args, $url ) {
 		return new WP_Error( 'fixture_outage', 'Disposable identity API outage' );
 	}
 	if ( get_option( 'alwp_fixture_receipt_outage' ) && str_contains( $url, '/v1/peer-sessions/status' ) ) {
+		if ( get_option( 'alwp_fixture_receipt_delay' ) ) { usleep( 3200000 ); }
 		return new WP_Error( 'fixture_receipt_outage', 'Disposable session check outage' );
 	}
 	return $result;
