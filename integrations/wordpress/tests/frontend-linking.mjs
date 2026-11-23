@@ -226,8 +226,12 @@ export async function qualifyUpgrade(s) {
   const runningVersion = async (tab, expected, target) => {
     // A host's CLI updater and web PHP process may have separate opcode caches.
     for (let attempt = 0; attempt < 20; attempt++) {
-      await tab.goto(target);
-      observed.runningVersion = await tab.locator('#fixture-runtime').getAttribute('data-plugin-version');
+      const response = await tab.goto(target);
+      observed.runtimeStatus = response?.status();
+      // A cached newer bootstrap can briefly refer to a removed class during a
+      // CLI-driven downgrade. Retry the complete request, never wait on a 500 page.
+      observed.runningVersion = await tab.locator('#fixture-runtime').count() ?
+        await tab.locator('#fixture-runtime').getAttribute('data-plugin-version') : null;
       diagnose({ ...observed });
       if (observed.runningVersion === expected) return;
       await new Promise(resolve => setTimeout(resolve, 250));
