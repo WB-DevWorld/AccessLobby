@@ -2,6 +2,12 @@
 /** Test-only hooks, never packaged. The bypass probe still requires valid local password proof. */
 if ( ! defined( 'ACCESSLOBBY_FIXTURE' ) || ! ACCESSLOBBY_FIXTURE ) { return; }
 add_shortcode( 'fixture_local_login', static fn() => wp_login_form( array( 'echo' => false ) ) );
+add_action( 'wp_login_failed', static function ( $username, $error ) {
+	update_option( 'alwp_fixture_local_failed', $error instanceof WP_Error ? $error->get_error_codes() : array( 'unknown' ) );
+}, 10, 2 );
+add_action( 'wp_login', static function ( $username, $user ) {
+	update_option( 'alwp_fixture_local_success', $user->ID );
+}, 10, 2 );
 add_action( 'init', static function () {
 	if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? '' ) || empty( $_POST['fixture_direct_local_login'] ) ) { return; }
 	if ( ! wp_verify_nonce( (string) ( $_POST['_wpnonce'] ?? '' ), 'fixture_direct_local_login' ) ) { wp_die( 'Invalid fixture nonce' ); }

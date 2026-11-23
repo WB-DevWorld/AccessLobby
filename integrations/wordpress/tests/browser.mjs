@@ -49,7 +49,15 @@ async function identity(site, tab = page) {
   return Number(await tab.locator('#fixture-identity').getAttribute('data-user'));
 }
 async function localLogin(site, username, tab = page) {
+  const network = [];
+  const trace = response => {
+    const url = new URL(response.url());
+    if (url.pathname.endsWith('/wp-login.php')) network.push({ method: response.request().method(), status: response.status(),
+      action: /^[a-z_]{1,40}$/.test(url.searchParams.get('action') || '') ? url.searchParams.get('action') : '' });
+  };
+  tab.on('response', trace);
   try {
+    wp(site, 'delete_option("alwp_fixture_local_failed");delete_option("alwp_fixture_local_success");');
     await tab.goto(site.base + '/wp-login.php?redirect_to=' + encodeURIComponent(site.account));
     // Core schedules autofocus after 200ms and can clear the password of a prefilled username.
     // Wait for that actual UI event before automation fills the form.
@@ -76,11 +84,16 @@ async function localLogin(site, username, tab = page) {
           invalidFields: [...form.querySelectorAll(':invalid')].map(element => element.id),
           actionHttps: new URL(form.action).protocol === 'https:',
           actionSameOrigin: new URL(form.action).origin === location.origin,
+          method: form.method, target: form.target,
+          connectorScript: Boolean(document.querySelector('script[src*="/accesslobby-sso/"]')),
+          connectorMode: window.accessLobbyWordPress?.mode || '',
         })).catch(() => ({})),
+        network,
+        backend: JSON.parse(wp(site, 'echo wp_json_encode(["success"=>get_option("alwp_fixture_local_success"),"failure"=>get_option("alwp_fixture_local_failed")]);')),
         activePlugins: JSON.parse(wp(site, 'echo wp_json_encode(get_option("active_plugins"));')) };
     } catch {}
     throw error;
-  }
+  } finally { tab.off('response', trace); }
 }
 async function directLocalCookie(site, tab, context) {
   await tab.goto(site.account);
