@@ -1,0 +1,49 @@
+{
+  "recordedAt": "2026-11-23T18:36:23.128002+00:00",
+  "status": "WIP_CURSOR_HANDOFF_NOT_DEPLOYMENT_APPROVED",
+  "baselineMainAndStagingApi": "3d9220a140d61df5effe633bc72cf5142c4a8371",
+  "branch": "feat/wordpress-connector",
+  "issue": 59,
+  "pluginVersion": "0.1.0-alpha.1",
+  "sourceAcceptanceTopics": 28,
+  "local": {
+    "php": "8.4.27",
+    "phpunit": {
+      "status": "PASS",
+      "tests": 39,
+      "assertions": 44
+    },
+    "phpSyntax": "PASS",
+    "wordpressCodingAndSecurityRules": "PASS",
+    "phpstanLevel5": "PASS",
+    "composerAudit": "PASS_NO_KNOWN_ADVISORIES",
+    "pythonCompile": "PASS",
+    "zipArchiveBuild": "PASS"
+  },
+  "notRun": [
+    "WordPress ZIP activation/deactivation/upgrade/uninstall",
+    "complete real OIDC/browser flow",
+    "controller dual-proof linking",
+    "WooCommerce commerce preservation",
+    "quiet SSO between independent WP sites",
+    "cross-app logout delivery",
+    "HTTPS/CDN/security-plugin qualification",
+    "actual emergency recovery",
+    "CETECH/FLAIROC rollout",
+    "external pairwise/consent/onboarding"
+  ],
+  "nativeFixture": {
+    "status": "INCOMPLETE_EXPECTED_GUARD",
+    "missing": "tests/browser.mjs",
+    "servicesStarted": false
+  },
+  "remoteMutation": {
+    "main": false,
+    "accesslobbyRuntime": false,
+    "wordpressEstate": false,
+    "iamClients": false,
+    "production": false
+  },
+  "externalActivation": "CLOSED_UNIMPLEMENTED",
+  "multisite": "UNSUPPORTED"
+}

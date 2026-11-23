@@ -1,0 +1,48 @@
+name: WordPress connector
+on:
+  pull_request:
+    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml']
+  push:
+    branches: [main]
+    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml']
+permissions:
+  contents: read
+jobs:
+  protocol:
+    name: PHP ${{ matrix.php }} protocol and package
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+    defaults:
+      run:
+        working-directory: integrations/wordpress
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sodium, openssl, mbstring, dom, xml, xmlwriter, simplexml
+          tools: composer:v2
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer audit --no-interaction
+      - run: python3 scripts/prefix-jwt.py
+      - name: Verify locked isolated dependency is reproducible
+        run: git diff --exit-code -- vendor-prefixed
+      - name: PHP syntax
+        run: find src tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: composer test
+      - run: composer analyze
+      - name: WordPress coding and security rules
+        run: |
+          vendor/bin/phpcs --config-set installed_paths ../../wp-coding-standards/wpcs,../../phpcsstandards/phpcsutils,../../phpcsstandards/phpcsextra
+          vendor/bin/phpcs --standard=phpcs.xml
+      - name: Build installable pilot ZIP (runtime installation remains a separate gate)
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.1.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: accesslobby-wordpress-pilot-php-${{ matrix.php }}
+          path: integrations/wordpress/dist/
+          retention-days: 14
