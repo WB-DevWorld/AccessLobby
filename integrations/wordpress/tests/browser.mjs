@@ -40,7 +40,8 @@ async function test(name, operation) {
     console.log('BROWSER_PASS ' + name); }
   catch (error) {
     // Assertion/Playwright errors can contain cookie values, callback or verification URLs.
-    cases.push({ name, status: 'FAIL', phase, errorClass: error.name, diagnostic });
+    const timeoutMethod = error.name === 'TimeoutError' ? (error.message.match(/^[A-Za-z]+\.[A-Za-z]+/) || [])[0] : undefined;
+    cases.push({ name, status: 'FAIL', phase, errorClass: error.name, timeoutMethod, diagnostic });
     throw new Error('Browser acceptance failed: ' + name + ' at ' + phase);
   }
 }
@@ -70,8 +71,11 @@ async function localLogin(site, username, tab = page) {
     // Core schedules autofocus after 200ms and can clear the password of a prefilled username.
     // Wait for that actual UI event before automation fills the form.
     await tab.waitForFunction(() => ['user_login', 'user_pass'].includes(document.activeElement?.id));
-    await tab.locator('#user_login').fill(username);
-    await tab.locator('#user_pass').fill(fixture.password);
+    await tab.locator('#user_login').fill('');
+    await tab.locator('#user_login').pressSequentially(username);
+    await tab.locator('#user_pass').fill('');
+    await tab.locator('#user_pass').pressSequentially(fixture.password);
+    await tab.locator('#user_pass').press('Tab');
     await Promise.all([tab.waitForURL(url => url.href === site.account || url.searchParams.get('action') === 'confirm_admin_email'), tab.locator('#wp-submit').click()]);
     if (new URL(tab.url()).searchParams.get('action') === 'confirm_admin_email') {
       // Confirm only the disposable fixture administrator's own configured email through the real nonce form.
@@ -95,6 +99,9 @@ async function localLogin(site, username, tab = page) {
           method: form.method, target: form.target,
           connectorScript: Boolean(document.querySelector('script[src*="/accesslobby-sso/"]')),
           connectorMode: window.accessLobbyWordPress?.mode || '',
+          submit: (() => { const button = form.querySelector('#wp-submit'); const rect = button?.getBoundingClientRect();
+            return { disabled: button?.disabled, type: button?.type, form: button?.form?.id,
+              visible: Boolean(rect?.width && rect?.height), hit: rect ? document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.id : '' }; })(),
         })).catch(() => ({})),
         network,
         backend: JSON.parse(wp(site, 'echo wp_json_encode(["success"=>get_option("alwp_fixture_local_success"),"failure"=>get_option("alwp_fixture_local_failed")]);')),
