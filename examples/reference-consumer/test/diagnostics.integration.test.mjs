@@ -5,6 +5,7 @@ import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { listenOnClaimedPort } from './claimed-port.mjs';
 
 const listen = async server => {
   server.listen(0, '127.0.0.1');
@@ -35,37 +36,35 @@ test('health separates process and dependency failure; logs correlate without ca
     }
   });
   upstreamOrigin = `http://127.0.0.1:${await listen(upstream)}`;
-  const reservation = createServer();
-  const consumerPort = await listen(reservation);
-  await new Promise(resolve => reservation.close(resolve));
-  const consumerOrigin = `http://127.0.0.1:${consumerPort}`;
-  const child = spawn(process.execPath, ['server.mjs'], {
-    cwd: fileURLToPath(new URL('..', import.meta.url)),
-    env: {
-      ...process.env, PORT: String(consumerPort), CONSUMER_ORIGIN: consumerOrigin,
-      OIDC_ISSUER: upstreamOrigin + '/realms/accesslobby-first-party',
-      OIDC_CLIENT_ID: 'reference-consumer', ACCESSLOBBY_API_URL: upstreamOrigin,
-    },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  let consumerOrigin = '';
   let logs = '';
-  child.stdout.on('data', chunk => { logs += chunk; });
-  child.stderr.on('data', chunk => { logs += chunk; });
-
-  try {
-    let live;
+  const child = await listenOnClaimedPort(async consumerPort => {
+    consumerOrigin = `http://127.0.0.1:${consumerPort}`;
+    const spawned = spawn(process.execPath, ['server.mjs'], {
+      cwd: fileURLToPath(new URL('..', import.meta.url)),
+      env: {
+        ...process.env, PORT: String(consumerPort), CONSUMER_ORIGIN: consumerOrigin,
+        OIDC_ISSUER: upstreamOrigin + '/realms/accesslobby-first-party',
+        OIDC_CLIENT_ID: 'reference-consumer', ACCESSLOBBY_API_URL: upstreamOrigin,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    spawned.stdout.on('data', chunk => { logs += chunk; });
+    spawned.stderr.on('data', chunk => { logs += chunk; });
     for (let attempt = 0; attempt < 40; attempt++) {
       try {
-        live = await fetch(consumerOrigin + '/health/live', {
-          headers: { 'x-request-id': 'probe_1', cookie: 'sensitive=do-not-log' },
-        });
-        break;
+        if ((await fetch(consumerOrigin + '/health/live')).ok) return spawned;
       } catch {
-        if (child.exitCode !== null) throw new Error('Reference consumer exited before readiness');
-        await delay(50);
+        if (spawned.exitCode !== null) throw new Error(`Reference consumer exited before readiness\n${logs}`);
       }
+      await delay(50);
     }
-    assert.ok(live, 'Reference consumer did not start');
+    throw new Error(`Reference consumer did not start\n${logs}`);
+  });
+  try {
+    const live = await fetch(consumerOrigin + '/health/live', {
+      headers: { 'x-request-id': 'probe_1', cookie: 'sensitive=do-not-log' },
+    });
     assert.equal(live.status, 200);
     assert.deepEqual(await live.json(), { status: 'ok' });
     assert.equal(live.headers.get('x-request-id'), 'probe_1');
