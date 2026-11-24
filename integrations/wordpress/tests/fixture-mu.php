@@ -10,6 +10,22 @@ $identity = static function () {
 };
 add_action( 'wp_footer', $identity );
 add_action( 'login_footer', $identity );
+add_action( 'login_footer', static function () {
+	if ( ! function_exists( 'accesslobby_login_url' ) ) {
+		return;
+	}
+	$destination = get_permalink( (int) get_option( 'alwp_fixture_protected' ) );
+	if ( ! is_string( $destination ) || '' === $destination ) {
+		return;
+	}
+	echo '<p><a id="fixture-join" href="' . esc_url( accesslobby_login_url( $destination, 'join' ) ) . '">Create an AccessLobby account</a></p>';
+} );
+add_filter( 'wp_pre_insert_user_data', static function ( $data ) {
+	if ( is_array( $data ) && 'partial-join@example.test' === ( $data['user_email'] ?? '' ) ) {
+		$data['user_login'] = '';
+	}
+	return $data;
+} );
 // Prevent real mail from disposable fixtures; never relax authentication/authorization.
 add_filter( 'pre_wp_mail', '__return_false' );
 // WordPress allows 80, 443 and 8080. This disposable edge publishes 8443 so it does not take the host HTTPS port.

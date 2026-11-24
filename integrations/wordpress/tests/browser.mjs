@@ -87,6 +87,193 @@ async function continueWith(page, site) {
   await page.locator('[data-accesslobby-start]').first().click();
 }
 
+function userCount(site) {
+  return Number(wpEval(site, 'echo count_users()["total_users"];'));
+}
+
+function linkCount(site) {
+  return Number(wpEval(site, `global $wpdb; $store = new AccessLobby\\WordPress\\Store($wpdb); echo (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $store->table('links')));`));
+}
+
+function setAdmission(value) {
+  if (value !== 'grant_required' && value !== 'authenticated_open') throw new Error('Unexpected admission value');
+  const result = spawnSync('docker', ['exec', 'alwp-https-pg', 'psql', '-U', 'accesslobby', '-d', 'accesslobby', '-v', 'ON_ERROR_STOP=1', '-c', `UPDATE applications SET admission='${value}' WHERE client_id='wordpress-a'`], { encoding: 'utf8' });
+  if (result.status !== 0) throw new Error('Could not update application admission');
+}
+
+function linkState(site, user) {
+  return wpEval(site, `global $wpdb; $store = new AccessLobby\\WordPress\\Store($wpdb); $row = $store->link_for_user(${Number(user)}); echo $row['link_state'] ?? 'missing';`);
+}
+
+async function keycloakLogin(page, email) {
+  await page.waitForURL(/\/realms\/accesslobby-first-party\//, { timeout: 20000 });
+  await page.locator('#username').fill(email);
+  await page.locator('#password').fill(config.password);
+  await page.locator('#kc-login').click();
+  if (!page.url().includes('a.alwp.test')) await page.waitForURL(url => url.hostname === 'a.alwp.test', { timeout: 30000 });
+}
+
+async function assertBrowserTls(browser) {
+  const page = await (await browser.newContext()).newPage();
+  const response = await page.goto('https://a.alwp.test:8443/wp-login.php', { waitUntil: 'domcontentloaded', timeout: 20000 });
+  const security = response && await response.securityDetails();
+  const now = Date.now() / 1000;
+  if (!security || security.validFrom > now || security.validTo < now) throw new Error('Browser did not expose a current verified certificate');
+  const details = { verification: 'verified', subjectName: security.subjectName, issuer: security.issuer, protocol: security.protocol };
+  console.log('TLS_BROWSER', JSON.stringify(details));
+  if (!String(security.issuer).includes('AccessLobby Fixture CA') || security.subjectName !== 'a.alwp.test' || !['TLS 1.2', 'TLS 1.3'].includes(security.protocol)) {
+    throw new Error('Browser TLS session did not present the fixture certificate');
+  }
+  await page.context().close();
+}
+
+async function verificationLink(email) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const found = await (await fetch(`http://127.0.0.1:${config.mailPort}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`)).json();
+    const message = found.messages && found.messages[0];
+    if (message) {
+      const full = await (await fetch(`http://127.0.0.1:${config.mailPort}/api/v1/message/${message.ID}`)).json();
+      const match = `${full.Text || ''} ${full.HTML || ''}`.match(/https:\/\/auth\.alwp\.test:8443\/[^"'\s<]+/);
+      if (!match) throw new Error('Verification message had no fixture link');
+      return match[0].replace(/&amp;/g, '&');
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  throw new Error('Verification message did not arrive');
+}
+
+async function openJoin(page, site) {
+  const response = await openPage(page, `${site.base}/wp-login.php`);
+  if (!response?.ok()) throw new Error('Join could not open the site login page');
+  await page.locator('#fixture-join').click();
+  await page.waitForURL(/\/realms\/accesslobby-first-party\//, { timeout: 20000 });
+}
+
+async function submitRegistration(page, email) {
+  await page.locator('#firstName').fill('Join');
+  await page.locator('#lastName').fill('Fixture');
+  const username = page.locator('#username');
+  if (await username.isVisible()) await username.fill(email);
+  await page.locator('#email').fill(email);
+  await page.locator('#password').fill(config.password);
+  const confirm = page.locator('#password-confirm');
+  if (await confirm.count()) await confirm.fill(config.password);
+  await page.locator('#kc-form-buttons input, input[type="submit"]').first().click();
+}
+
+async function finishVerifiedRegistration(page, email) {
+  await submitRegistration(page, email);
+  try {
+    await page.goto(await verificationLink(email), { waitUntil: 'domcontentloaded', timeout: 20000 });
+  } catch (error) {
+    throw new Error('Verification link did not open');
+  }
+  const submit = page.locator('input[type="submit"], button[type="submit"]');
+  if (await submit.count()) await submit.first().click();
+  const proceed = page.getByRole('link', { name: /proceed|continue|log in|sign in/i });
+  if (await proceed.count()) await proceed.first().click();
+  const username = page.locator('#username');
+  if (await username.isVisible().catch(() => false)) {
+    await username.fill(email);
+    await page.locator('#password').fill(config.password);
+    await page.locator('#kc-login').click();
+  }
+  if (!page.url().includes('a.alwp.test')) {
+    await page.waitForURL(url => url.hostname === 'a.alwp.test', { timeout: 30000 });
+  }
+}
+
+async function joinFlows(browser, site) {
+  const beforeUsers = userCount(site);
+  const beforeLinks = linkCount(site);
+  const cancel = await (await browser.newContext()).newPage();
+  await openJoin(cancel, site);
+  await cancel.getByRole('link', { name: /back to login/i }).click();
+  if (userCount(site) !== beforeUsers || linkCount(site) !== beforeLinks) throw new Error('Cancelled Join created a local account or mapping');
+  console.log('FLOW join-cancelled');
+
+  const unverified = await (await browser.newContext()).newPage();
+  await openJoin(unverified, site);
+  await submitRegistration(unverified, 'unverified-join@example.test');
+  await unverified.getByText(/verify your email|email with instructions/i).waitFor({ timeout: 20000 });
+  if (userCount(site) !== beforeUsers || linkCount(site) !== beforeLinks) throw new Error('Unverified Join created a local account or mapping');
+  console.log('FLOW join-unverified');
+
+  wpEval(site, `if (!username_exists('local_only')) { wp_insert_user(array('user_login'=>'local_only','user_pass'=>wp_generate_password(),'user_email'=>'local-only@example.test','role'=>'customer')); } echo 'ok';`);
+  const collisionUsers = userCount(site);
+  const collisionLinks = linkCount(site);
+  const collision = await (await browser.newContext()).newPage();
+  await openJoin(collision, site);
+  await finishVerifiedRegistration(collision, 'local-only@example.test');
+  if (!(await collision.locator('body').innerText()).includes('account_link_required')) throw new Error('Join used an existing email to create or link an account');
+  const localOnly = Number(wpEval(site, `echo (int) get_user_by('email','local-only@example.test')->ID;`));
+  if (wpEval(site, `global $wpdb; $store = new AccessLobby\\WordPress\\Store($wpdb); echo $store->link_for_user(${localOnly}) ? 'linked' : 'unlinked';`) !== 'unlinked') {
+    throw new Error('Join collision created a mapping');
+  }
+  if (userCount(site) !== collisionUsers || linkCount(site) !== collisionLinks) throw new Error('Join collision changed local accounts or mappings');
+  console.log('FLOW join-email-collision');
+
+  const deniedUsers = userCount(site);
+  const deniedLinks = linkCount(site);
+  setAdmission('grant_required');
+  try {
+    const denied = await (await browser.newContext()).newPage();
+    await openJoin(denied, site);
+    await finishVerifiedRegistration(denied, 'denied-join@example.test');
+    if (!(await denied.locator('body').innerText()).includes('application_entry_denied')) throw new Error('Denied admission completed Join');
+    if (userCount(site) !== deniedUsers || linkCount(site) !== deniedLinks) throw new Error('Denied admission created a local account or mapping');
+    console.log('FLOW join-admission-denied');
+  } finally {
+    setAdmission('authenticated_open');
+  }
+
+  const partialUsers = userCount(site);
+  const partialLinks = linkCount(site);
+  const partial = await (await browser.newContext()).newPage();
+  await openJoin(partial, site);
+  await finishVerifiedRegistration(partial, 'partial-join@example.test');
+  if (!(await partial.locator('body').innerText()).includes('local_account_creation_failed')) throw new Error('Partial provisioning completed Join');
+  if (Number(wpEval(site, `echo email_exists('partial-join@example.test') ? 1 : 0;`)) !== 0) throw new Error('Partial provisioning left a local account');
+  if (userCount(site) !== partialUsers || linkCount(site) !== partialLinks) throw new Error('Partial provisioning created a local account or mapping');
+  console.log('FLOW join-partial-provisioning');
+
+  const joined = await (await browser.newContext()).newPage();
+  await openJoin(joined, site);
+  await finishVerifiedRegistration(joined, 'joiner@example.test');
+  if (!joined.url().startsWith(site.protected)) throw new Error(`Join did not return to the initiating destination: ${joined.url().split('?')[0]}`);
+  const person = await identity(joined);
+  if (!(person.user > 0) || person.admin !== 'no') throw new Error('Join did not establish an unprivileged local account');
+  if (wpEval(site, `echo implode(',', get_userdata(${person.user})->roles);`) !== 'customer') throw new Error('Join granted an unexpected role');
+  if (wpEval(site, `global $wpdb; $store = new AccessLobby\\WordPress\\Store($wpdb); echo $store->link_for_user(${person.user}) ? 'linked' : 'unlinked';`) !== 'linked') {
+    throw new Error('Join did not keep the local mapping');
+  }
+  console.log('FLOW join-verified', person.user);
+  await joined.goto(`${site.base}/my-account/`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+  await joined.getByRole('button', { name: 'Disconnect AccessLobby' }).click();
+  await joined.waitForURL(/\/realms\/accesslobby-first-party\//, { timeout: 20000 });
+  await joined.goto(`${site.base}/my-account/`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+  if (linkState(site, person.user) !== 'active') throw new Error('Leaving the unlink flow changed the mapping');
+  console.log('FLOW unlink-cancelled');
+  await joined.getByRole('button', { name: 'Disconnect AccessLobby' }).click();
+  await keycloakLogin(joined, 'joiner@example.test');
+  if (linkState(site, person.user) !== 'unlinked') throw new Error('Fresh proof did not unlink the local mapping');
+  if (wpEval(site, `echo implode(',', get_userdata(${person.user})->roles);`) !== 'customer') throw new Error('Unlink changed the local role');
+  console.log('FLOW unlink');
+  const login = wpEval(site, `wp_set_password(${JSON.stringify(config.password)}, ${person.user}); echo get_userdata(${person.user})->user_login;`);
+  await openPage(joined, `${site.base}/wp-login.php`);
+  await joined.locator('#user_login').fill(login);
+  await joined.locator('#user_pass').fill(config.password);
+  await joined.locator('#wp-submit').click();
+  await joined.goto(`${site.base}/my-account/`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+  await joined.getByRole('button', { name: 'Connect AccessLobby' }).click();
+  await keycloakLogin(joined, 'joiner@example.test');
+  if (linkState(site, person.user) !== 'active') throw new Error('Fresh dual proof did not restore the same mapping');
+  if (Number(wpEval(site, `global $wpdb; $store = new AccessLobby\\WordPress\\Store($wpdb); $row = $store->link_for_user(${person.user}); echo (int) $row['user_id'];`)) !== person.user) {
+    throw new Error('Relink attached a different local account');
+  }
+  console.log('FLOW relink', person.user);
+}
+
 const browser = await chromium.launch({
   headless: true,
   args: config.tls ? ['--host-resolver-rules=MAP a.alwp.test 127.0.0.1, MAP b.alwp.test 127.0.0.1, MAP auth.alwp.test 127.0.0.1, MAP api.alwp.test 127.0.0.1'] : [],
@@ -244,6 +431,8 @@ try {
   } finally {
     optionPatch(siteB, `$o['mode']='hybrid';`);
   }
+  if (config.tls) await assertBrowserTls(browser);
+  if (config.join) await joinFlows(browser, siteA);
   console.log('BROWSER_PASS');
 } finally {
   await browser.close();
