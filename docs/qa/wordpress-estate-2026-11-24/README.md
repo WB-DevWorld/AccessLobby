@@ -59,18 +59,40 @@ Before activation, each backup gzip still matched the table above. Each site the
 
 On training.cetechbpa.com a real browser submitted the local customer password at `wp-login.php`. The password form and “Continue with AccessLobby” were both present. The session landed on My Account as AccessLobby Qualification Customer, and `/my-account/orders/` showed order 50402. Woo logout opened the plugin's sign-out choice. “Sign out of this site” ended that local session: My Account then showed the login form, the AccessLobby button, and the existing B2B registration fields. No AccessLobby credential was entered. On staging.cetechbpa.com the same alpha.8 browser flow signed in as the synthetic customer, showed order 54346 at `/my-account/orders/`, and “Sign out of this site” returned the signed-out confirmation. Local staging login is **QUALIFIED**.
 
-FLAIROC training’s missing dashboard was WooCommerce Launch Your Store, not a theme edit. `woocommerce_coming_soon` is `yes` and `woocommerce_store_pages_only` is `no`, so every front-end page is coming soon except a user who can `manage_woocommerce`. The My Account page is still page 13 with the Woo shortcode. The private-link option is enabled; its share key was not used. A must-use plugin, `al-qual-account-preview.php`, uses the supported `woocommerce_coming_soon_exclude` filter and returns true only for a signed-in account page. The existing `flairoc-training-safety` plugin only disables `wp_mail` and was left in place. After the exemption, the synthetic customer saw the account dashboard and order 4043, then signed out of this site. The anonymous homepage still says the site is coming soon, so the shop was not launched. That account flow is **QUALIFIED** with the exemption installed.
+FLAIROC training’s missing dashboard was WooCommerce Launch Your Store, not a theme edit. `woocommerce_coming_soon` is `yes` and `woocommerce_store_pages_only` is `no`, so every front-end page is coming soon except a user who can `manage_woocommerce`. The My Account page is still page 13 with the Woo shortcode. The private-link option is enabled; its share key was not used. The existing `flairoc-training-safety` plugin only disables `wp_mail` and was left in place. After the exemption below, a signed-in synthetic customer saw the account dashboard and order 4043, then signed out of this site. The anonymous homepage still says the site is coming soon, so the shop was not launched. That signed-in account flow is **QUALIFIED** with the exemption installed. Anonymous My Account, the local login form on that route, and the signed-out return are **UNTESTED**: the filter does not run for a signed-out visitor, so those pages still render the coming-soon hero.
+
+The temporary file is `/home/flairoctraining/htdocs/training.flairoc.com/wp-content/mu-plugins/al-qual-account-preview.php`, owner `flairoctraining:flairoctraining`, mode 644, 472 bytes, SHA256 `0830877c73e41c5fc77bf215cf3d6e18916972cc3f03c5952ef50c9ccf25a3a2`. Its full source is:
+
+```php
+<?php
+/**
+ * Plugin Name: AccessLobby qualification account preview
+ * Description: Temporary exemption so a signed-in customer can open WooCommerce account pages while the site stays in coming-soon mode. Remove after the qualification check.
+ */
+
+add_filter(
+	'woocommerce_coming_soon_exclude',
+	static function ( $excluded ) {
+		if ( $excluded ) {
+			return $excluded;
+		}
+		return is_user_logged_in() && function_exists( 'is_account_page' ) && is_account_page();
+	}
+);
+```
+
+Remove only that file as `flairoctraining`, then confirm it is gone and the anonymous homepage still says the site is coming soon. Do not delete `flairoc-training-safety.php` and do not change `woocommerce_coming_soon` or `woocommerce_store_pages_only`.
 
 ## Recovery
 
-Enforced mode stays off. The staging origin answers HTTPS on its own address, but the certificate is issued by `CN=staging.cetechbpa.com` to itself, so a normal browser does not trust it. PHP still sees the TCP peer because nginx’s forwarded-header handling is commented out. A Cloudflare address is not an administrator, and a loopback tunnel would identify every local process rather than one person. No recovery allowlist or ticket was created.
+Enforced mode stays off. Recovery accepts a session only when `ACCESSLOBBY_EMERGENCY_ENABLED` is true, the request is HTTPS, and `REMOTE_ADDR` is one of the configured `ACCESSLOBBY_EMERGENCY_IPS`. Neither constant is set. The staging host has only `lo` and `ens3`; nginx listens on public 80, 443 and 8080, with no VPN or private admin interface. The origin certificate is issued by `CN=staging.cetechbpa.com` to itself, so a normal browser does not trust it. Certificate checks were not disabled. PHP still sees the TCP peer because nginx’s forwarded-header handling is commented out. A Cloudflare address is not an administrator, and a loopback tunnel would identify every local process rather than one person. No recovery allowlist or ticket was created.
 
 ## Capability results
 
 | Capability | Result |
 |---|---|
 | Local customer login, own order, and this-site sign-out on alpha.8 | **QUALIFIED** on all three sites |
-| FLAIROC coming-soon account exemption | **QUALIFIED** for signed-in account pages; public coming-soon posture unchanged |
+| FLAIROC coming-soon account exemption | **QUALIFIED** for a signed-in account page. Anonymous My Account login and signed-out return remain **UNTESTED**. |
 | Application request, origin proof, reviewed activation | **BLOCKED** on the missing owner session; DNS edit is a second blocker |
 | Unlinked-identity refusal, explicit linking, repeat login | **BLOCKED** until the clients are active |
 | Quiet SSO, Join/JIT, all-apps logout, backchannel negatives | **BLOCKED** until the clients are active |
