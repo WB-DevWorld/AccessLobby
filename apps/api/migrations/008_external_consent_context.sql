@@ -1,4 +1,5 @@
--- No backfill: previous preview approvals require a fresh private origin review and consent.
+-- No consent backfill: previous approvals require a fresh private origin review and consent.
+ALTER TABLE external_app_profiles ADD COLUMN IF NOT EXISTS review_generation uuid NOT NULL DEFAULT gen_random_uuid();
 ALTER TABLE external_app_profiles ADD COLUMN IF NOT EXISTS config_fingerprint text
   CHECK (config_fingerprint ~ '^[a-f0-9]{64}$');
 ALTER TABLE external_app_consents ADD COLUMN IF NOT EXISTS config_fingerprint text

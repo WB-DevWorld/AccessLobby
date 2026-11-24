@@ -82,11 +82,16 @@ test('external preparation stays inactive; two isolated subjects retain one cano
       await assert.rejects(external.reverify(a.app.id, 'review-resume', true), ApplicationError);
       published = true;
       await external.reverify(a.app.id, 'review-resume', true);
+      await assert.rejects(external.grant(human.id, a.app.id, externalPreviewPolicy, ['openid'], a.review.fingerprint), ApplicationError);
       await assert.rejects(external.subjectForConsentedPerson(human.id, a.app.id), ApplicationError);
       await external.grant(human.id, a.app.id, externalPreviewPolicy, ['openid'], (await external.review(human.id, a.app.id)).fingerprint);
       assert.equal(await external.subjectForConsentedPerson(human.id, a.app.id), a.opaque);
       assert.equal(await apps.allowedClient(a.app.clientId), false); // Resuming a preview never activates it.
 
+      const preReview = await external.review(human.id, a.app.id);
+      await external.reverify(a.app.id, 'review-unchanged-config');
+      await assert.rejects(external.grant(human.id, a.app.id, externalPreviewPolicy, ['openid'], preReview.fingerprint), ApplicationError);
+      await external.grant(human.id, a.app.id, externalPreviewPolicy, ['openid'], (await external.review(human.id, a.app.id)).fingerprint);
       // Every consequential registration change invalidates the old review and consent, including a transfer to another active owner.
       for (const [field, value] of [['name', 'Changed publisher'], ['owner_person_id', outsider],
         ['redirect_uri', 'https://publisher-one.example.test/gh/wp-login.php?action=al_callback&unapproved=1'],
