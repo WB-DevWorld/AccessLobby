@@ -210,7 +210,7 @@ async function joinFlows(browser, site) {
   const unverified = await (await browser.newContext()).newPage();
   await openJoin(unverified, site);
   await submitRegistration(unverified, 'unverified-join@example.test');
-  await unverified.getByText(/verify your email|email with instructions/i).waitFor({ timeout: 20000 });
+  await unverified.locator('.kc-feedback-text').waitFor({ timeout: 20000 });
   if (userCount(site) !== beforeUsers || linkCount(site) !== beforeLinks) throw new Error('Unverified Join created a local account or mapping');
   console.log('FLOW join-unverified');
 
