@@ -25,3 +25,11 @@ Verification email is captured by an isolated loopback SMTP sink; no message is 
 Source/CI/runtime/pilot/production are separate evidence dimensions. Keep pilot versioning until the vertical slice, security review, actual two-site quiet SSO/logout, preserved Woo customer history and safe rollback pass. Merge through protected-main PRs; publish immutable versioned ZIP/hash and exact source revision only after required checks. No external publisher activation belongs in this first-party release.
 
 Dedicated membership login pages can be configured in the admin or through `accesslobby_is_login_page`. See [frontend integration](frontend.md) for server-side/no-JavaScript behavior and the public-page boundary.
+
+## Consolidated testing
+
+`qualify.py --profile native` retains the broad behavior matrix and requires the exact alpha.5 upgrade ZIP, an isolated runtime and a disposable Keycloak distribution. `qualify.py --profile https` invokes the additional Cursor-derived nginx/PHP-FPM hostname smoke and requires Docker, OpenSSL and fixture authorization (`ALWP_DISPOSABLE_FIXTURE=1`). Both use the same candidate plugin ZIP; they report different coverage.
+
+The HTTPS smoke trusts only its disposable CA, labels owned resources, refuses to replace unlabelled containers/networks, and uses a frozen-lockfile API image. Private-address/8443/CA exceptions live solely in the unshipped test MU plugin. Authentication query strings and raw logs never enter public evidence. Only categorical JSON may be retained.
+
+API tests use an independent schema per test and the same migrations001–006 list as the production runner. Reference tests reserve ports until their child answers readiness. CI repeats the normal-concurrency suites on the same database to expose residue/races; no shared database is dropped.

@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { test } from 'node:test';
-import { Pool } from 'pg';
+import { openIsolatedDatabase } from './isolated-database.js';
 import { PeerSessions, PeerSessionError } from '../src/peer-sessions.js';
 import { SessionRevocations } from '../src/logout.js';
 
 test('receipts reconcile missed peer logout without affecting another browser or leaking identities',
   { skip: !process.env.TEST_DATABASE_URL }, async () => {
-    const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+    const { pool, close } = await openIsolatedDatabase();
     const issuer = `https://issuer.example/${randomUUID()}`, person = randomUUID(), sid = randomUUID();
     const actor = { issuer, subject: randomUUID(), sid, client: 'wp-site-a', expiresAt: Math.floor(Date.now() / 1000) + 300 };
     const peers = new PeerSessions(pool, issuer, async client => ['wp-site-a', 'wp-site-b'].includes(client));
@@ -30,12 +30,12 @@ test('receipts reconcile missed peer logout without affecting another browser or
       await assert.rejects(peers.issue(actor, person), PeerSessionError);
       const response = JSON.stringify(await peers.status(b.receipt, 'wp-site-b'));
       for (const privateValue of [person, sid, actor.subject, a.receipt, b.receipt]) assert(!response.includes(privateValue));
-    } finally { await pool.end(); }
+    } finally { await close(); }
   });
 
 test('receipt status respects expiry, identity suspension, client suspension and admission withdrawal',
   { skip: !process.env.TEST_DATABASE_URL }, async () => {
-    const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+    const { pool, close } = await openIsolatedDatabase();
     const person = randomUUID(), issuer = `https://issuer.example/${randomUUID()}`;
     const actor = { issuer, subject: randomUUID(), sid: randomUUID(), client: 'wp-pilot', expiresAt: Math.floor(Date.now() / 1000) + 300 };
     let allowed = true, admitted = true;
@@ -54,5 +54,5 @@ test('receipt status respects expiry, identity suspension, client suspension and
       assert.equal((await peers.status(receipt.receipt, actor.client)).active, false);
       await assert.rejects(peers.end(receipt.receipt, actor.client), PeerSessionError);
       await assert.rejects(peers.issue({ ...actor, sid: undefined }, person), PeerSessionError);
-    } finally { await pool.end(); }
+    } finally { await close(); }
   });

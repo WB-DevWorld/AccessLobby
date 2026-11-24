@@ -1,5 +1,7 @@
 # ADR012 — Reviewed external consent context and inactive product preview
 
+Consolidation scope: the implementation described here is preserved in PR61/3131df44bb7f6bb006a2dac6bcbac29591f288e9. It is excluded from the alpha.6 first-party runtime/migrations; see ADR013.
+
 Status: **NEW-RECOMMENDATION / MVP-PROVISIONAL**, 2026-11-24. Reversible inactive preview; not owner approval of external activation or a legal retention policy. Relates to #59.
 
 The alpha.4 preview recorded scope/policy without a product review screen or a binding to the reviewed registration. Alpha.5 adds a default-off first-party-web-only review/withdrawal UI and an application-specific configuration fingerprint. This extends ADR011; the first-party-only activation constraint and all existing token-admission gates remain closed to external clients.

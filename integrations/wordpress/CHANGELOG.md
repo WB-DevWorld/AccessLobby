@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-alpha.6 — 2026-11-24
+
+- Consolidate the hardened first-party connector with Cursor's representative nginx/PHP-FPM/hostname TLS fixture and isolated database/parallel-port tests.
+- Keep the two authentication modes, explicit links, local commerce/roles, dedicated login pages and bounded session reconciliation.
+- Exercise a real alpha.5 to alpha.6 ZIP update. Stage B external consent/profile APIs and migrations remain preserved in PR61 and are excluded from this first-party release.
+- Build the HTTPS fixture API from the frozen repository lockfile, redact authentication queries and guard cleanup of disposable resources.
+
 ## 0.1.0-alpha.5 — 2026-11-24
 
 - Let administrators select dedicated frontend login pages without editing a theme. Enforced mode starts SSO server-side, including with JavaScript disabled.

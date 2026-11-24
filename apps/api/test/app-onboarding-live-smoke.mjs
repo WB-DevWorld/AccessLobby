@@ -11,7 +11,6 @@ import { provisionApp, reconcileClient } from '../dist/provision-app.js';
 import { suspendRegistry, disableIamClient } from '../dist/suspend-app.js';
 import { loadAppEntry, AppEntryError } from '../../../examples/reference-consumer/app-entry.mjs';
 import { mayViewPrivate } from '../../../examples/reference-consumer/policy.mjs';
-import { qualifyExternalConsent } from './external-consent-ui.mjs';
 import { qualifyEnbenPeer } from './enben-live-peer.mjs';
 import { withScopedClientToken } from '../../../infra/scripts/private-client-token.mjs';
 
@@ -265,7 +264,11 @@ try {
     const disabled = await fetch(apiOrigin + path, { method }); assert.equal(disabled.status, 404);
   }
   await stopServer(); await startServer(true);
-  await qualifyExternalConsent({ browser, pool, apps, proofs, api, apiOrigin, issuer, users, password, people, webTokens, peerToken: restricted.tokens[1] });
+  for (const method of ['GET', 'POST', 'DELETE']) {
+    const absent = await fetch(apiOrigin + '/v1/preview/external-consents/' + randomUUID(), { method });
+    assert.equal(absent.status, 404); assert.equal(absent.headers.get('cache-control'), 'no-store');
+  }
+  assert.equal((await pool.query("SELECT count(*) AS count FROM information_schema.tables WHERE table_schema=current_schema() AND table_name LIKE 'external_app_%'")).rows[0].count, '0');
   const unknownReceipt = await fetch(apiOrigin + '/v1/peer-sessions/status', { method: 'POST',
     headers: { authorization: 'PeerSession ' + 'x'.repeat(43), 'x-accesslobby-client-id': restricted.clientId } });
   assert.equal(unknownReceipt.status, 401);

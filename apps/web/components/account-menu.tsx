@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
-export function AccountMenu({ mobile = false, connectionsPreview = false }: { mobile?: boolean; connectionsPreview?: boolean }) {
+export function AccountMenu({ mobile = false }: { mobile?: boolean }) {
   const details = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const closeOutside = (event: PointerEvent) => {
@@ -26,7 +26,6 @@ export function AccountMenu({ mobile = false, connectionsPreview = false }: { mo
     }}>
       <Link href="/contexts">Personal & organizations</Link>
       <Link href="/recovery">Recovery & help</Link>
-      {connectionsPreview && <Link href="/connections">Site connections</Link>}
       <Link href="/apps/manage">Developer tools</Link>
       <Link href="/help">Help</Link>
       <Link href="/privacy">Privacy information</Link>

@@ -5,6 +5,7 @@ credentials are disposable synthetic fixtures. This never connects to an estate 
 """
 from pathlib import Path
 import argparse
+import sys
 import atexit
 import copy
 import json
@@ -25,13 +26,21 @@ from urllib.parse import urlparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--runtime', type=Path, required=True)
 parser.add_argument('--package', type=Path, required=True)
-parser.add_argument('--upgrade-from', type=Path, required=True)
-parser.add_argument('--keycloak-home', type=Path, required=True)
+parser.add_argument('--upgrade-from', type=Path)
+parser.add_argument('--keycloak-home', type=Path)
+parser.add_argument('--profile', choices=('native', 'https'), default='native')
+parser.add_argument('--keep', action='store_true')
 args = parser.parse_args()
 if os.environ.get('ALWP_DISPOSABLE_FIXTURE') != '1':
     raise SystemExit('Set ALWP_DISPOSABLE_FIXTURE=1 only for isolated throwaway databases; no service started.')
-if hashlib.sha256(args.upgrade_from.read_bytes()).hexdigest() != '3fd9652455522eb23d50f04b161f529b0a656805bebddf5b0c69a3f489fba81c':
-    raise SystemExit('Upgrade requires the exact previously qualified alpha.2 ZIP; no service started.')
+if args.profile == 'https':
+    from fixture_https import main
+    plugin = Path(__file__).resolve().parents[1]
+    raise SystemExit(main(args, plugin, plugin.parents[1], args.runtime.resolve()))
+if not args.upgrade_from or not args.keycloak_home:
+    raise SystemExit('Native profile requires --upgrade-from and --keycloak-home; no service started.')
+if hashlib.sha256(args.upgrade_from.read_bytes()).hexdigest() != 'f85e2eb00ba3e71742f435e9bb9025c189c6b1f2819081a388d60969bada20c2':
+    raise SystemExit('Upgrade requires the exact previously qualified alpha.5 ZIP; no service started.')
 runtime = args.runtime.resolve()
 plugin = Path(__file__).resolve().parents[1]
 repo = plugin.parents[1]

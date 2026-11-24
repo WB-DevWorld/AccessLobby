@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { Pool } from 'pg';
+import { openIsolatedDatabase } from './isolated-database.js';
 import { SessionRevocations } from '../src/logout.js';
 
 test('signed logout event persists revocation and cannot be replayed', { skip: !process.env.TEST_DATABASE_URL }, async () => {
-  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+  const { pool, close } = await openIsolatedDatabase();
   const store = new SessionRevocations(pool);
   const issuer = `https://issuer.example/${crypto.randomUUID()}`;
   const sid = crypto.randomUUID();
@@ -16,5 +16,5 @@ test('signed logout event persists revocation and cannot be replayed', { skip: !
     assert.equal(await store.revoke(issuer, sid, jti), true);
     assert.equal(await store.revoke(issuer, sid, jti), false);
     assert.equal(await store.isRevoked('https://other.example', sid), false);
-  } finally { await pool.end(); }
+  } finally { await close(); }
 });

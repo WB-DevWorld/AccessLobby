@@ -1,0 +1,38 @@
+"""Safety boundaries for the imported host-changing fixture; no Docker or CA changes."""
+import importlib.util
+import os
+from pathlib import Path
+import tempfile
+from types import SimpleNamespace
+import unittest
+from unittest.mock import patch
+
+spec = importlib.util.spec_from_file_location('fixture_https', Path(__file__).parents[1] / 'scripts/fixture_https.py')
+fixture = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(fixture)
+
+class FixtureSafety(unittest.TestCase):
+    def test_missing_explicit_authorization_has_no_side_effect(self):
+        with patch.dict(os.environ, {}, clear=True), patch.object(fixture, 'map_fixture_names') as mapping:
+            with self.assertRaises(SystemExit):
+                fixture.main(None, None, None, None)
+            mapping.assert_not_called()
+
+    def test_failed_preflight_never_removes_foreign_named_resources(self):
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name); plugin = root / 'plugin'; plugin.mkdir()
+            # Missing package is intentional: reporting must not mask preflight or run cleanup.
+            args = SimpleNamespace(package=root / 'absent.zip', keep=False)
+            with patch.dict(os.environ, {'ALWP_DISPOSABLE_FIXTURE':'1'}), \
+                 patch.object(fixture, 'map_fixture_names'), \
+                 patch.object(fixture, 'preflight', side_effect=SystemExit('Foreign resource refused')), \
+                 patch.object(fixture.subprocess, 'run', return_value=SimpleNamespace(returncode=0, stdout='test-source')) as commands, \
+                 patch.object(fixture.subprocess, 'check_output', return_value=''):
+                with self.assertRaises(SystemExit):
+                    fixture.main(args, plugin, root, root)
+                for call in commands.call_args_list:
+                    self.assertNotIn('docker', call.args[0])
+                self.assertTrue((plugin / 'dist/https-qualification-report.json').exists())
+
+if __name__ == '__main__':
+    unittest.main()

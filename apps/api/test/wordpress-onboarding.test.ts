@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
-import { Pool } from 'pg';
+import { openIsolatedDatabase } from './isolated-database.js';
 import { ApplicationError, ApplicationStore, exactApplicationUrl } from '../src/applications.js';
 import { proofValue } from '../src/origin-proof.js';
 import { provisionApp, representation } from '../src/provision-app.js';
@@ -31,7 +31,7 @@ test('WordPress permits only fixed login actions and the plain REST backchannel 
 
 test('real WordPress request, domain proof and private provisioning retain exact subdirectory URLs',
   { skip: !process.env.TEST_DATABASE_URL }, async () => {
-    const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+    const { pool, close } = await openIsolatedDatabase();
     const person = randomUUID(), clientId = `wp-${randomUUID()}`;
     let challenge = '', created: ReturnType<typeof representation> | undefined;
     const lookupTxt = async (host: string) => {
@@ -74,5 +74,5 @@ test('real WordPress request, domain proof and private provisioning retain exact
       await assert.rejects(apps.entry(person, clientId), ApplicationError);
       await apps.grant(person, app.id, person, undefined);
       assert.equal((await apps.entry(person, clientId)).admitted, true);
-    } finally { await pool.end(); }
+    } finally { await close(); }
   });

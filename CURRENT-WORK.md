@@ -1,5 +1,13 @@
 # Execution ledger — MVP-0
 
+## Owner-authorized first-party consolidation — 2026-11-24 UTC
+
+New branch `feat/wordpress-consolidation` starts at PR61/3131df44bb7f6bb006a2dac6bcbac29591f288e9 and selectively incorporates Cursor PR60/6ad3ec96d3c18f06d993c8e72d941fc0d90dd8e1. Both source branches remain intact. Main remains3d9220a140d61df5effe633bc72cf5142c4a8371. The retained connector/authentication/registration/session guards are combined with Cursor's isolated DB schemas, readiness-bound port claims, dependency lock and representative hostname/nginx/PHP-FPM TLS fixture.
+
+Version0.1.0-alpha.6 is a first-party release candidate: production migrations end at006; Stage B consent/profile routes, UI, CLI and migrations007/008 are excluded and preserved in PR61. Even a stale preview enablement flag cannot expose `/v1/preview`. No data-drop migration is introduced. The negative external token privacy gate remains; universal publisher activation is not implemented.
+
+Local API/web typecheck/build, web22/reference16, fixture safety2, infrastructure Python45 and production dependency audit pass. Actual PostgreSQL repeatability, PHP and both WordPress runtime profiles await new-branch CI. The HTTPS fixture uses locked compiled API source and real client request/provision/readback, with explicitly synthetic DNS/review inputs. Source acceptance extends through39 passes. See ADR013 and the consolidation QA/runbook. No merge, staging/production promotion, real-site installation or pilot success. Relates to #59; keep umbrella open.
+
 ## Continued WordPress and external-consent implementation — 2026-11-24 UTC
 
 Independent comparison branch/PR61 continues from a0583c09; Cursor PR60 remains separate. Alpha.5 adds site-admin selected dedicated frontend login pages with enforced server-side/no-JavaScript SSO and safe original destinations, while leaving unselected public pages with login actions public. No theme edits, new authentication mode or local role/commerce ownership change is introduced.

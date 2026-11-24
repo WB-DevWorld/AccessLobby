@@ -101,7 +101,6 @@ services:
       OIDC_API_AUDIENCE: accesslobby-api
       ALLOWED_CLIENT_IDS: ${ALLOWED_CLIENT_IDS:?}
       GIT_SHA: ${GIT_SHA:?}
-      EXTERNAL_PROFILE_PREVIEW_ENABLED: ${EXTERNAL_PROFILE_PREVIEW_ENABLED:-false}
     expose: ["3001"]
     networks: [backend]
     depends_on:
@@ -120,7 +119,6 @@ services:
       GIT_SHA: ${GIT_SHA:?}
       SESSION_SECRET: ${SESSION_SECRET:?}
       API_INTERNAL_URL: http://api:3001
-      EXTERNAL_PROFILE_PREVIEW_ENABLED: ${EXTERNAL_PROFILE_PREVIEW_ENABLED:-false}
       PUBLIC_REGISTRATION_ENABLED: ${PUBLIC_REGISTRATION_ENABLED:-false}
     expose: ["3000"]
     networks: [backend]

@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { Pool } from 'pg';
+import { openIsolatedDatabase } from './isolated-database.js';
 import { OrganizationStore, OrganizationError } from '../src/organizations.js';
 
 test('personal identity, membership invitation, role transfer and isolation', { skip: !process.env.TEST_DATABASE_URL }, async () => {
-  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+  const { pool, close } = await openIsolatedDatabase();
   const store = new OrganizationStore(pool);
   const owner = crypto.randomUUID();
   const member = crypto.randomUUID();
@@ -48,11 +48,11 @@ test('personal identity, membership invitation, role transfer and isolation', { 
     assert.deepEqual(audit.rows.map(row => row.action), [
       'organization.created', 'invitation.created', 'invitation.accepted', 'membership.role.owner', 'membership.left'
     ]);
-  } finally { await pool.end(); }
+  } finally { await close(); }
 });
 
 test('invitation lifecycle, administrator limits and rejoining after removal', { skip: !process.env.TEST_DATABASE_URL }, async () => {
-  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+  const { pool, close } = await openIsolatedDatabase();
   const store = new OrganizationStore(pool);
   const [owner, admin, member] = Array.from({ length: 3 }, () => crypto.randomUUID()) as [string, string, string];
   const forbidden = (code: string) => (error: unknown) => error instanceof OrganizationError && error.code === code;
@@ -81,5 +81,5 @@ test('invitation lifecycle, administrator limits and rejoining after removal', {
     await pool.query("UPDATE organizations SET status = 'suspended' WHERE id = $1", [org.id]);
     assert.deepEqual(await store.activeMemberships(member), []);
     assert.deepEqual(await store.activeMemberships(owner), []);
-  } finally { await pool.end(); }
+  } finally { await close(); }
 });

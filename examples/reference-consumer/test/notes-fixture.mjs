@@ -8,6 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { SignJWT, exportJWK, generateKeyPair, jwtVerify } from 'jose';
 import { BACKCHANNEL_EVENT } from '../logout.mjs';
+import { listenOnClaimedPort } from './claimed-port.mjs';
 
 const listen = async server => { server.listen(0, '127.0.0.1'); await once(server, 'listening'); return server.address().port; };
 const json = (response, body, status = 200) => { response.writeHead(status, { 'content-type': 'application/json' }); response.end(JSON.stringify(body)); };
@@ -58,23 +59,29 @@ export async function notesFixture() {
   });
   upstreamOrigin = `http://127.0.0.1:${await listen(upstream)}`;
   issuer = `${upstreamOrigin}/realms/accesslobby-first-party`;
-  const reservation = createServer();
-  const port = await listen(reservation); await new Promise(resolve => reservation.close(resolve));
-  origin = `http://127.0.0.1:${port}`;
-  const child = spawn(process.execPath, ['server.mjs'], { cwd: fileURLToPath(new URL('..', import.meta.url)),
-    env: { ...process.env, PORT: String(port), CONSUMER_ORIGIN: origin, OIDC_ISSUER: issuer, OIDC_CLIENT_ID: clientId,
-      ACCESSLOBBY_API_URL: upstreamOrigin, NOTES_ENABLED: 'true', APP_ENTRY_REQUIRED: 'true', PUBLIC_REGISTRATION_ENABLED: 'false', GRANTED_PERSON_IDS: '' }, stdio: 'ignore' });
+  let childStderr = '';
+  const child = await listenOnClaimedPort(async port => {
+    origin = `http://127.0.0.1:${port}`;
+    const spawned = spawn(process.execPath, ['server.mjs'], { cwd: fileURLToPath(new URL('..', import.meta.url)),
+      env: { ...process.env, PORT: String(port), CONSUMER_ORIGIN: origin, OIDC_ISSUER: issuer, OIDC_CLIENT_ID: clientId,
+        ACCESSLOBBY_API_URL: upstreamOrigin, NOTES_ENABLED: 'true', APP_ENTRY_REQUIRED: 'true', PUBLIC_REGISTRATION_ENABLED: 'false', GRANTED_PERSON_IDS: '' },
+      stdio: ['ignore', 'ignore', 'pipe'] });
+    spawned.stderr.on('data', chunk => { childStderr = (childStderr + chunk).slice(-4000); });
+    let ready = false;
+    for (let i = 0; i < 60; i++) {
+      try { ready = (await fetch(`${origin}/health/live`)).ok; if (ready) break; } catch { /* startup */ }
+      if (spawned.exitCode !== null) throw new Error(`Notes fixture app exited\n${childStderr}`);
+      await delay(50);
+    }
+    if (!ready) throw new Error(`Notes fixture app did not start\n${childStderr}`);
+    return spawned;
+  });
   const close = async () => {
     if (child.exitCode === null && child.signalCode === null) { const exited = once(child, 'exit'); child.kill(); await exited; }
     await new Promise(resolve => upstream.close(resolve));
   };
   try {
-    let ready = false;
-    for (let i = 0; i < 60; i++) {
-      try { ready = (await fetch(`${origin}/health/live`)).ok; if (ready) break; } catch { /* startup */ }
-      if (child.exitCode !== null) throw new Error('Notes fixture app exited'); await delay(50);
-    }
-    assert.equal(ready, true);
+    assert.equal(origin.startsWith('http://127.0.0.1:'), true);
   } catch (error) { await close(); throw error; }
   return { origin, issuer, clientId, close,
     setEntry: value => { entry = value; }, setBrowserUser: user => { browserUser = user; },

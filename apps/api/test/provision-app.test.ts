@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
-import { Pool } from 'pg';
+import { openIsolatedDatabase } from './isolated-database.js';
 import { ApplicationStore } from '../src/applications.js';
 import { proofValue } from '../src/origin-proof.js';
 import { matchesClient, provisionApp, reconcileClient, representation } from '../src/provision-app.js';
@@ -74,7 +74,7 @@ test('private reconciler rejects a conflicting existing client', async () => {
 
 test('private activation joins DNS proof, IAM readback and registry admission',
   { skip: !process.env.TEST_DATABASE_URL }, async () => {
-    const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+    const { pool, close } = await openIsolatedDatabase();
     const owner = randomUUID();
     const clientId = `activation-${randomUUID()}`;
     let challenge = '', published = true, iamCalls = 0, mismatch = true;
@@ -133,5 +133,5 @@ test('private activation joins DNS proof, IAM readback and registry admission',
         ['application.requested', 'application.origin_verified', 'application.activated']);
       await assert.rejects(provisionApp(pool, app.id, '--activate-first-party', 'review-1234', options),
         /Only requested applications/);
-    } finally { await pool.end(); }
+    } finally { await close(); }
   });

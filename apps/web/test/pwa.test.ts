@@ -37,7 +37,7 @@ test('updates wait for an explicit message and critical account flows cannot req
   assert.doesNotMatch(source.slice(source.indexOf("self.addEventListener('install'"),
     source.indexOf("self.addEventListener('activate'")), /self\.skipWaiting\(\)/);
   for (const route of ['/auth/callback', '/recovery', '/account', '/identity', '/contexts',
-    '/organizations/id', '/apps', '/connections', '/connections/site', '/connections/action']) assert.equal(safeUpdateBoundary(route, false), false);
+    '/organizations/id', '/apps']) assert.equal(safeUpdateBoundary(route, false), false);
   assert.equal(safeUpdateBoundary('/', true), false);
   assert.equal(safeUpdateBoundary('/', false), true);
   assert.equal(safeUpdateBoundary('/future-route', false), false);
@@ -84,8 +84,6 @@ test('worker precaches only a neutral shell, never stores private routes or API 
   assert.equal(await request('https://accesslobby.example.test/account', 'navigate'), entries.get('/offline.html'));
   assert.equal(await request('https://accesslobby.example.test/auth/callback?code=secret', 'navigate'), entries.get('/offline.html'));
   assert.equal(await request('https://accesslobby.example.test/apps', 'cors'), undefined);
-  assert.equal(await request('https://accesslobby.example.test/connections', 'cors'), undefined);
-  assert.equal(await request('https://accesslobby.example.test/connections/action', 'cors', 'POST'), undefined);
   assert.equal(fetches, 2);
   assert.deepEqual([...entries.keys()], ['/offline.html', '/icons/icon-192.png', '/icons/icon-512.png']);
 });

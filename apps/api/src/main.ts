@@ -10,7 +10,6 @@ import { logoutVerifier, SessionRevocations } from './logout.js';
 import { OrganizationError, OrganizationStore, validId } from './organizations.js';
 import { ApplicationError, ApplicationStore, ClientRegistryUnavailable } from './applications.js';
 import { PeerSessions, PeerSessionError } from './peer-sessions.js';
-import { ExternalProfiles, externalPreviewContract } from './external-profiles.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
@@ -25,7 +24,6 @@ const peerSessions = new PeerSessions(pool, settings.issuer, client => applicati
   catch (error) { if (error instanceof ApplicationError && error.status === 403) return false; throw error; }
 });
 const organizations = new OrganizationStore(pool);
-const externalProfiles = new ExternalProfiles(pool);
 
 @Controller()
 class ApiController {
@@ -154,35 +152,6 @@ class ApiController {
     return this.withPerson(req, res, id => applications.request(id, body), true);
   }
 
-  @Get('v1/preview/external-consents')
-  externalConsents(@Req() req: any, @Res() res: any) {
-    res.setHeader('cache-control', 'no-store');
-    if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
-    return this.withPerson(req, res, async id => ({ contract: externalPreviewContract,
-      consents: await externalProfiles.mine(id), activationAllowed: false }), true);
-  }
-
-  @Get('v1/preview/external-profiles/:applicationId')
-  externalProfile(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
-    res.setHeader('cache-control', 'no-store');
-    if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
-    return this.withPerson(req, res, id => externalProfiles.review(id, appId), true);
-  }
-
-  @Post('v1/preview/external-consents/:applicationId')
-  grantExternalConsent(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
-    res.setHeader('cache-control', 'no-store');
-    if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
-    return this.withPerson(req, res, id => externalProfiles.grant(id, appId, body?.policyVersion, body?.scopes, body?.fingerprint), true);
-  }
-
-  @Delete('v1/preview/external-consents/:applicationId')
-  withdrawExternalConsent(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
-    res.setHeader('cache-control', 'no-store');
-    if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
-    return this.withPerson(req, res, id => externalProfiles.withdraw(id, appId), true);
-  }
-
   @Get('v1/applications/mine')
   myApplications(@Req() req: any, @Res() res: any) {
     return this.withPerson(req, res, async id => ({ contract: 'accesslobby.applications.v0.1',
@@ -285,5 +254,10 @@ class ApiController {
 class AppModule {}
 
 const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'log'] });
+// Stage A has no external preview, even if a stale environment flag is supplied.
+app.use('/v1/preview', (_req: any, res: any) => {
+  res.setHeader('cache-control', 'no-store');
+  return res.status(404).json({ error: 'not_found' });
+});
 app.enableShutdownHooks();
 await app.listen(settings.port, '0.0.0.0');

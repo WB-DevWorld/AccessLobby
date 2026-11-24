@@ -1,4 +1,12 @@
-# Compatibility and qualification
+# Consolidated alpha.6 qualification
+
+This package is a reviewed first-party pilot candidate. Its exact consolidated source/ZIP and passing results belong in the repository release acceptance record. The prior alpha.5 matrix below is historical evidence for the retained connector; it is not a substitute for re-running the combined branch.
+
+The release workflow checks PHP8.3/8.4/8.5 protocol/static/package, native Windows ZIP bytes, five independent two-WordPress behavior matrices (CPT/HPOS, WP6.9/7.1, Woo11.1/11.2/11.3, Kadence), plus the additional distinct-hostname nginx/PHP-FPM HTTPS smoke. The broad behavior matrix and representative hosting smoke are different scopes. New upgrade coverage uses the exact qualified alpha.5 ZIP.
+
+Multisite remains unsupported. Actual WoodMart/B2BKing/membership/cache/security/checkout-Blocks/extension and public-domain estate pilots remain unqualified until tested on their own installed versions. External publisher activation is excluded. A passing fixture does not establish production or actual CETECH/FLAIROC rollout.
+
+## Earlier candidate evidence
 
 This alpha supports reviewed first-party pilots. QUALIFIED below means the listed isolated fixture and revision, never every deployment of that product. Use a maintained security patch release in each WordPress/PHP line.
 

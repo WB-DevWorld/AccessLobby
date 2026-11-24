@@ -8,7 +8,7 @@ The page displays exact callback, logout-return and backchannel URLs, derived wi
 
 Keep scopes `openid profile email` for this first-party profile, `aud=accesslobby-api`, signed RS256 tokens, PKCE S256 and session-required backchannel logout. Set the backchannel URL before activation and confirm the registration/readback. Test connection metadata, then complete actual sign-in/linking; metadata checks alone do not qualify a client.
 
-For alpha.4 continuing session checks, apply API migrations005/006 and deploy the matching API before the plugin. Run the connection test, confirm opaque receipts are available and establish a fresh SSO session. Older sessions/API versions retain their earlier bounded behavior; they do not acquire retroactive revocation guarantees. See [logout](logout.md).
+For continuing session checks and typed WordPress registration, apply API migrations005/006 and deploy the matching API before the plugin. Run the connection test, confirm opaque receipts are available and establish a fresh SSO session. Older sessions/API versions retain their earlier bounded behavior; they do not acquire retroactive revocation guarantees. See [logout](logout.md).
 
 Configure cache exclusions from security.md. Enable opt-in JIT only after selecting subscriber or customer and reviewing its actual capabilities. The plugin rejects a modified default role with capabilities beyond read/level_0. Existing users must link while locally signed in. Add `[accesslobby_login]`, `[accesslobby_login intent="join"]`, the AccessLobby login block or `[accesslobby_account]` through the editor for custom themes.
 
@@ -17,3 +17,5 @@ For subdirectories use the displayed URLs verbatim. `home` and `siteurl` can dif
 Production must not define `ACCESSLOBBY_ALLOW_LOCAL_HTTP`. Its only exception is exact localhost/127.0.0.1/::1 when WordPress environment type is `local`. There is no staging HTTP exception.
 
 For dedicated theme or membership login pages, select the published pages under **Settings → AccessLobby → Frontend login pages**. Hybrid mode keeps their normal UI. AccessLobby only starts SSO on entry, even without JavaScript; a validated `redirect_to` returns to the original resource, otherwise the site home is used. Do not select ordinary browsing pages. A login action in a footer, shortcode or block does not by itself turn that public page into a mandatory login page. Read [frontend integration](frontend.md).
+
+Alpha.6 consolidates first-party support only. API migrations stop at006; the external preview from PR61 is a separate workstream and cannot be enabled here with an environment flag. Keep existing preview data when upgrading a development database; never delete users, orders or mappings to change release scope.

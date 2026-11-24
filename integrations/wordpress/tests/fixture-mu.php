@@ -45,7 +45,7 @@ add_action( 'template_redirect', static function () {
 	}
 } );
 add_filter( 'pre_http_request', static function ( $result, $args, $url ) {
-	if ( ! in_array( wp_parse_url( $url, PHP_URL_HOST ), array( '127.0.0.1', 'localhost' ), true ) ) {
+	if ( ! in_array( wp_parse_url( $url, PHP_URL_HOST ), array_merge( array( '127.0.0.1', 'localhost' ), defined( 'ACCESSLOBBY_FIXTURE_TLS' ) && ACCESSLOBBY_FIXTURE_TLS ? array( 'a.alwp.test', 'b.alwp.test', 'auth.alwp.test', 'api.alwp.test' ) : array() ), true ) ) {
 		return new WP_Error( 'fixture_external_service_blocked', 'Disposable fixtures do not use external updates or feeds' );
 	}
 	if ( get_option( 'alwp_fixture_outage' ) && str_contains( $url, '/v1/me' ) ) {
@@ -74,11 +74,22 @@ add_filter( 'rest_pre_dispatch', static function ( $result, $server, $request ) 
 	}
 	return $result;
 }, 10, 3 );
-add_action( 'wp_footer', static function () {
+$fixture_identity = static function () {
 	echo '<output id="fixture-runtime" data-plugin-version="' . esc_attr( defined( 'ACCESSLOBBY_WP_VERSION' ) ? ACCESSLOBBY_WP_VERSION : '' ) . '"></output>';
 	echo '<output id="fixture-identity" data-user="' . esc_attr( (string) get_current_user_id() ) . '" data-admin="' . esc_attr( current_user_can( 'manage_options' ) ? 'yes' : 'no' ) . '" data-order-received="' . esc_attr( function_exists( 'is_order_received_page' ) && is_order_received_page() ? 'yes' : 'no' ) . '"></output>';
 	echo '<input id="fixture-direct-nonce" type="hidden" value="' . esc_attr( wp_create_nonce( 'fixture_direct_local_login' ) ) . '">';
 	echo '<input id="fixture-unlink-nonce" type="hidden" value="' . esc_attr( wp_create_nonce( 'alwp_unlink' ) ) . '">';
-} );
+};
+add_action( 'wp_footer', $fixture_identity );
+add_action( 'login_footer', $fixture_identity );
 // Prevent real mail from disposable fixtures; never relax authentication/authorization.
 add_filter( 'pre_wp_mail', '__return_false' );
+
+if ( defined( 'ACCESSLOBBY_FIXTURE_TLS' ) && ACCESSLOBBY_FIXTURE_TLS ) {
+ add_filter( 'http_allowed_safe_ports', static fn( $ports ) => array_merge( $ports, array( 8443 ) ) );
+ add_filter( 'http_request_host_is_external', static fn( $external, $host ) => in_array( $host, array( 'a.alwp.test', 'b.alwp.test', 'auth.alwp.test', 'api.alwp.test' ), true ) ? true : $external, 10, 2 );
+ add_filter( 'http_request_args', static function ( $args, $url ) {
+  if ( in_array( wp_parse_url( $url, PHP_URL_HOST ), array( 'a.alwp.test', 'b.alwp.test', 'auth.alwp.test', 'api.alwp.test' ), true ) ) { $args['sslcertificates'] = '/certs/ca.crt'; }
+  return $args;
+ }, 10, 2 );
+}

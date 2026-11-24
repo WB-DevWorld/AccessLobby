@@ -1,5 +1,7 @@
 # ADR 011 — Closed external identity preparation
 
+Consolidation scope: the implementation described here is preserved in PR61/3131df44bb7f6bb006a2dac6bcbac29591f288e9. It is excluded from the alpha.6 first-party runtime/migrations; see ADR013.
+
 Status: **MVP-PROVISIONAL / NEW-RECOMMENDATION**, implemented preparatory storage/tests, 2026-11-23. External authentication activation remains **DEFERRED**. This does not supersede unresolved policy in `external-app-contract-decision.md`.
 
 The current request/DNS-proof contract can now prepare an inactive external profile privately. `prepare-external-app --plan` is read-only; `--prepare REVIEW` rechecks current DNS proof, exact URLs, requested/unreviewed state and active publisher. It records an external trust classification, review reference and minimal `openid` policy. It creates no IAM client and has no IAM credential. `--suspend REVIEW` blocks the prepared profile and retains audit/consent data. The existing database constraint, first-party provisioner and API client registry still prohibit external activation, including environment-allowlist bypasses.
