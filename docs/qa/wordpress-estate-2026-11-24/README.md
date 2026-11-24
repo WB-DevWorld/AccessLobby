@@ -1,6 +1,6 @@
 # WordPress estate qualification — 2026-11-24
 
-Status: **PARTIALLY QUALIFIED**. The matching API is promoted and AccessLobby SSO 0.1.0-alpha.8 is configured in hybrid mode with JIT off on all three sites. Local login is proved on both training sites. Client registration, Join, linking, cross-site SSO and emergency recovery are not qualified.
+Status: **PARTIALLY QUALIFIED**. AccessLobby SSO 0.1.0-alpha.8 is hybrid with JIT off on all three sites. Local customer login, order visibility and this-site sign-out are proved on all three. Application requests, DNS proof, Join, linking, cross-site SSO and emergency recovery are not qualified.
 
 The earlier “API promotion blocked” note is historical. [PR62](https://github.com/WB-DevWorld/AccessLobby/pull/62) merged as `d875712ecb41e06d8905046e0f4bc93bb8e9e7a5`. Public `/health/ready` reports that revision. Running images, unchanged IAM and gateway pins:
 
@@ -21,7 +21,9 @@ Alpha.7 from CI run 45382011687, SHA256 `373dce094881278b9f08e28ba3e847bb6634719
 | training.flairoc.com | `flairoc-training-wp` | `https://training.flairoc.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://training.flairoc.com/wp-json/accesslobby/v1/backchannel-logout` |
 | staging.cetechbpa.com | `cetech-staging-wp` | `https://staging.cetechbpa.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://staging.cetechbpa.com/wp-json/accesslobby/v1/backchannel-logout` |
 
-Registration is blocked on DNS. Both domains use `jason.ns.cloudflare.com` and `roxy.ns.cloudflare.com`. The available Wrangler token expired at 2026-11-10T11:43:48Z and does not include DNS edit. No TXT proof was published and no client was requested. Admission will be `authenticated_open` for these customer sites once a reviewed request exists. `ALLOWED_CLIENT_IDS` was not changed.
+Application requests are **BLOCKED** before creation. `https://accesslobby.realjanelove.com/apps/manage` and `/auth/login` send this browser to the Keycloak sign-in form. There is no authenticated owner session, so no request was submitted and no challenge was invented. Database insertion was not used. `ALLOWED_CLIENT_IDS` was not changed.
+
+DNS publication is a separate **BLOCKED** step. Both domains use `jason.ns.cloudflare.com` and `roxy.ns.cloudflare.com`. The Wrangler token expired at 2026-11-10T11:43:48Z and its scopes do not include DNS edit. The three TXT hosts will be `_accesslobby-verify.training.cetechbpa.com`, `_accesslobby-verify.training.flairoc.com` and `_accesslobby-verify.staging.cetechbpa.com`. Their values must come from the created requests. Admission will be `authenticated_open` and visibility `hidden` once an owner can submit them.
 
 ## Installations
 
@@ -29,9 +31,9 @@ All three are single-site, `wp_get_environment_type()=staging`, HPOS runtime ena
 
 | Site | WordPress / PHP / Woo | Theme | Commerce policy | Notable active stack | Result |
 |---|---|---|---|---|---|
-| `https://staging.cetechbpa.com/` | 7.1.5 / 8.4.27 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9, WP Rocket 3.24, Redis Object Cache 3.0.0, Wordfence 9.1.1, delivery engine 1.0.0-m2.5, Jetpack 16.4. Paystack gateway disabled. B2BKing installed, inactive. | Alpha.8 hybrid, JIT off. Configuration saved. Browser login **UNTESTED**. |
+| `https://staging.cetechbpa.com/` | 7.1.5 / 8.4.27 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9, WP Rocket 3.24, Redis Object Cache 3.0.0, Wordfence 9.1.1, delivery engine 1.0.0-m2.5, Jetpack 16.4. Paystack gateway disabled. B2BKing installed, inactive. | Alpha.8 hybrid, JIT off. Local customer login, order 54346 and this-site sign-out **QUALIFIED**. |
 | `https://training.cetechbpa.com/` | 7.1.4 / 8.4.24 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout on; My Account registration on | B2BKing Core 5.2.61 and B2BKing 5.6.80, WPML 5.0.2, WP Rocket 3.24, Redis Object Cache 3.0.0, delivery engine 1.0.0-m2.4, POS bridge 0.6.0-stg05, MailPoet 5.44.0. Paystack enabled with its test-mode flag set. COD and B2BKing invoice/PO gateways enabled. Wordfence installed, inactive. | Alpha.8 hybrid, JIT off, owned by `cetechtraining` (directory 775, plugin file 664). Local browser login, order 50402 and this-site sign-out **QUALIFIED** again after the alpha.8 upgrade. SSO **BLOCKED** on client registration. |
-| `https://training.flairoc.com/` | 7.1.1 / 8.4.25 / 11.1.1 | Kadence 1.5.2 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9 is active while the theme is Kadence. ShopLentor 3.5.2, pre-orders 2.3.1, Mailchimp for WP 4.14.1. BACS and COD enabled. | Alpha.8 hybrid, JIT off. Local login created a session on alpha.7, then `wp-admin` returned to My Account. The account page contains the Woo shortcode, but the rendered page shows the coming-soon hero and not the account dashboard. Order display **UNTESTED**. SSO **BLOCKED** on client registration. |
+| `https://training.flairoc.com/` | 7.1.1 / 8.4.25 / 11.1.1 | Kadence 1.5.2 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9 is active while the theme is Kadence. ShopLentor 3.5.2, pre-orders 2.3.1, Mailchimp for WP 4.14.1. BACS and COD enabled. | Alpha.8 hybrid, JIT off. WooCommerce coming-soon mode covers the whole site. A logged-in account-page exemption now lets the customer see order 4043. Anonymous visitors still see the coming-soon page. This-site sign-out **QUALIFIED**. SSO **BLOCKED** on client registration. |
 
 `p06-physical.cetechbpa.com` is a separate staging schema on the training database host. It was inventoried only and not backed up or changed. No subdirectory installation was found. Estate subdirectory coverage remains **UNTESTED**; fixture subdirectory evidence stays in the consolidation CI record.
 
@@ -55,7 +57,24 @@ Backups live only on the site hosts, mode 700, outside the web root, under `acce
 
 Before activation, each backup gzip still matched the table above. Each site then received two synthetic local accounts, `al-qual-customer` and `al-qual-admin`, plus one private virtual product and one on-hold order. Payment used an already enabled non-card gateway (`cod` on the two CETECH sites). New Action Scheduler rows for product lookup were left in place. No mail, webhook, Paystack, POS, delivery, SMS or ERP hook was canceled because none of those names appeared. Passwords stay in the host credential file, mode 600, and are not recorded here.
 
-On training.cetechbpa.com a real browser submitted the local customer password at `wp-login.php`. The password form and “Continue with AccessLobby” were both present. The session landed on My Account as AccessLobby Qualification Customer, and `/my-account/orders/` showed order 50402. Woo logout opened the plugin's sign-out choice. “Sign out of this site” ended that local session: My Account then showed the login form, the AccessLobby button, and the existing B2B registration fields. No AccessLobby credential was entered. On training.flairoc.com the same customer login created a WordPress session and `wp-admin/profile.php` redirected back to My Account, which confirms the session. The published My Account page contains only the Woo shortcode, but the rendered page shows “is coming soon” and does not show the account dashboard or order 4043. That account surface is **PARTIALLY QUALIFIED**. Staging has not had this browser pass.
+On training.cetechbpa.com a real browser submitted the local customer password at `wp-login.php`. The password form and “Continue with AccessLobby” were both present. The session landed on My Account as AccessLobby Qualification Customer, and `/my-account/orders/` showed order 50402. Woo logout opened the plugin's sign-out choice. “Sign out of this site” ended that local session: My Account then showed the login form, the AccessLobby button, and the existing B2B registration fields. No AccessLobby credential was entered. On staging.cetechbpa.com the same alpha.8 browser flow signed in as the synthetic customer, showed order 54346 at `/my-account/orders/`, and “Sign out of this site” returned the signed-out confirmation. Local staging login is **QUALIFIED**.
+
+FLAIROC training’s missing dashboard was WooCommerce Launch Your Store, not a theme edit. `woocommerce_coming_soon` is `yes` and `woocommerce_store_pages_only` is `no`, so every front-end page is coming soon except a user who can `manage_woocommerce`. The My Account page is still page 13 with the Woo shortcode. The private-link option is enabled; its share key was not used. A must-use plugin, `al-qual-account-preview.php`, uses the supported `woocommerce_coming_soon_exclude` filter and returns true only for a signed-in account page. The existing `flairoc-training-safety` plugin only disables `wp_mail` and was left in place. After the exemption, the synthetic customer saw the account dashboard and order 4043, then signed out of this site. The anonymous homepage still says the site is coming soon, so the shop was not launched. That account flow is **QUALIFIED** with the exemption installed.
+
+## Recovery
+
+Enforced mode stays off. The staging origin answers HTTPS on its own address, but the certificate is issued by `CN=staging.cetechbpa.com` to itself, so a normal browser does not trust it. PHP still sees the TCP peer because nginx’s forwarded-header handling is commented out. A Cloudflare address is not an administrator, and a loopback tunnel would identify every local process rather than one person. No recovery allowlist or ticket was created.
+
+## Capability results
+
+| Capability | Result |
+|---|---|
+| Local customer login, own order, and this-site sign-out on alpha.8 | **QUALIFIED** on all three sites |
+| FLAIROC coming-soon account exemption | **QUALIFIED** for signed-in account pages; public coming-soon posture unchanged |
+| Application request, origin proof, reviewed activation | **BLOCKED** on the missing owner session; DNS edit is a second blocker |
+| Unlinked-identity refusal, explicit linking, repeat login | **BLOCKED** until the clients are active |
+| Quiet SSO, Join/JIT, all-apps logout, backchannel negatives | **BLOCKED** until the clients are active |
+| Enforced mode and emergency recovery | **BLOCKED** until a single-administrator route is rehearsed |
 
 ## Not claimed
 
