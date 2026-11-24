@@ -60,6 +60,8 @@ Use Python instead of python3 on Windows if appropriate. Optional --output write
 
 Expected result: HTTP400 with JSON error=invalid_logout, no-store, and no cached response. This proves only rejection of that malformed request from that vantage. It does not prove signature validation, issuer delivery, successful logout, all-app propagation, browser login or every source IP/user-agent. A challenge result includes its safe Ray ID; an ordinary403 is not automatically attributed to Cloudflare.
 
+An unexpected HTTP 2xx may be a maintenance page or intermediary response; it is not proof that a JWT was accepted. Treat it as an unresolved endpoint response and investigate privately.
+
 If actual server delivery is challenged, scope the applicable product's exception to the exact registered POST route. Successful probes do not justify adding an unneeded bypass. Browser-IP exceptions do not cover the IAM sender. Preserve signature/issuer/audience/event/time/session/replay validation and appropriate rate limits. Verify an invalid request is rejected without changing a session, then perform actual issuer-delivered logout and targeted invalidation. Do not mark backchannel qualified from the preflight alone.
 
 ### Initial live observation
@@ -74,6 +76,10 @@ On training, test site-only logout of the AccessLobby-authenticated session, qui
 
 Keep the application-management owner session separate from the qualification browser. Test shared logout with the complete issuer confirmation, a second independent browser/device, actual backchannel delivery and re-entry requiring credentials as policy dictates. Run controlled Join/JIT and collision/duplicate-prevention checks when the verification channel is available, then restore JIT off.
 
+Test both logout directions. In particular, initiate all-apps logout from AccessLobby web while the training WordPress session is still active, then verify the signed backchannel event and targeted WordPress invalidation. Logging out from WordPress itself first clears its own session, so that direction alone cannot prove receiver-side invalidation. Distinguish backchannel delivery from later receipt rechecks.
+
 After the other sites are reachable, link each existing synthetic customer through fresh dual proof, then start the separate measured two-site quiet-SSO journey. Keep FLAIROC's anonymous coming-soon posture and temporary signed-in account exemption; document anonymous account behavior instead of opening the whole store.
+
+Record any pre-cleared browser or temporary test-IP exception as a test condition. A warm-browser result proves OIDC SSO under those conditions; keep the cold-browser Cloudflare journey as a separate compatibility result.
 
 Keep enforced mode off pending trusted recovery. Preserve image pins, production sites, existing user IDs, roles, links and commerce data. Update the estate ledger with separate browser-vantage, issuer-vantage, rule-change and rollback evidence. Overall qualification and external-publisher gates stay open.
