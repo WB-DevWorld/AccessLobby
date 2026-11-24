@@ -172,30 +172,25 @@ async function finishVerifiedRegistration(page, email) {
   } catch (error) {
     throw new Error('Verification link did not open');
   }
-  for (let step = 0; step < 4 && !page.url().includes('a.alwp.test'); step += 1) {
+  const deadline = Date.now() + 40000;
+  while (Date.now() < deadline && !page.url().includes('a.alwp.test')) {
     const password = page.locator('#password');
     if (await password.isVisible().catch(() => false)) {
       await password.fill(config.password);
       const confirm = page.locator('#password-confirm');
       if (await confirm.isVisible().catch(() => false)) await confirm.fill(config.password);
-      await page.locator('#kc-form-buttons input, #kc-form-buttons button, input[type="submit"], button[type="submit"]').first().click();
+      await page.locator('#kc-form-buttons input, #kc-form-buttons button').first().click();
+      await page.waitForURL(url => !url.href.includes('UPDATE_PASSWORD'), { timeout: 15000 }).catch(() => undefined);
       continue;
     }
-    const proceed = page.getByRole('link', { name: /proceed|continue|log in|sign in|click here/i });
-    if (await proceed.count()) {
+    const proceed = page.getByRole('link', { name: /proceed|continue|click here/i });
+    if (await proceed.first().isVisible().catch(() => false)) {
       await proceed.first().click();
       continue;
     }
-    const submit = page.locator('input[type="submit"], button[type="submit"]');
-    if (await submit.first().isVisible().catch(() => false)) {
-      await submit.first().click();
-      continue;
-    }
-    break;
+    await page.waitForTimeout(300);
   }
-  if (!page.url().includes('a.alwp.test')) {
-    await page.waitForURL(url => url.hostname === 'a.alwp.test', { timeout: 30000 });
-  }
+  if (!page.url().includes('a.alwp.test')) throw new Error('Verified registration did not return to the initiating site');
 }
 
 async function joinFlows(browser, site) {
