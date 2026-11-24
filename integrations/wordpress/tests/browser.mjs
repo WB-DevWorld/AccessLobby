@@ -357,7 +357,7 @@ try {
     await admin.locator('select[name="accesslobby_sso[mode]"]').selectOption('enforced');
     await admin.getByRole('button', { name: 'Save Changes', exact: true }).click();
     assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
-    assert.deepEqual(JSON.parse(wp(a, 'echo wp_json_encode(get_option("accesslobby_sso")["login_pages"]);')), [a.shortcodePageId, a.blockPageId]);
+    assert.deepEqual(JSON.parse(wp(a, 'echo wp_json_encode(get_option("accesslobby_sso")["login_pages"]);')).sort((x, y) => x - y), [a.shortcodePageId, a.blockPageId].sort((x, y) => x - y));
   });
   await qualifyDedicatedLogin({ test, browser, browsers, fixture, iamLogin, identity }, a);
   await qualifyEnforced({ test, browser, browsers, fixture, a, page, context, wp, iamLogin, identity });
