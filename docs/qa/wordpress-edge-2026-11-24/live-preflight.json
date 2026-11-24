@@ -1,0 +1,57 @@
+{
+  "vantage": "ChatGPT Work executor; not the owner browser or verified IAM delivery host",
+  "scope": "One credential-free malformed-token POST per approved endpoint. Browser login, signature checking, live-session preservation and signed issuer delivery are not qualified by this report.",
+  "observed": [
+    {
+      "evidenceType": "malformed-backchannel-machine-preflight",
+      "recordedAt": "2026-11-24T19:18:44.446932+00:00",
+      "host": "training.cetechbpa.com",
+      "path": "/wp-json/accesslobby/v1/backchannel-logout",
+      "routeKind": "pretty",
+      "method": "POST",
+      "passed": true,
+      "signedLogoutQualified": false,
+      "status": 400,
+      "tlsVerified": true,
+      "cloudflareChallenge": false,
+      "cfRay": "a5fac3068d1023d3-ORD",
+      "cacheStatus": "DYNAMIC",
+      "noStore": true,
+      "result": "invalid_test_token_rejected"
+    },
+    {
+      "evidenceType": "malformed-backchannel-machine-preflight",
+      "recordedAt": "2026-11-24T19:18:45.748334+00:00",
+      "host": "staging.cetechbpa.com",
+      "path": "/wp-json/accesslobby/v1/backchannel-logout",
+      "routeKind": "pretty",
+      "method": "POST",
+      "passed": true,
+      "signedLogoutQualified": false,
+      "status": 400,
+      "tlsVerified": true,
+      "cloudflareChallenge": false,
+      "cfRay": "a5fac30eebad3a0f-ORD",
+      "cacheStatus": "DYNAMIC",
+      "noStore": true,
+      "result": "invalid_test_token_rejected"
+    },
+    {
+      "evidenceType": "malformed-backchannel-machine-preflight",
+      "recordedAt": "2026-11-24T19:18:47.087944+00:00",
+      "host": "training.flairoc.com",
+      "path": "/wp-json/accesslobby/v1/backchannel-logout",
+      "routeKind": "pretty",
+      "method": "POST",
+      "passed": true,
+      "signedLogoutQualified": false,
+      "status": 400,
+      "tlsVerified": true,
+      "cloudflareChallenge": false,
+      "cfRay": "a5fac3102ac323d3-ORD",
+      "cacheStatus": "DYNAMIC",
+      "noStore": true,
+      "result": "invalid_test_token_rejected"
+    }
+  ]
+}
