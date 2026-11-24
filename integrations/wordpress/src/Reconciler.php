@@ -55,7 +55,7 @@ final class Reconciler {
 				return $user;
 			}
 			$c = Config::get();
-			if ( ! hash_equals( Config::fingerprint( $c ), $data['configuration'] ?? '' ) ||
+			if ( ! is_string( $data['configuration'] ?? null ) || ! Config::recognizes( $c, $data['configuration'] ) ||
 				! is_string( $peer['receipt'] ?? null ) || ! preg_match( '/^[A-Za-z0-9_-]{43}$/D', $peer['receipt'] ) ) {
 				return $this->retire( $user, $token );
 			}
@@ -109,7 +109,7 @@ final class Reconciler {
 		if ( ! $peer ) {
 			return false;
 		}
-		if ( ! hash_equals( Config::fingerprint( $c ), $data['configuration'] ?? '' ) ) {
+		if ( ! is_string( $data['configuration'] ?? null ) || ! Config::recognizes( $c, $data['configuration'] ) ) {
 			throw new Failure( 'session_configuration_changed' );
 		}
 		$result = $this->request( $c, $peer['receipt'], 'end' );

@@ -21,7 +21,33 @@ final class Config {
 	}
 
 	public static function fingerprint( array $c ): string {
-		return hash( 'sha256', wp_json_encode( array( $c['issuer'], $c['api'], $c['client_id'], site_url(), home_url() ) ) );
+		// Request-phase URL filters can add or remove only a trailing slash. That is not a configuration change.
+		return self::digest( $c, untrailingslashit( site_url() ), untrailingslashit( home_url() ) );
+	}
+
+	/** Accept the canonical fingerprint and a session sealed before slash normalization. */
+	public static function recognizes( array $c, string $stored ): bool {
+		$site = site_url();
+		$home = home_url();
+		if ( hash_equals( self::digest( $c, $site, $home ), $stored ) ) {
+			return true;
+		}
+		// Old sessions could independently spell either base URL with a slash.
+		// Compare only spellings of these current URLs; real trust changes still fail.
+		$site = untrailingslashit( $site );
+		$home = untrailingslashit( $home );
+		foreach ( array( $site, $site . '/' ) as $legacy_site ) {
+			foreach ( array( $home, $home . '/' ) as $legacy_home ) {
+				if ( hash_equals( self::digest( $c, $legacy_site, $legacy_home ), $stored ) ) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static function digest( array $c, string $site, string $home ): string {
+		return hash( 'sha256', wp_json_encode( array( $c['issuer'], $c['api'], $c['client_id'], $site, $home ) ) );
 	}
 
 	public static function validate( array $c ): void {
@@ -47,13 +73,20 @@ final class Config {
 		self::safe_role( $c['default_role'] );
 	}
 
+	public static function elevating_capability( string $capability ): bool {
+		// Wordfence Login Security adds these to every role so a person can open their own
+		// login-security screen and enroll their own second factor. They do not grant content,
+		// user, shop, or settings management. This is not a firewall or cache allowlist.
+		return ! in_array( $capability, array( 'read', 'level_0', 'wfls_show_login_security', 'wf2fa_activate_2fa_self' ), true );
+	}
+
 	public static function safe_role( string $name ): void {
 		$role = get_role( $name );
 		if ( ! in_array( $name, array( 'subscriber', 'customer' ), true ) || ! $role ) {
 			throw new Failure( 'unsafe_default_role' );
 		}
 		foreach ( $role->capabilities as $cap => $enabled ) {
-			if ( $enabled && ! in_array( $cap, array( 'read', 'level_0' ), true ) ) {
+			if ( $enabled && self::elevating_capability( $cap ) ) {
 				throw new Failure( 'unsafe_default_role' );
 			}
 		}

@@ -1,0 +1,58 @@
+{
+  "contract": "accesslobby.external-privacy-audit.v0.1",
+  "passed": false,
+  "clients": 2,
+  "findings": [
+    {
+      "client": 0,
+      "surface": "profile",
+      "code": "invalid_app_scoped_subject"
+    },
+    {
+      "client": 0,
+      "surface": "idToken",
+      "code": "undeclared_claim",
+      "claim": "typ"
+    },
+    {
+      "client": 0,
+      "surface": "idToken",
+      "code": "cross_client_identifier",
+      "claim": "sid"
+    },
+    {
+      "client": 0,
+      "surface": "accessToken",
+      "code": "cross_client_identifier",
+      "claim": "sid"
+    },
+    {
+      "client": 1,
+      "surface": "profile",
+      "code": "invalid_app_scoped_subject"
+    },
+    {
+      "client": 1,
+      "surface": "idToken",
+      "code": "undeclared_claim",
+      "claim": "typ"
+    },
+    {
+      "client": 1,
+      "surface": "idToken",
+      "code": "cross_client_identifier",
+      "claim": "sid"
+    },
+    {
+      "client": 1,
+      "surface": "accessToken",
+      "code": "cross_client_identifier",
+      "claim": "sid"
+    }
+  ],
+  "evidenceType": "REAL_IAM_NEGATIVE_PRIVACY_PROBE",
+  "pairwiseSubjectsDiffer": true,
+  "oneCredentialPrompt": true,
+  "externalApiRejected": true,
+  "externalApplicationsActivated": 0
+}

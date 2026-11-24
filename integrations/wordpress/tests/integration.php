@@ -73,6 +73,21 @@ $new_id = $store->resolve( $new, $jit );
 $check( $new_id > 0 && $new_id === $store->resolve( $new, $jit ), 'JIT exactly one local user' );
 $check( ! user_can( $new_id, 'manage_options' ) && ! user_can( $new_id, 'edit_users' ), 'JIT never grants privileged capabilities' );
 $check( get_userdata( $new_id )->roles === array( $c['default_role'] ), 'explicit safe local default role' );
+$subscriber = get_role( 'subscriber' );
+$subscriber->add_cap( 'wfls_show_login_security' );
+$subscriber->add_cap( 'wf2fa_activate_2fa_self' );
+Config::safe_role( 'subscriber' );
+$check( true, 'Wordfence self-service subscriber capabilities remain eligible' );
+$wf = $new; $wf['identity'] = wp_generate_uuid4(); $wf['subject'] = 'wf-' . $suffix; $wf['email'] = 'wf_' . $suffix . '@example.test';
+$wf_config = $jit; $wf_config['default_role'] = 'subscriber';
+$wf_id = $store->resolve( $wf, $wf_config );
+$wf_user = get_userdata( $wf_id );
+$check( array( 'subscriber' ) === $wf_user->roles && ! Store::privileged( $wf_user ), 'self-service login-security capabilities do not privilege a new account' );
+$subscriber->add_cap( 'manage_options' );
+$denied( fn() => Config::safe_role( 'subscriber' ), 'administration capability remains an unsafe default role' );
+$subscriber->remove_cap( 'manage_options' );
+$subscriber->remove_cap( 'wfls_show_login_security' );
+$subscriber->remove_cap( 'wf2fa_activate_2fa_self' );
 $unsafe = $jit; $unsafe['default_role'] = 'administrator';
 $unsafe_identity = $new; $unsafe_identity['identity'] = wp_generate_uuid4(); $unsafe_identity['subject'] = 'unsafe-' . $suffix;
 $denied( fn() => $store->resolve( $unsafe_identity, $unsafe ), 'privileged JIT rejected' );
@@ -141,6 +156,15 @@ if ( $order_id ) {
 $check( get_option( 'woocommerce_enable_guest_checkout' ) === $guest_before, 'guest-checkout policy unchanged' );
 $check( get_userdata( $legacy )->ID === $legacy && get_userdata( $legacy )->roles === $roles, 'local history and permissions survive session/link operations' );
 $check( ! str_contains( wp_json_encode( $wpdb->get_results( 'SELECT * FROM ' . $store->table( 'audit' ), ARRAY_A ) ), $first_token ), 'session token never appears in audit' );
+$stable = Config::fingerprint( $c );
+$slash  = static function ( $url ) { return untrailingslashit( $url ); };
+add_filter( 'home_url', $slash, 100 );
+$check( hash_equals( $stable, Config::fingerprint( $c ) ), 'home slash filter does not look like a configuration change' );
+remove_filter( 'home_url', $slash, 100 );
+$host = static function () { return 'https://other.example.test'; };
+add_filter( 'home_url', $host, 100 );
+$check( ! hash_equals( $stable, Config::fingerprint( $c ) ), 'home host change still changes the configuration fingerprint' );
+remove_filter( 'home_url', $host, 100 );
 
 $result = array( 'wordpress' => get_bloginfo( 'version' ), 'php' => PHP_VERSION, 'woocommerce' => defined( 'WC_VERSION' ) ? WC_VERSION : null,
 	'theme' => array( 'name' => wp_get_theme()->get( 'Name' ), 'version' => wp_get_theme()->get( 'Version' ) ),

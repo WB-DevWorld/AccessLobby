@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0-alpha.9 — 2026-11-24
+
+- Canonicalize trailing slashes in the WordPress configuration fingerprint. A request-phase `home_url` filter that only adds or removes that slash no longer ends a valid AccessLobby session.
+- A different site or home host still changes the fingerprint. Sessions sealed before this change remain valid, including through an upgrade.
+- Legacy-session recognition covers independent site/home trailing-slash spellings. Real issuer, API, client, host, path, scheme and port changes still fail closed. The browser fixture reproduces a login-init-only slash change across a real callback and later storefront requests.
+
+## 0.1.0-alpha.8 — 2026-11-24
+
+- Treat Wordfence Login Security's own-account capabilities `wfls_show_login_security` and `wf2fa_activate_2fa_self` as non-elevating. Real subscriber and customer roles on the estate include them, and alpha.7 refused every settings save and SSO start because of that.
+- Keep administration, shop, and content capabilities unsafe. A regression covers the self-service capabilities and still rejects `manage_options`.
+
 ## 0.1.0-alpha.7 — 2026-11-24
 
 - Reject an empty or whitespace-only stored username after local insertion/registration hooks finish. Roll back the new user and identity mapping together.

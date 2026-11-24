@@ -133,7 +133,7 @@ final class Controller {
 		$this->store->state_get( $state, 'auth_flow', true );
 		$this->cookie( $state, '', time() - 3600 );
 		$c = Config::get();
-		if ( ! hash_equals( $flow['configuration'], Config::fingerprint( $c ) ) || $this->input( 'error' ) ||
+		if ( ! is_string( $flow['configuration'] ?? null ) || ! Config::recognizes( $c, $flow['configuration'] ) || $this->input( 'error' ) ||
 			( $this->input( 'iss' ) && $this->input( 'iss' ) !== $c['issuer'] ) ) {
 			throw new Failure( 'invalid_authorization_response' );
 		}

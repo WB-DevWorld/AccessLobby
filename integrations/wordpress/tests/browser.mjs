@@ -192,6 +192,26 @@ try {
     await page.waitForURL(a.protected);
     assert.equal(await page.locator('#fixture-identity').getAttribute('data-user'), String(a.legacyUser));
   });
+  await test('login_init slash-only home filter preserves SSO on subsequent storefront requests', async () => {
+    await siteLogout(a);
+    const before = wp(a, 'echo count_users()["total_users"];');
+    wp(a, 'update_option("alwp_fixture_phase_slash",true);');
+    try {
+      phase = 'callback_under_login_init_filter';
+      await page.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.account));
+      await page.waitForURL(a.account);
+      assert.equal(wp(a, 'echo get_option("alwp_fixture_login_home_slash");'), 'no');
+      phase = 'first_storefront_request';
+      assert.equal(await page.locator('#fixture-runtime').getAttribute('data-home-slash'), 'yes');
+      assert.equal(await page.locator('#fixture-identity').getAttribute('data-user'), String(a.legacyUser));
+      phase = 'next_storefront_request';
+      assert.equal(await identity(a), a.legacyUser);
+      assert.equal(wp(a, 'echo count_users()["total_users"];'), before);
+      assert.equal(wp(a, '$s=new AccessLobby\\WordPress\\Store($GLOBALS["wpdb"]);echo $s->link_for_user(' + a.legacyUser + ')["link_state"];'), 'active');
+    } finally {
+      wp(a, 'delete_option("alwp_fixture_phase_slash");delete_option("alwp_fixture_login_home_slash");');
+    }
+  });
   let bUser;
   await test('second independent subdirectory WP reuses IAM session without credentials', async () => {
     await page.goto(b.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(b.protected));
