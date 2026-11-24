@@ -454,7 +454,7 @@ cd /opt/src/apps/api
 cp /opt/api-seed.mjs ./seed.mjs
 node --import tsx src/migrate.ts
 node --import tsx seed.mjs
-node --input-type=module /opt/api-versions.mjs
+node /opt/api-versions.mjs
 exec node --import tsx src/main.ts
 """
     versions = """import { createRequire } from 'node:module';
@@ -476,8 +476,21 @@ writeFileSync('/tmp/api-versions.json', JSON.stringify(versions));
          '-v', f'{work / "api-seed.mjs"}:/opt/api-seed.mjs:ro', '-v', f'{work / "api-versions.mjs"}:/opt/api-versions.mjs:ro',
          '-v', f'{work / "api-start.sh"}:/api-start.sh:ro',
          'node:24-bookworm', 'sh', '/api-start.sh'], quiet=True)
-    wait_https(f'https://api.alwp.test:{EDGE_PORT}/health/ready', ca, 180)
+    try:
+        wait_https(f'https://api.alwp.test:{EDGE_PORT}/health/ready', ca, 180)
+    except RuntimeError:
+        print(api_log_excerpt(), flush=True)
+        raise
     print('FIXTURE HTTPS API ready', flush=True)
+
+
+def api_log_excerpt():
+    result = subprocess.run(['docker', 'logs', '--tail', '40', 'alwp-https-api'], capture_output=True, text=True)
+    lines = []
+    for line in ((result.stdout or '') + (result.stderr or '')).splitlines()[-40:]:
+        lowered = line.lower()
+        lines.append('redacted' if 'postgres://' in lowered or 'password' in lowered or 'token' in lowered else line)
+    return '\n'.join(lines)
 
 
 def stop_api():
