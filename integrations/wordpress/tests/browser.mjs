@@ -414,7 +414,11 @@ try {
   }
   await openPage(first, `${siteA.base}/wp-login.php`);
   await first.locator('[data-accesslobby-start]').first().click();
-  if (!(await first.locator('#username').isVisible())) throw new Error(`All-apps logout left the shared browser session signed in at ${first.url()}`);
+  try {
+    await first.locator('#username').waitFor({ timeout: 20000 });
+  } catch (error) {
+    throw new Error('All-apps logout left the shared browser session signed in');
+  }
   console.log('FLOW all-apps-logout-revokes-both-sites');
   const forged = await quiet.evaluate(async (url) => {
     const response = await fetch(url, {
