@@ -1,0 +1,1 @@
+{"apiVersion":3,"name":"accesslobby/login","version":"0.1.0","title":"AccessLobby login","category":"widgets","icon":"lock","description":"Continue with AccessLobby using this site's configured authentication policy.","textdomain":"accesslobby-sso","attributes":{"intent":{"type":"string","default":"login"}},"editorScript":"accesslobby-block","supports":{"html":false}}

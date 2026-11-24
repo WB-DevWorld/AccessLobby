@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { Pool } from 'pg';
 import { PostgresIdentityStore } from '../src/identity.js';
+import { openIsolatedDatabase } from './isolated-database.js';
 
 test('durable mapping is stable, concurrent-safe and issuer-specific', { skip: !process.env.TEST_DATABASE_URL }, async () => {
-  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+  const { pool, close } = await openIsolatedDatabase();
   try {
     const store = new PostgresIdentityStore(pool);
     const subject = `test-${crypto.randomUUID()}`;
@@ -15,5 +15,5 @@ test('durable mapping is stable, concurrent-safe and issuer-specific', { skip: !
     assert.notEqual((await store.resolve({ ...actor, issuer: 'https://two.example/realms/test' })).id, results[0]!.id);
     const count = await pool.query<{ count: string }>('SELECT count(*) FROM iam_subject_links WHERE issuer=$1 AND subject=$2', [actor.issuer, subject]);
     assert.equal(Number(count.rows[0]!.count), 1);
-  } finally { await pool.end(); }
+  } finally { await close(); }
 });

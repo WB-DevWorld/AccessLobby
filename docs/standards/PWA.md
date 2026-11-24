@@ -22,7 +22,7 @@ The POS PR #91 exposed an installed cold-start that reached only a fallback inst
 
 ## Install and origin
 
-Next.js 16.3.6 serves `/manifest.webmanifest` with stable `id`, root scope/start URL, standalone display and 192/512 PNG icons derived from the existing AccessLobby mark. The PNGs and SVG are provisional renderings of the approved mark, not a new identity. The worker lives at `/sw.js` and controls only the AccessLobby web origin; it cannot control `api.*`, `iam.*` or peer origins. The web runtime receives the same exact `GIT_SHA` as the API so worker bytes change with every deployed build. A missing SHA is `local-build` for development, not a qualified staging release. The Docker image copies `public/` as well as Next output.
+Next.js 16.4.6 serves `/manifest.webmanifest` with stable `id`, root scope/start URL, standalone display and 192/512 PNG icons derived from the existing AccessLobby mark. The PNGs and SVG are provisional renderings of the approved mark, not a new identity. The worker lives at `/sw.js` and controls only the AccessLobby web origin; it cannot control `api.*`, `iam.*` or peer origins. The web runtime receives the same exact `GIT_SHA` as the API so worker bytes change with every deployed build. A missing SHA is `local-build` for development, not a qualified staging release. The Docker image copies `public/` as well as Next output.
 
 ## Cache and offline contract
 

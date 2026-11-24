@@ -1,0 +1,15 @@
+# Security and retention
+
+Pilot implementation: mandatory Code/PKCE S256/state/nonce; pinned full issuer and same-origin discovery endpoints; signed RS256 ID/access tokens; client/audience/expiry/session binding; versioned identity/admission APIs; no role claims; no email merge. The maintained locked JWT library is namespace-isolated with its license/provenance and Composer audit.
+
+Private flow/session payloads use authenticated Sodium encryption with WordPress salts. Rotating those salts ends recoverability of outstanding flow/session associations and invalidates ordinary WP sessions. State and browser binding expire after five minutes and are single-use. Local tokens retained for targeted session destruction are encrypted; access/refresh tokens are not persisted. SHA-256 indexed mapping keys also retain original values for collision comparison.
+
+WordPress capabilities/nonces protect settings/link/logout actions. Callback authority is OIDC state/browser binding and token validation; backchannel authority is the validated signed event. Both are intentionally reachable without a WP nonce. Neither route trusts unauthenticated payload claims. Tokens/codes/cookies/secrets are excluded from plugin audit and normal UI. Redact `code`, `state`, ticket bodies, Authorization and Cookie at proxies/APM; WordPress cannot erase upstream request logs.
+
+Exclude all `wp-login.php?action=al_*`, the exact REST backchannel route (including `?rest_route=` installations), account/link/logout/diagnostic pages and authenticated account state from Cloudflare, Nginx/Varnish, WP Rocket and any full-page cache. Do not rely solely on PHP no-store headers when an upstream cache answers first. Keep cache-control/referrer/noindex headers. Redis object cache must not become a cross-site mapping namespace; all tables/options/transients are site-prefixed. No browser token storage/service worker is added, and AccessLobby's existing PWA is unchanged.
+
+No Wordfence allowlist, firewall bypass, cache rule or proxy trust change is automatically installed. Qualify each actual site's security plugins and trusted HTTPS/IP topology. No auth middleware may strip callback parameters or block a genuine signed backchannel request. Limit request sizes and rate-limit unauthenticated routes at the trusted proxy without exposing private data in keys.
+
+Current production gates: adversarial security review, race/load tests, real HTTPS cookie/cache/CDN evidence, actual theme/security-plugin qualification, continuing admission/revocation policy and emergency replay/recovery rehearsal. A passing unit suite is not those results.
+
+Data retention: active/inactive identity maps retain local ownership/provenance; audit expires after 90 days while active cleanup runs; private flow/session rows expire and are cleaned hourly. Uninstall retains plugin tables deliberately for safe recovery. A permanently retired site needs a host-authorized export/retention review and private-state purge. Never delete WP users or commerce to purge the connector. No raw historical chat, credentials or realm exports belong in Git.

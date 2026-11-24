@@ -6,6 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { SignJWT, exportJWK, generateKeyPair } from 'jose';
+import { listenOnClaimedPort } from './claimed-port.mjs';
 
 const personId = '76257b81-2222-4444-aaaa-638fa68c529c';
 const orgId = '19d98b15-3333-4444-bbbb-7dad53c3fc97';
@@ -25,6 +26,10 @@ test('peer selection checks live membership while resource access still needs it
   const jwk = { ...await exportJWK(publicKey), kid: 'test-key', alg: 'RS256', use: 'sig' };
   let upstreamOrigin, nonce, membership = true, available = true, entry = 'denied';
   const upstream = createServer(async (request, response) => {
+    try { await routeUpstream(request, response); }
+    catch { if (!response.headersSent) responseJson(response, { error: 'fixture_failure' }, 500); else response.destroy(); }
+  });
+  const routeUpstream = async (request, response) => {
     const path = new URL(request.url, upstreamOrigin).pathname;
     const issuer = `${upstreamOrigin}/realms/accesslobby-first-party`;
     if (path.endsWith('/.well-known/openid-configuration')) return responseJson(response, {
@@ -51,24 +56,28 @@ test('peer selection checks live membership while resource access still needs it
         organizations: membership ? [{ id: orgId, name: '<Example team>', role: 'member' }] : [] })
       : responseJson(response, { error: 'unavailable' }, 503);
     return responseJson(response, {}, 404);
-  });
+  };
   upstreamOrigin = `http://127.0.0.1:${await listen(upstream)}`;
-  const reservation = createServer();
-  const port = await listen(reservation);
-  await new Promise(resolve => reservation.close(resolve));
-  const origin = `http://127.0.0.1:${port}`;
-  const child = spawn(process.execPath, ['server.mjs'], {
-    cwd: fileURLToPath(new URL('..', import.meta.url)),
-    env: { ...process.env, PORT: String(port), CONSUMER_ORIGIN: origin,
-      OIDC_ISSUER: `${upstreamOrigin}/realms/accesslobby-first-party`, OIDC_CLIENT_ID: 'reference-consumer',
-      ACCESSLOBBY_API_URL: upstreamOrigin, GRANTED_PERSON_IDS: personId, APP_ENTRY_REQUIRED: 'true' },
-    stdio: 'ignore',
+  let origin = '';
+  let childStderr = '';
+  const child = await listenOnClaimedPort(async port => {
+    origin = `http://127.0.0.1:${port}`;
+    const spawned = spawn(process.execPath, ['server.mjs'], {
+      cwd: fileURLToPath(new URL('..', import.meta.url)),
+      env: { ...process.env, PORT: String(port), CONSUMER_ORIGIN: origin,
+        OIDC_ISSUER: `${upstreamOrigin}/realms/accesslobby-first-party`, OIDC_CLIENT_ID: 'reference-consumer',
+        ACCESSLOBBY_API_URL: upstreamOrigin, GRANTED_PERSON_IDS: personId, APP_ENTRY_REQUIRED: 'true' },
+      stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    spawned.stderr.on('data', chunk => { childStderr = (childStderr + chunk).slice(-4000); });
+    for (let attempt = 0; attempt < 40; attempt++) {
+      try { if ((await fetch(`${origin}/health/live`)).ok) return spawned; }
+      catch { if (spawned.exitCode !== null) throw new Error(`Consumer exited\n${childStderr}`); }
+      await delay(50);
+    }
+    throw new Error(`Consumer did not start\n${childStderr}`);
   });
   try {
-    for (let attempt = 0; attempt < 40; attempt++) {
-      try { if ((await fetch(`${origin}/health/live`)).ok) break; }
-      catch { if (child.exitCode !== null) throw new Error('Consumer exited'); await delay(50); }
-    }
     const callbackForLogin = async () => {
       const login = await fetch(`${origin}/login`, { redirect: 'manual' });
       assert.equal(login.status, 303);
