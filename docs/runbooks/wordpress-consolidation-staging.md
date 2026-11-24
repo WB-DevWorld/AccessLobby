@@ -2,6 +2,8 @@
 
 Use feat/wordpress-consolidation / PR62 and the exact qualified source, ZIP and image revisions in the [acceptance record](../qa/wordpress-consolidation-2026-11-24/README.md). PR60 and PR61 are preserved inputs; do not install competing candidates on the same site. This is a controlled staging runbook. Main merge, immutable AccessLobby staging promotion and production enforcement remain separate recorded actions.
 
+Alpha.7 supersedes alpha.6 for new pilots after the late-hook rollback defect. The current acceptance contains the reproduced red baseline and exact fixed-source proof; the earlier alpha.6 result remains historical.
+
 ## Preserve and inventory
 
 1. Start with the owner-designated CETECH staging/training or FLAIROC training installation. Reconfirm hostname, document root and environment before writing. Run integrations/wordpress/scripts/site-inventory.php through that site's WP-CLI, retaining the private categorical inventory. Establish active theme/child theme, WP/PHP/Woo, HPOS/CPT, B2B/membership/cache/security plugins, guest policy and root/subdirectory topology. Installed WoodMart Core alone does not prove WoodMart is active.
@@ -13,7 +15,7 @@ This first-party release has no consent/profile preview routes, CLI or migration
 
 ## Register and start in hybrid mode
 
-Verify the installable alpha.6 ZIP against its acceptance-record digest. Upload that ZIP through WordPress Plugins, activate and open Settings → AccessLobby. The outer review/evidence archive is not installable. The plugin's [setup guide](../../integrations/wordpress/docs/setup.md) explains all settings and exact WordPress-derived routes.
+Verify the installable alpha.7 ZIP against its acceptance-record digest. Upload that ZIP through WordPress Plugins, activate and open Settings → AccessLobby. The outer review/evidence archive is not installable. The plugin's [setup guide](../../integrations/wordpress/docs/setup.md) explains all settings and exact WordPress-derived routes.
 
 Register each installation as a distinct typed WordPress application using the displayed callback, signed-out return and backchannel URLs verbatim, including fixed queries and path prefixes. Complete the existing DNS proof, private first-party review, provisioning and live IAM readback. Do not hand-edit application rows, substitute wildcards or distribute IAM administration credentials to WordPress. Select app entry (authenticated_open or grant_required) separately from local roles and entitlements.
 
@@ -35,6 +37,6 @@ Prove **Sign out of this site** clears only the current local session, leaves IA
 
 Opaque receipt checks reconcile a missed backchannel at the next due check, normally 30 seconds; outage grace is at most 90 seconds without extending the cookie expiry. Older sessions retain their prior bounded behavior. Establish fresh SSO sessions before asserting receipt coverage. These controls do not mean sign out every device.
 
-Rehearse AccessLobby/API/backchannel outages, new-login failure, bounded existing-session behavior and deliberate host recovery. Follow the recovery guide to deactivate or restore the intended hybrid/local policy without deleting users, orders or mappings. Test actual alpha.5 → alpha.6 ZIP upgrade and data preservation. Reactivating saved enforced mode invalidates local sessions created during rollback. A database rollback must not discard newer commerce records.
+Rehearse AccessLobby/API/backchannel outages, new-login failure, bounded existing-session behavior and deliberate host recovery. Follow the recovery guide to deactivate or restore the intended hybrid/local policy without deleting users, orders or mappings. Test actual alpha.6 → alpha.7 ZIP upgrade and data preservation. Reactivating saved enforced mode invalidates local sessions created during rollback. A database rollback must not discard newer commerce records.
 
 For each site retain environment, exact versions/client/routes/revisions/digests, modes and categorical login/link/JIT/commerce/logout/SSO/recovery/rollback outcomes. Keep missing credentials or licensed access BLOCKED/UNTESTED. No first-party estate MVP acceptance without the real two-site, commerce-preserving and reversible vertical slice. No external publisher activation is authorized by this runbook.

@@ -1,17 +1,19 @@
-# Consolidated first-party WordPress qualification
+# Consolidated WordPress qualification — alpha.7
 
-The implementation cycle is qualified at **b683fcf776de50bf8606ca772c38625633c19110**, version **0.1.0-alpha.6**, on **feat/wordpress-consolidation / PR62**. All **13 CI jobs** pass, including **356 browser cases** across five independent two-WordPress matrices, and the additional distinct-hostname/nginx/PHP-FPM trusted-TLS smoke. This is an isolated first-party pilot candidate, not a real estate or external-publisher rollout.
+Current qualified release source: **3d9aa57aef00807ac5174ff28fe807409873a838**, version **0.1.0-alpha.7**, feat/wordpress-consolidation / PR62. All **13 CI jobs** pass, including **361 browser cases** across five real-IAM/two-WordPress matrices and the separate trusted-hostname HTTPS smoke. This is a first-party fixture-qualified pilot candidate; actual estate adoption remains pending.
 
-- [Complete acceptance and actual remaining gates](ACCEPTANCE.md)
-- [CI revisions, jobs, versions and report checksums](ci-index.json)
-- [Exact package/source and Windows/Linux byte verification](package-verification.json)
-- [Read-only public staging observation](staging-observation.json)
-- [Per-lane categorical evidence](ci/)
-- [Standalone controlled staging runbook](../../runbooks/wordpress-consolidation-staging.md)
-- [Consolidation decision and source rationale](../../adr/013-wordpress-first-party-consolidation.md)
+- [Current alpha.7 acceptance and remaining gates](late-hook/ACCEPTANCE.md)
+- [Current CI index and 62 categorical reports](late-hook/ci-index.json)
+- [Current package/source/Windows/Linux byte verification](late-hook/package-verification.json)
+- [Red baseline on all five configurations](late-hook/baseline-matrix.json)
+- [Historical alpha.6 acceptance](ACCEPTANCE.md), superseded for new pilots by the late-hook fix
+- [Controlled staging runbook](../../runbooks/wordpress-consolidation-staging.md)
+- [ADR013: sources, selection and boundaries](../../adr/013-wordpress-first-party-consolidation.md)
 
-The canonical installable ZIP contains 50 files / 91,112 bytes. SHA256: **64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5**. It upgrades the exact alpha.5 package. Build with integrations/wordpress/scripts/package.py from the qualified source; the outer review bundle is not installable.
+The canonical installable alpha.7 ZIP contains **50 files / 91,493 bytes**, SHA256 **373dce094881278b9f08e28ba3e847bb6634719605bef761ee251d80fa771afa**. Its exact alpha.6 upgrade baseline remains retained. Both modes, explicit linking, safe JIT, local ownership and targeted logout remain qualified within the listed fixtures.
 
-Source acceptance reuses the previous 37 focused passes. Pass 38 reconciles exact comparison heads and actual CI. Pass 39 checks typed WordPress registration, missing-extension enforcement, durable audit/storage/JIT guards, database/port isolation and TLS fixture boundaries. Pass 40 reviews Cursor's independently advancing 04941d9f179c29739de25a3e8d5a277692bc28c2 and incorporates its stronger host/browser certificate gates; broader new Join/lifecycle additions are not claimed for the representative smoke. Consequential findings are **CURRENT-REPO-FACT**; consolidation and Stage A/B separation are owner-authorized decisions recorded in ADR013. No raw chat/source-pack or credential is committed.
+Cursor's later partial-Join test exposed a gap in both candidates: a late WordPress hook could leave a blank username after core validation. The alpha.6 passes did not include that fault. Alpha.7 rejects it inside the transaction, rolls back user/mapping changes and proves no cookie plus quiet retry to one safe account. Valid local username customization still works. Do not relabel the earlier record as covering this fix.
 
-The initial fixture startup failure, its generated-script fix and pre-release package changes are retained honestly in the acceptance record. Evidence-only successors must retain the same packaged files and pass their own required checks. Main/public API stays 3d9220a140d61df5effe633bc72cf5142c4a8371. No estate installation, main merge, image promotion or production migration occurred. Issue59 remains open. Actual WoodMart/B2BKing/cache/security/extensions, public-domain two-site adoption and backup/recovery remain gates; multisite is unsupported and arbitrary external activation stays closed.
+Focused acceptance extends through 41 passes: earlier 37 plus exact comparison/CI reconciliation 38, guard/isolation/TLS review 39, Cursor's stronger certificate checks 40 and official WordPress hook-order/runtime reconciliation 41. Findings are CURRENT-REPO-FACT/SOURCE-CONFIRMED as recorded; no new owner policy is inferred. Raw source packs, chat exports and credentials remain outside Git.
+
+No main merge, candidate staging promotion, estate installation or production migration occurred. Actual CETECH/FLAIROC backup/recovery, WoodMart/B2BKing/cache/security/extensions and public-domain two-site adoption remain gates. External publisher activation stays closed; Stage B remains preserved in PR61. Multisite unsupported; issue59 stays open. Evidence-only successors must retain the packaged bytes and pass their own head checks.

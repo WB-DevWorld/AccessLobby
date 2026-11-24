@@ -1,5 +1,7 @@
 # WordPress consolidation acceptance — 2026-11-24
 
+> Historical alpha.6 evidence. Cursor's later partial-Join probe uncovered a late-hook malformed-account gap outside this earlier matrix. Use the [qualified alpha.7 record](late-hook/ACCEPTANCE.md) for new pilots; the old ZIP remains only the exact tested upgrade baseline.
+
 Qualified implementation/release source: **b683fcf776de50bf8606ca772c38625633c19110** on feat/wordpress-consolidation, [PR62](https://github.com/WB-DevWorld/AccessLobby/pull/62). Evidence-only successors must retain the same packaged bytes and pass their required head checks. This record qualifies isolated fixtures and a first-party pilot candidate; the real estate MVP and universal external WordPress support remain incomplete.
 
 ## Current AccessLobby state

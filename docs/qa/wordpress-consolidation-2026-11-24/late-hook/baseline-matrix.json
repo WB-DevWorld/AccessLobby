@@ -1,0 +1,67 @@
+{
+  "sourceRevision": "c767b2dd292f8af53bc1ec9e046f119b68e61c81",
+  "runId": 45379569260,
+  "scope": "Expected negative regression before the Store guard fix; first root-site injection fails in each lane",
+  "rows": [
+    {
+      "jobId": 138394762656,
+      "lane": "WP 7.1.4 PHP 8.4 Woo 11.2.1 default SSO",
+      "conclusion": "failure",
+      "observation": {
+        "hookCalled": true,
+        "rejected": false,
+        "usersPreserved": false,
+        "linksPreserved": false
+      },
+      "failedAt": "Actual IAM API WordPress WooCommerce browser acceptance"
+    },
+    {
+      "jobId": 138394762678,
+      "lane": "WP 7.1.5 PHP 8.4 Woo 11.3.1 default SSO",
+      "conclusion": "failure",
+      "observation": {
+        "hookCalled": true,
+        "rejected": false,
+        "usersPreserved": false,
+        "linksPreserved": false
+      },
+      "failedAt": "Actual IAM API WordPress WooCommerce browser acceptance"
+    },
+    {
+      "jobId": 138394762885,
+      "lane": "WP 6.9.12 PHP 8.3 Woo none default SSO",
+      "conclusion": "failure",
+      "observation": {
+        "hookCalled": true,
+        "rejected": false,
+        "usersPreserved": false,
+        "linksPreserved": false
+      },
+      "failedAt": "Actual IAM API WordPress WooCommerce browser acceptance"
+    },
+    {
+      "jobId": 138394762910,
+      "lane": "WP 7.1.1 PHP 8.4 Woo 11.1.1 kadence SSO",
+      "conclusion": "failure",
+      "observation": {
+        "hookCalled": true,
+        "rejected": false,
+        "usersPreserved": false,
+        "linksPreserved": false
+      },
+      "failedAt": "Actual IAM API WordPress WooCommerce browser acceptance"
+    },
+    {
+      "jobId": 138394763009,
+      "lane": "WP 7.1.5 PHP 8.3 Woo 11.3.1 default SSO",
+      "conclusion": "failure",
+      "observation": {
+        "hookCalled": true,
+        "rejected": false,
+        "usersPreserved": false,
+        "linksPreserved": false
+      },
+      "failedAt": "Actual IAM API WordPress WooCommerce browser acceptance"
+    }
+  ]
+}
