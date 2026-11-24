@@ -174,6 +174,14 @@ async function finishVerifiedRegistration(page, email) {
   }
   const deadline = Date.now() + 40000;
   while (Date.now() < deadline && !page.url().includes('a.alwp.test')) {
+    const updated = page.locator('#password-new');
+    if (await updated.isVisible().catch(() => false)) {
+      await updated.fill(config.password);
+      await page.locator('#password-confirm').fill(config.password);
+      await page.locator('#kc-submit').click();
+      await page.waitForURL(url => !url.href.includes('UPDATE_PASSWORD'), { timeout: 15000 }).catch(() => undefined);
+      continue;
+    }
     const password = page.locator('#password');
     if (await password.isVisible().catch(() => false)) {
       await password.fill(config.password);
