@@ -1,5 +1,9 @@
 # Execution ledger — MVP-0
 
+## Wordfence own-account role capabilities — 2026-11-24 UTC
+
+Alpha.7 is installed and active on staging.cetechbpa.com, training.cetechbpa.com and training.flairoc.com, but `Config::validate` rejects the subscriber role before any client can be saved or SSO can start. Each site's subscriber has `read`, `level_0` and Wordfence Login Security's `wfls_show_login_security`. FLAIROC training also has `wf2fa_activate_2fa_self` on subscriber and customer. Those capabilities let a person open their own login-security screen and enroll their own second factor. Alpha.8 treats only those two as non-elevating and still rejects administration capabilities. This commit is the source change; it does not by itself qualify the estate. Issue 59 stays open.
+
 ## Late WordPress hook rollback qualified — 2026-11-24 UTC
 
 Cursor PR60/0ecc60eb20984cb24e0c185a420484b9ea978646 run 45378656583 fails its later partial-Join case after TLS and earlier Join negatives pass. Regression-only **c767b2dd292f8af53bc1ec9e046f119b68e61c81** independently reproduces the defect on all five consolidated native lanes: hookCalled=true, rejected=false, usersPreserved=false, linksPreserved=false. Official WordPress source confirms the late hook runs after initial username validation. The old role/capability guard missed the malformed login. CURRENT-REPO-FACT; acceptance pass 41. The existing native Join already handled Keycloak password-new; the stopped local Mailpit experiment supplies no pass.

@@ -47,13 +47,20 @@ final class Config {
 		self::safe_role( $c['default_role'] );
 	}
 
+	public static function elevating_capability( string $capability ): bool {
+		// Wordfence Login Security adds these to every role so a person can open their own
+		// login-security screen and enroll their own second factor. They do not grant content,
+		// user, shop, or settings management. This is not a firewall or cache allowlist.
+		return ! in_array( $capability, array( 'read', 'level_0', 'wfls_show_login_security', 'wf2fa_activate_2fa_self' ), true );
+	}
+
 	public static function safe_role( string $name ): void {
 		$role = get_role( $name );
 		if ( ! in_array( $name, array( 'subscriber', 'customer' ), true ) || ! $role ) {
 			throw new Failure( 'unsafe_default_role' );
 		}
 		foreach ( $role->capabilities as $cap => $enabled ) {
-			if ( $enabled && ! in_array( $cap, array( 'read', 'level_0' ), true ) ) {
+			if ( $enabled && self::elevating_capability( $cap ) ) {
 				throw new Failure( 'unsafe_default_role' );
 			}
 		}

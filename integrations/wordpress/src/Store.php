@@ -349,7 +349,7 @@ final class Store {
 
 	public static function privileged( \WP_User $user ): bool {
 		foreach ( $user->allcaps as $capability => $enabled ) {
-			if ( $enabled && ! in_array( $capability, array( 'read', 'level_0' ), true ) &&
+			if ( $enabled && Config::elevating_capability( $capability ) &&
 				! in_array( $capability, $user->roles, true ) ) {
 				return true; }
 		}
