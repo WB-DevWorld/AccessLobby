@@ -1,6 +1,6 @@
 # WordPress estate qualification — 2026-11-24
 
-Status: **PARTIALLY QUALIFIED**. AccessLobby SSO 0.1.0-alpha.8 is hybrid with JIT off on all three sites. Local customer login, order visibility and this-site sign-out are proved on all three. Application requests, DNS proof, Join, linking, cross-site SSO and emergency recovery are not qualified.
+Status: **PARTIALLY QUALIFIED**. AccessLobby SSO 0.1.0-alpha.8 is hybrid with JIT off on all three sites. Local customer login, order visibility and this-site sign-out are proved on all three. Three inactive WordPress application requests exist. DNS proof, activation, Join, linking, cross-site SSO and emergency recovery are not qualified.
 
 The earlier “API promotion blocked” note is historical. [PR62](https://github.com/WB-DevWorld/AccessLobby/pull/62) merged as `d875712ecb41e06d8905046e0f4bc93bb8e9e7a5`. Public `/health/ready` reports that revision. Running images, unchanged IAM and gateway pins:
 
@@ -15,15 +15,21 @@ Alpha.7 from CI run 45382011687, SHA256 `373dce094881278b9f08e28ba3e847bb6634719
 
 [PR63](https://github.com/WB-DevWorld/AccessLobby/pull/63) merged as `344cd8cee6ac48b952d9eaffac29b3b7e7473a95`. Alpha.8 treats only those two own-account capabilities as non-elevating and still rejects `manage_options`. The installed ZIP is the main Windows artifact from run 45415908064, SHA256 `5760b2daa738d7eab2b055548b67407e04bc0f60cf60a111a63987c424e58c3b`, 92,107 bytes. It matches the green PR artifact. The digest matched on each host before upgrade. Each site is now `0.1.0-alpha.8`, hybrid, JIT off, and its discovery call reached API ready `d875712`.
 
-| Site | Client ID, not yet registered | Callback and signed-out return | Backchannel |
+| Site | Request | Callback and signed-out return | Backchannel |
 |---|---|---|---|
-| training.cetechbpa.com | `cetech-training-wp` | `https://training.cetechbpa.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://training.cetechbpa.com/wp-json/accesslobby/v1/backchannel-logout` |
-| training.flairoc.com | `flairoc-training-wp` | `https://training.flairoc.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://training.flairoc.com/wp-json/accesslobby/v1/backchannel-logout` |
-| staging.cetechbpa.com | `cetech-staging-wp` | `https://staging.cetechbpa.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://staging.cetechbpa.com/wp-json/accesslobby/v1/backchannel-logout` |
+| training.cetechbpa.com | `cetech-training-wp`, `72d29a2d-f629-432e-9603-e1d798210990` | `https://training.cetechbpa.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://training.cetechbpa.com/wp-json/accesslobby/v1/backchannel-logout` |
+| training.flairoc.com | `flairoc-training-wp`, `043bb9fe-9e16-4cd1-9e1d-120c819d58ee` | `https://training.flairoc.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://training.flairoc.com/wp-json/accesslobby/v1/backchannel-logout` |
+| staging.cetechbpa.com | `cetech-staging-wp`, `39cdfa01-e33b-4116-948e-9d832a314c19` | `https://staging.cetechbpa.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://staging.cetechbpa.com/wp-json/accesslobby/v1/backchannel-logout` |
 
-Application requests are **BLOCKED** before creation. `https://accesslobby.realjanelove.com/apps/manage` and `/auth/login` send this browser to the Keycloak sign-in form. There is no authenticated owner session, so no request was submitted and no challenge was invented. Database insertion was not used. `ALLOWED_CLIENT_IDS` was not changed.
+Application requests are **created and unreviewed**. The signed-in owner at `https://accesslobby.realjanelove.com/apps/manage` now has exactly these three rows. Each is platform WordPress, visibility hidden, admission authenticated open, and status Requested. The page shows “Waiting for verification. A first-party review is still required.” No Keycloak client was created. `ALLOWED_CLIENT_IDS` was not changed and no row was inserted by hand. A full-page form submit from the narrow layout left the window on `/account` without saving. A same-origin POST of the same fields to `/apps/action` saved the FLAIROC and staging requests.
 
-DNS publication is a separate **BLOCKED** step. Both domains use `jason.ns.cloudflare.com` and `roxy.ns.cloudflare.com`. The Wrangler token expired at 2026-11-10T11:43:48Z and its scopes do not include DNS edit. The three TXT hosts will be `_accesslobby-verify.training.cetechbpa.com`, `_accesslobby-verify.training.flairoc.com` and `_accesslobby-verify.staging.cetechbpa.com`. Their values must come from the created requests. Admission will be `authenticated_open` and visibility `hidden` once an owner can submit them.
+DNS publication remains **BLOCKED**. Both domains use `jason.ns.cloudflare.com` and `roxy.ns.cloudflare.com`. The Wrangler OAuth token expired at 2026-11-10T11:43:48.288Z. Its scopes include `zone:read` and do not include DNS edit. Publish these TXT records before verification or activation:
+
+| Host | Value |
+|---|---|
+| `_accesslobby-verify.training.cetechbpa.com` | `accesslobby-verify=cabCC4l7m8P_wdY4XjFFQp0wp23gn3ithk8IwD1SCSo` |
+| `_accesslobby-verify.training.flairoc.com` | `accesslobby-verify=XU3YgkTD1YoNgS58-egP-YyY6I9Y-8CKNAa7QdQEtHs` |
+| `_accesslobby-verify.staging.cetechbpa.com` | `accesslobby-verify=-MMCIPgf8-FBgukZ7RBTgBFfmHTgJ73DyyzrirwhbbQ` |
 
 ## Installations
 
@@ -93,11 +99,11 @@ Enforced mode stays off. Recovery accepts a session only when `ACCESSLOBBY_EMERG
 |---|---|
 | Local customer login, own order, and this-site sign-out on alpha.8 | **QUALIFIED** on all three sites |
 | FLAIROC coming-soon account exemption | **QUALIFIED** for a signed-in account page. Anonymous My Account login and signed-out return remain **UNTESTED**. |
-| Application request, origin proof, reviewed activation | **BLOCKED** on the missing owner session; DNS edit is a second blocker |
+| Application request | **QUALIFIED** as three inactive requested rows. Origin proof and reviewed activation remain **BLOCKED** on DNS edit. |
 | Unlinked-identity refusal, explicit linking, repeat login | **BLOCKED** until the clients are active |
 | Quiet SSO, Join/JIT, all-apps logout, backchannel negatives | **BLOCKED** until the clients are active |
 | Enforced mode and emergency recovery | **BLOCKED** until a single-administrator route is rehearsed |
 
 ## Not claimed
 
-No AccessLobby client is registered. Join, JIT, account linking, cross-site SSO, all-apps logout, backchannel delivery and emergency recovery were not run. Enforced mode stays off. Subdirectory estate coverage remains **UNTESTED**. External publisher activation and multisite remain unsupported. Production hosts, `p06-physical.cetechbpa.com` and the other FLAIROC installations were not changed. Issue 59 stays open.
+Three inactive application requests exist. No AccessLobby client is registered. Join, JIT, account linking, cross-site SSO, all-apps logout, backchannel delivery and emergency recovery were not run. Enforced mode stays off. Subdirectory estate coverage remains **UNTESTED**. External publisher activation and multisite remain unsupported. Production hosts, `p06-physical.cetechbpa.com` and the other FLAIROC installations were not changed. Issue 59 stays open.
