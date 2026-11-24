@@ -28,6 +28,14 @@ Not yet. The current AccessLobby identity contract is first-party only; external
 
 == Changelog ==
 = 0.1.0-alpha.6 =
+* Consolidate first-party SSO, isolated tests and the hostname/nginx/PHP-FPM HTTPS fixture.
+* Preserve both modes, explicit account links, local data and bounded logout reconciliation.
+* Keep external publisher activation closed and the consent preview outside this release.
+
+= 0.1.0-alpha.5 =
+* Add selected dedicated frontend login pages with automatic SSO even without JavaScript.
+
+= 0.1.0-alpha.4 =
 * Add optional negotiated server session receipts and missed-logout reconciliation.
 
 = 0.1.0-alpha.3 =

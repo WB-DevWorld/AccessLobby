@@ -1,6 +1,6 @@
 # Consolidated alpha.6 qualification
 
-This package is a reviewed first-party pilot candidate. Its exact consolidated source/ZIP and passing results belong in the repository release acceptance record. The prior alpha.5 matrix below is historical evidence for the retained connector; it is not a substitute for re-running the combined branch.
+This package is a reviewed first-party pilot candidate. Its exact consolidated source, ZIP and results are recorded in the [consolidation acceptance record](https://github.com/WB-DevWorld/AccessLobby/tree/feat/wordpress-consolidation/docs/qa/wordpress-consolidation-2026-11-24). The earlier alpha.3/alpha.4/alpha.5 records below are historical evidence for the retained connector; they do not substitute for the combined branch's own checks.
 
 The release workflow checks PHP8.3/8.4/8.5 protocol/static/package, native Windows ZIP bytes, five independent two-WordPress behavior matrices (CPT/HPOS, WP6.9/7.1, Woo11.1/11.2/11.3, Kadence), plus the additional distinct-hostname nginx/PHP-FPM HTTPS smoke. The broad behavior matrix and representative hosting smoke are different scopes. New upgrade coverage uses the exact qualified alpha.5 ZIP.
 
