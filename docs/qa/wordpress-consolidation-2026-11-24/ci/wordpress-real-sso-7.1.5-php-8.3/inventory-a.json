@@ -1,0 +1,84 @@
+{
+  "evidenceType": "READ_ONLY_PREINSTALL_INVENTORY_NOT_AUTHENTICATION_ACCEPTANCE",
+  "recordedAt": "2026-11-24T10:30:10+00:00",
+  "wordpress": "7.1.5",
+  "php": "8.3.37",
+  "environmentReportedByWordPress": "local",
+  "homeUrl": "https://127.0.0.1:8441/",
+  "siteUrl": "https://127.0.0.1:8441/",
+  "multisite": false,
+  "connectorMultisiteSupport": false,
+  "extensions": {
+    "openssl": true,
+    "sodium": true,
+    "mysqli": true
+  },
+  "theme": {
+    "stylesheet": "twentytwentyfive",
+    "name": "Twenty Twenty-Five",
+    "version": "1.5",
+    "parent": null
+  },
+  "plugins": [
+    {
+      "basename": "accesslobby-sso/accesslobby-sso.php",
+      "name": "AccessLobby SSO for WordPress",
+      "version": "0.1.0-alpha.6",
+      "active": true
+    },
+    {
+      "basename": "akismet/akismet.php",
+      "name": "Akismet Anti-spam: Spam Protection",
+      "version": "5.7.2",
+      "active": false
+    },
+    {
+      "basename": "hello.php",
+      "name": "Hello Dolly",
+      "version": "1.7.2",
+      "active": false
+    },
+    {
+      "basename": "woocommerce/woocommerce.php",
+      "name": "WooCommerce",
+      "version": "11.3.1",
+      "active": true
+    }
+  ],
+  "dropins": [],
+  "externalObjectCache": null,
+  "users": {
+    "total": 7,
+    "roleCounts": {
+      "administrator": 1,
+      "customer": 4,
+      "fixture_custom_staff": 1,
+      "none": 0,
+      "subscriber": 1
+    },
+    "customUserCapabilitiesAssessed": false,
+    "dormancyAssessed": false
+  },
+  "woocommerce": {
+    "installedVersion": "11.3.1",
+    "active": true,
+    "orderStorageConfigured": "HPOS",
+    "orderStorageRuntimeVerified": false,
+    "guestCheckoutConfigured": "yes",
+    "checkoutSignupConfigured": "yes",
+    "myAccountSignupConfigured": "yes"
+  },
+  "connectorPersistedConfiguration": {
+    "mode": "hybrid",
+    "issuer": "https://127.0.0.1:8083/realms/accesslobby-first-party",
+    "api": "http://127.0.0.1:8090",
+    "jitConfigured": true
+  },
+  "authenticationQualification": "NOT_RUN",
+  "httpsProxyAndCacheQualification": "NOT_RUN",
+  "notes": [
+    "No usernames, emails, order/customer records, credentials or tokens are exported.",
+    "Role totals do not assess per-user capabilities or prove migration readiness.",
+    "Storage and checkout flags are saved configuration, not commerce/runtime qualification."
+  ]
+}

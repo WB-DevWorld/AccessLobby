@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<ruleset name="AccessLobby WordPress">
+  <file>src</file><file>accesslobby-sso.php</file><file>autoload.php</file><file>functions.php</file><file>uninstall.php</file>
+  <exclude-pattern>*/vendor/*</exclude-pattern><exclude-pattern>*/vendor-prefixed/*</exclude-pattern>
+  <arg name="extensions" value="php"/>
+  <config name="minimum_wp_version" value="6.9"/>
+  <rule ref="WordPress-Core">
+    <exclude name="WordPress.Files.FileName"/>
+    <exclude name="WordPress.NamingConventions.ValidFunctionName"/>
+    <exclude name="WordPress.NamingConventions.PrefixAllGlobals"/>
+  </rule>
+  <rule ref="WordPress.Security.EscapeOutput"/>
+  <rule ref="WordPress.DB.PreparedSQL"/>
+</ruleset>

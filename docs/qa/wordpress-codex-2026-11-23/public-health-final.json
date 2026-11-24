@@ -1,0 +1,18 @@
+{
+  "recordedAt": "2026-11-23T21:24:22.589496+00:00",
+  "evidenceType": "PUBLIC_READ_ONLY_HTTP_NOT_DEPLOYMENT_INVENTORY",
+  "main": "3d9220a140d61df5effe633bc72cf5142c4a8371",
+  "cursorObservedHead": "8b3481000b30652d47cf75e71f9d4310be3ad55e",
+  "web": {
+    "httpStatus": 200
+  },
+  "ready": {
+    "httpStatus": 200,
+    "status": "ready",
+    "version": "3d9220a140d61df5effe633bc72cf5142c4a8371"
+  },
+  "discovery": {
+    "httpStatus": 200,
+    "issuerMatches": true
+  }
+}

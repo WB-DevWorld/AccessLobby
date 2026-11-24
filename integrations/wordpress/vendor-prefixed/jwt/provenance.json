@@ -1,0 +1,20 @@
+{
+  "package": "firebase/php-jwt",
+  "version": "v7.2.2",
+  "source": {
+    "type": "git",
+    "url": "https://github.com/googleapis/php-jwt.git",
+    "reference": "99efeb17d6def8c0295777f2d45b07ff4fdb4e40"
+  },
+  "transformation": "namespace-only",
+  "sha256": {
+    "BeforeValidException.php": "74fb3c5a7c4492071807693ee55a5da74608bbb671ea2b88ed31c5eab3bc1441",
+    "CachedKeySet.php": "a9f467f8865a056bc8fb4fc26c59afa478477a303c6e671ca10a9aceeb3972bc",
+    "ExpiredException.php": "b1564ef7df87d1c89a6f2c1427f140e24f446c20e8266c60599972f8956d9f70",
+    "JWK.php": "69062648b7d50c8d12c4049c565170bc5f9e678889bab32448e9cb6d5d954140",
+    "JWT.php": "e0e1d8eb180f40c547cd68875188fbe8533d3ed56c33516fe565ecca2ce9639f",
+    "JWTExceptionWithPayloadInterface.php": "3f96b8134e16e480d5da0fb30d0ff8e57441c487aa3b3c4e459881808db8e876",
+    "Key.php": "2c9db28a6e7e4f94f4529bf204a71e28db196a17170a72d29a9210955b3e91d4",
+    "SignatureInvalidException.php": "79979f488497a8092327e2374b887f0c2c3eb1ae0ce7d825bf7dfa00105a9a7b"
+  }
+}

@@ -9,19 +9,35 @@ export class ApplicationError extends Error {
 export class ClientRegistryUnavailable extends Error {}
 const fail = (status: number, code: string): never => { throw new ApplicationError(status, code); };
 
-export function exactApplicationUrl(value: unknown): string {
+export type ApplicationPlatform = 'web' | 'wordpress';
+export type ApplicationUrlPurpose = 'callback' | 'logout' | 'backchannel';
+
+export function exactApplicationUrl(value: unknown, platform: ApplicationPlatform = 'web', purpose?: ApplicationUrlPurpose): string {
   if (typeof value !== 'string' || value.length > 2048 || /[\x00-\x20\x7f*]/.test(value)) return fail(400, 'invalid_application_url');
   let url: URL;
   try { url = new URL(value); } catch { return fail(400, 'invalid_application_url'); }
   if ((url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) ||
-      !url.hostname || url.username || url.password || url.search || url.hash || url.href !== value) {
+      !url.hostname || url.username || url.password || value.includes('#') || url.href !== value) {
     return fail(400, 'invalid_application_url');
   }
+  // WordPress core dispatches these actions on wp-login.php. Permit only this
+  // registered static query profile, never caller-supplied return URLs/tokens.
+  if (platform === 'wordpress') {
+    if (purpose === 'callback' || purpose === 'logout') {
+      const action = purpose === 'callback' ? 'al_callback' : 'al_signed_out';
+      if (!url.pathname.endsWith('/wp-login.php') || /%2f|%5c/i.test(url.pathname) || url.search !== `?action=${action}`) {
+        return fail(400, 'invalid_application_url');
+      }
+    } else if (purpose !== 'backchannel' || (value.includes('?') &&
+        !/^\?rest_route=(?:\/accesslobby\/v1\/backchannel-logout|%2faccesslobby%2fv1%2fbackchannel-logout)$/i.test(url.search))) {
+      return fail(400, 'invalid_application_url');
+    }
+  } else if (platform !== 'web' || value.includes('?')) return fail(400, 'invalid_application_url');
   return value;
 }
 
 interface RequestInput { clientId?: unknown; name?: unknown; redirectUri?: unknown; logoutUri?: unknown; backchannelLogoutUri?: unknown;
-  visibility?: unknown; admission?: unknown }
+  visibility?: unknown; admission?: unknown; platform?: unknown }
 
 export class ApplicationStore {
   constructor(private readonly pool: Pool, private readonly legacyClients: string[],
@@ -49,11 +65,14 @@ export class ApplicationStore {
     if (typeof clientId !== 'string' || clientId.length > 80 || !/^[a-z0-9_-]+$/.test(clientId) ||
         ['accesslobby-web', 'accesslobby-api'].includes(clientId) || this.legacyClients.includes(clientId)) return fail(400, 'invalid_client_id');
     if (name.length < 2 || name.length > 120 || /[\x00-\x1f\x7f]/.test(name)) return fail(400, 'invalid_application_name');
-    const redirectUri = exactApplicationUrl(input.redirectUri);
-    const logoutUri = exactApplicationUrl(input.logoutUri);
+    const platform = input.platform ?? 'web';
+    if (platform !== 'web' && platform !== 'wordpress') return fail(400, 'invalid_application_platform');
+    const redirectUri = exactApplicationUrl(input.redirectUri, platform, 'callback');
+    const logoutUri = exactApplicationUrl(input.logoutUri, platform, 'logout');
     if (new URL(redirectUri).origin !== new URL(logoutUri).origin) return fail(400, 'application_origin_mismatch');
+    if (platform === 'wordpress' && new URL(redirectUri).pathname !== new URL(logoutUri).pathname) return fail(400, 'application_path_mismatch');
     const backchannelLogoutUri = input.backchannelLogoutUri === undefined || input.backchannelLogoutUri === null || input.backchannelLogoutUri === ''
-      ? null : exactApplicationUrl(input.backchannelLogoutUri);
+      ? null : exactApplicationUrl(input.backchannelLogoutUri, platform, 'backchannel');
     if (backchannelLogoutUri && new URL(redirectUri).origin !== new URL(backchannelLogoutUri).origin) return fail(400, 'application_origin_mismatch');
     if (input.visibility !== 'discoverable' && input.visibility !== 'hidden') return fail(400, 'invalid_visibility');
     if (input.admission !== 'authenticated_open' && input.admission !== 'grant_required') return fail(400, 'invalid_admission');
@@ -66,21 +85,21 @@ export class ApplicationStore {
       const id = randomUUID();
       const challenge = randomBytes(32).toString('base64url');
       try {
-        await db.query('INSERT INTO applications (id, client_id, name, owner_person_id, redirect_uri, logout_uri, backchannel_logout_uri, visibility, admission, origin_challenge) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
-          [id, clientId, name, personId, redirectUri, logoutUri, backchannelLogoutUri, input.visibility, input.admission, challenge]);
+        await db.query('INSERT INTO applications (id, client_id, name, owner_person_id, redirect_uri, logout_uri, backchannel_logout_uri, visibility, admission, origin_challenge, platform) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
+          [id, clientId, name, personId, redirectUri, logoutUri, backchannelLogoutUri, input.visibility, input.admission, challenge, platform]);
       } catch (error) {
         if ((error as { code?: string }).code === '23505') return fail(409, 'client_id_taken');
         throw error;
       }
       await this.event(db, id, personId, 'application.requested');
-      return { id, clientId, name, visibility: input.visibility, admission: input.admission, status: 'requested', backchannelLogoutUri,
+      return { id, clientId, name, platform, visibility: input.visibility, admission: input.admission, status: 'requested', backchannelLogoutUri,
         originVerificationHost: proofHost(redirectUri), originVerificationValue: proofValue(challenge) };
     });
   }
 
   async mine(personId: string) {
     const result = await this.pool.query(
-      `SELECT id, client_id AS "clientId", name, visibility, admission, status, created_at AS "createdAt",
+      `SELECT id, client_id AS "clientId", name, platform, visibility, admission, status, created_at AS "createdAt",
         redirect_uri AS "redirectUri", backchannel_logout_uri AS "backchannelLogoutUri",
         origin_challenge AS "originChallenge", origin_verified_at AS "originVerifiedAt"
         FROM applications WHERE owner_person_id = $1 ORDER BY created_at DESC, id`, [personId]);
@@ -110,7 +129,7 @@ export class ApplicationStore {
 
   async visible(personId: string) {
     const result = await this.pool.query(
-      `SELECT a.id, a.client_id AS "clientId", a.name, a.visibility, a.admission
+      `SELECT a.id, a.client_id AS "clientId", a.name, a.platform, a.visibility, a.admission
        FROM applications a LEFT JOIN application_grants g ON g.application_id = a.id AND g.person_id = $1
        WHERE a.status = 'active' AND a.trust_class = 'first_party'
          AND (a.visibility = 'discoverable' OR (g.status = 'active' AND (g.expires_at IS NULL OR g.expires_at > now())))

@@ -1,0 +1,14 @@
+{
+  "sourceRevision": "4570054a362dd11a47c4e06f056cd35981bf5c11",
+  "candidateRevision": null,
+  "sourceDirty": true,
+  "packageSha256": "906f904449dc23a1d5bfaeab07c77365bd09c5cdf57a094a00676cb2d33cb4f5",
+  "upgradeFromPackageSha256": "3fd9652455522eb23d50f04b161f529b0a656805bebddf5b0c69a3f489fba81c",
+  "wordpressArchiveSha256": "cd44160a3fcce179fe170331132fcfc05e84e2f9284e2aad38df2aea6edaeab1",
+  "wooEnabled": true,
+  "hposRequested": false,
+  "keycloakDistribution": "keycloak-26.7.0",
+  "themeRequested": "default",
+  "woocommerceArchiveSha256": "1502600c738840f7f9ebfa2f11e1aaff087221a5fc5a2006c51be2d874ae2a09",
+  "themeArchiveSha256": null
+}

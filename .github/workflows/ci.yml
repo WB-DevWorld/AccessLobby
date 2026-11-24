@@ -37,6 +37,10 @@ jobs:
       - run: pnpm --filter @accesslobby/api migrate
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Verify database and port isolation on repeat
+        run: |
+          pnpm --filter @accesslobby/api test
+          pnpm --filter @accesslobby/reference-consumer test
       - run: pnpm build
       - name: Install Chromium for installed-PWA smoke
         run: pnpm exec playwright install --with-deps chromium

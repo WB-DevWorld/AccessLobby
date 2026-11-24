@@ -34,6 +34,7 @@ const api = createServer(async (req, res) => {
     let data = ''; for await (const chunk of req) data += chunk;
     mutations.push({ path: req.url, method: req.method, body: data ? JSON.parse(data) : null });
     await new Promise(resolve => setTimeout(resolve, 350));
+    if (req.url === '/v1/session/end' && req.method === 'POST') return json({ contract: 'accesslobby.browser-session.v0.1', ended: true });
     return json({ id: organizationId });
   }
   await new Promise(resolve => setTimeout(resolve, req.url === '/v1/me' ? identityDelay : sectionDelay));
@@ -141,6 +142,7 @@ try {
     await page.waitForURL('**/apps/manage?notice=requested');
     assert.equal(mutations.length, 1); assert.equal(mutations[0].body.clientId, 'new-sample-app');
     assert.equal(mutations[0].body.backchannelLogoutUri, '');
+    assert.equal(mutations[0].body.platform, 'web');
   });
   await check('grant/revoke confirmation preserves named submitter and prevents duplicate POSTs', async () => {
     await page.locator(`input[id="grant-${appId}"]`).fill(otherId);
@@ -165,6 +167,24 @@ try {
     await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click(); assert.equal(mutations.length, 2);
     await remove.click(); await page.getByRole('dialog').getByRole('button', { name: 'Confirm change', exact: true }).click();
     await page.waitForURL('**/organizations/*?notice=remove'); assert.equal(mutations[2].method, 'DELETE'); assert.equal(mutations[2].path, `/v1/organizations/${organizationId}/members/${otherId}`);
+  });
+  await check('WordPress request transports its platform and exact fixed subdirectory routes', async () => {
+    await page.goto(`${origin}/apps/manage`);
+    await page.locator('#app-platform').selectOption('wordpress');
+    await page.locator('#app-name').fill('WordPress fixture'); await page.locator('#app-client').fill('wordpress-fixture');
+    const callback = 'https://wordpress.example.test/gh/wp-login.php?action=al_callback';
+    const logout = 'https://wordpress.example.test/gh/wp-login.php?action=al_signed_out';
+    const backchannel = 'https://wordpress.example.test/gh/?rest_route=/accesslobby/v1/backchannel-logout';
+    await page.locator('#app-callback').fill(callback); await page.locator('#app-logout').fill(logout);
+    await page.getByText('Advanced: shared sign-out endpoint', { exact: true }).click();
+    await page.locator('#app-backchannel').fill(backchannel);
+    const count = mutations.length;
+    await page.getByRole('button', { name: 'Save app request', exact: true }).click();
+    await page.waitForURL('**/apps/manage?notice=requested');
+    assert.equal(mutations.length, count + 1);
+    assert.deepEqual({ platform: mutations.at(-1).body.platform, callback: mutations.at(-1).body.redirectUri,
+      logout: mutations.at(-1).body.logoutUri, backchannel: mutations.at(-1).body.backchannelLogoutUri },
+    { platform: 'wordpress', callback, logout, backchannel });
   });
   await check('keyboard menus, 200% text resize, labels and narrow identity', async () => {
     await page.goto(`${origin}/account`); await page.getByText('Sample app 4', { exact: true }).waitFor();
@@ -202,11 +222,15 @@ try {
     unavailable = false; await page.getByRole('button', { name: 'Try again', exact: true }).click(); await page.getByRole('heading', { name: "You're signed in", exact: true }).waitFor();
   });
   await check('both logout choices preserve current-app and shared-browser scope', async () => {
+    const markers = () => mutations.filter(item => item.path === '/v1/session/end').length;
+    const before = markers();
     await page.goto(`${origin}/sign-out`); await page.getByRole('button', { name: 'Sign out of this app', exact: true }).click(); await page.waitForURL(origin + '/');
     assert(!(await context.cookies()).some(cookie => cookie.name === 'al-session' || cookie.name === 'al-context'));
+    assert.equal(markers(), before);
     await session(); await page.goto(`${origin}/sign-out`); await page.getByRole('button', { name: 'Sign out of AccessLobby and supported apps', exact: true }).click();
     await page.waitForURL('**/iam/logout?**'); assert.equal(new URL(page.url()).searchParams.get('post_logout_redirect_uri'), origin);
     assert(!(await context.cookies()).some(cookie => cookie.name === 'al-session'));
+    assert.equal(markers(), before + 1); assert.equal(mutations.at(-1).body, null);
   });
   await check('native POST survives disabled client scripts; no-script loading is explained; cross-origin writes stay rejected', async () => {
     const native = await browser.newContext({ serviceWorkers: 'block' });

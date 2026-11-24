@@ -1,0 +1,387 @@
+{
+  "engine": "actual Keycloak + AccessLobby API + real WordPress/WooCommerce",
+  "sites": [
+    {
+      "label": "a",
+      "base": "https://127.0.0.1:8441",
+      "client": "wordpress-a"
+    },
+    {
+      "label": "b",
+      "base": "https://127.0.0.1:8442/gh",
+      "client": "wordpress-b"
+    }
+  ],
+  "cases": [
+    {
+      "name": "hybrid core login exposes AccessLobby and preserves local form",
+      "status": "PASS",
+      "milliseconds": 305
+    },
+    {
+      "name": "hybrid local customer login retains original local account",
+      "status": "PASS",
+      "milliseconds": 2083
+    },
+    {
+      "name": "hybrid custom password frontend can issue an ordinary local cookie",
+      "status": "PASS",
+      "milliseconds": 713
+    },
+    {
+      "name": "fresh dual proof links existing WooCommerce customer",
+      "status": "PASS",
+      "milliseconds": 2742
+    },
+    {
+      "name": "site-only logout clears WP without automatically re-entering",
+      "status": "PASS",
+      "milliseconds": 631
+    },
+    {
+      "name": "quiet SSO re-entry preserves original protected destination",
+      "status": "PASS",
+      "milliseconds": 438
+    },
+    {
+      "name": "second independent subdirectory WP reuses IAM session without credentials",
+      "status": "PASS",
+      "milliseconds": 1498
+    },
+    {
+      "name": "site-only logout on A leaves independent B session active",
+      "status": "PASS",
+      "milliseconds": 790
+    },
+    {
+      "name": "subdirectory repeat login resolves exactly one local account",
+      "status": "PASS",
+      "milliseconds": 1249
+    },
+    {
+      "name": "WordPress sessions use Secure and HttpOnly cookies over HTTPS",
+      "status": "PASS",
+      "milliseconds": 2
+    },
+    {
+      "name": "callback rejects missing state without creating a session",
+      "status": "PASS",
+      "milliseconds": 367
+    },
+    {
+      "name": "shortcode and dynamic block preserve private entry URLs on independent site a",
+      "status": "PASS",
+      "milliseconds": 537
+    },
+    {
+      "name": "shortcode and dynamic block preserve private entry URLs on independent site b",
+      "status": "PASS",
+      "milliseconds": 289
+    },
+    {
+      "name": "shortcode Join reaches real registration without creating an unvalidated local user",
+      "status": "PASS",
+      "milliseconds": 2132
+    },
+    {
+      "name": "mobile mounted login adapter inserts one action and completes the original journey",
+      "status": "PASS",
+      "milliseconds": 1313
+    },
+    {
+      "name": "disconnect rejects a missing WordPress nonce and preserves the active mapping",
+      "status": "PASS",
+      "milliseconds": 1458
+    },
+    {
+      "name": "a different freshly authenticated person cannot disconnect the existing local account",
+      "status": "PASS",
+      "milliseconds": 3205
+    },
+    {
+      "name": "disconnect loses authority when the original local browser proof disappears",
+      "status": "PASS",
+      "milliseconds": 2896
+    },
+    {
+      "name": "bounded OIDC denial leaves the original account link and local session intact",
+      "status": "PASS",
+      "milliseconds": 2978
+    },
+    {
+      "name": "fresh disconnect invalidates linked sessions while preserving commerce and the peer site",
+      "status": "PASS",
+      "milliseconds": 4438
+    },
+    {
+      "name": "unlinked SSO cannot silently recreate or reactivate a local account",
+      "status": "PASS",
+      "milliseconds": 1183
+    },
+    {
+      "name": "explicit fresh reconnect reuses the original local user and mapping without duplicates",
+      "status": "PASS",
+      "milliseconds": 2598
+    },
+    {
+      "name": "unsigned backchannel cannot destroy another WP session",
+      "status": "PASS",
+      "milliseconds": 208
+    },
+    {
+      "name": "older API without receipts retains bounded SSO compatibility",
+      "status": "PASS",
+      "milliseconds": 4862
+    },
+    {
+      "name": "malformed advertised receipt fails closed before a WordPress session",
+      "status": "PASS",
+      "milliseconds": 3881
+    },
+    {
+      "name": "actual issuer logout invalidates matching sessions on both WP peers",
+      "status": "PASS",
+      "milliseconds": 1670
+    },
+    {
+      "name": "all-app logout ends quiet IAM re-entry",
+      "status": "PASS",
+      "milliseconds": 180
+    },
+    {
+      "name": "peer Join verifies email before creating exactly one safe local account",
+      "status": "PASS",
+      "milliseconds": 6042
+    },
+    {
+      "name": "late-hook JIT callback leaves no account or cookie and quiet retry creates one safe user",
+      "status": "PASS",
+      "milliseconds": 11929
+    },
+    {
+      "name": "enforced migration gate refuses an unprepared administrator",
+      "status": "PASS",
+      "milliseconds": 10223
+    },
+    {
+      "name": "existing administrator links explicitly without claim-based elevation",
+      "status": "PASS",
+      "milliseconds": 3135
+    },
+    {
+      "name": "real Gutenberg Journey control saves and reloads a Join block that reaches IAM",
+      "status": "PASS",
+      "milliseconds": 13049
+    },
+    {
+      "name": "HTTPS emergency ticket creates only the intended short admin session",
+      "status": "PASS",
+      "milliseconds": 2371
+    },
+    {
+      "name": "linked admin enables enforced mode only after readiness acknowledgements",
+      "status": "PASS",
+      "milliseconds": 4010
+    },
+    {
+      "name": "a dedicated shortcode page starts SSO server-side without JavaScript",
+      "status": "PASS",
+      "milliseconds": 1000
+    },
+    {
+      "name": "a dedicated block page starts SSO server-side without JavaScript",
+      "status": "PASS",
+      "milliseconds": 971
+    },
+    {
+      "name": "a dedicated login preserves a protected destination without JavaScript",
+      "status": "PASS",
+      "milliseconds": 1016
+    },
+    {
+      "name": "a dedicated login rejects a foreign return target",
+      "status": "PASS",
+      "milliseconds": 912
+    },
+    {
+      "name": "a public page containing a login action stays public in enforced mode",
+      "status": "PASS",
+      "milliseconds": 260
+    },
+    {
+      "name": "an unrelated form named login remains usable in enforced mode",
+      "status": "PASS",
+      "milliseconds": 738
+    },
+    {
+      "name": "mobile mounted login starts enforced SSO without an extra AccessLobby click",
+      "status": "PASS",
+      "milliseconds": 1491
+    },
+    {
+      "name": "enforced unlink is hidden and rejected even with a valid current WordPress nonce",
+      "status": "PASS",
+      "milliseconds": 2188
+    },
+    {
+      "name": "enforced cookie guard denies a valid local-password frontend that bypasses authenticate",
+      "status": "PASS",
+      "milliseconds": 870
+    },
+    {
+      "name": "host recovery can issue a short administrator cookie while enforcement is active",
+      "status": "PASS",
+      "milliseconds": 1529
+    },
+    {
+      "name": "Application Password REST authentication follows its explicit machine policy",
+      "status": "PASS",
+      "milliseconds": 3096
+    },
+    {
+      "name": "enforced wp-login automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 242
+    },
+    {
+      "name": "enforced wp-admin automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 268
+    },
+    {
+      "name": "enforced My Account automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 281
+    },
+    {
+      "name": "enforced generic frontend automatically initiates AccessLobby",
+      "status": "PASS",
+      "milliseconds": 485
+    },
+    {
+      "name": "enforced protected journey preserves its original destination and local permission",
+      "status": "PASS",
+      "milliseconds": 905
+    },
+    {
+      "name": "enforced mode keeps WooCommerce guest checkout and guest purchasing intact",
+      "status": "PASS",
+      "milliseconds": 6672
+    },
+    {
+      "name": "enforced anonymous Woo registration fails without creating a local account",
+      "status": "PASS",
+      "milliseconds": 3103
+    },
+    {
+      "name": "account-required checkout starts IAM while guest policy remains a local setting",
+      "status": "PASS",
+      "milliseconds": 1862
+    },
+    {
+      "name": "identity API outage fails new enforced login closed and leaves existing sessions usable",
+      "status": "PASS",
+      "milliseconds": 2625
+    },
+    {
+      "name": "missing prerequisite fault cannot reopen enforced local password login",
+      "status": "PASS",
+      "milliseconds": 2029
+    },
+    {
+      "name": "authorized rollback restores local login and enforced reactivation ends rollback sessions",
+      "status": "PASS",
+      "milliseconds": 4723
+    },
+    {
+      "name": "b dedicated shortcode page starts SSO server-side without JavaScript",
+      "status": "PASS",
+      "milliseconds": 600
+    },
+    {
+      "name": "b dedicated block page starts SSO server-side without JavaScript",
+      "status": "PASS",
+      "milliseconds": 609
+    },
+    {
+      "name": "b dedicated login preserves a protected destination without JavaScript",
+      "status": "PASS",
+      "milliseconds": 579
+    },
+    {
+      "name": "b dedicated login rejects a foreign return target",
+      "status": "PASS",
+      "milliseconds": 558
+    },
+    {
+      "name": "b public page containing a login action stays public in enforced mode",
+      "status": "PASS",
+      "milliseconds": 153
+    },
+    {
+      "name": "subdirectory enforced core starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 206
+    },
+    {
+      "name": "subdirectory enforced admin starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 264
+    },
+    {
+      "name": "subdirectory enforced frontend starts IAM automatically",
+      "status": "PASS",
+      "milliseconds": 278
+    },
+    {
+      "name": "subdirectory enforced callback preserves protected destination and original local account",
+      "status": "PASS",
+      "milliseconds": 1692
+    },
+    {
+      "name": "enforced shared logout ends matching peer sessions and preserves another IAM browser device",
+      "status": "PASS",
+      "milliseconds": 3790
+    },
+    {
+      "name": "missed backchannel is reconciled on the next due check before the WordPress cookie expires",
+      "status": "PASS",
+      "milliseconds": 4247
+    },
+    {
+      "name": "receipt outage grants bounded grace, then denies access and resumes the same cookie after recovery",
+      "status": "PASS",
+      "milliseconds": 14551
+    },
+    {
+      "name": "WordPress to independent reference app reuses SSO but retains peer-local account and authorization",
+      "status": "PASS",
+      "milliseconds": 2708
+    },
+    {
+      "name": "local logout in either WordPress or the reference peer preserves the other app and quiet re-entry",
+      "status": "PASS",
+      "milliseconds": 2531
+    },
+    {
+      "name": "reference-origin shared logout ends both WordPress sessions and preserves another browser",
+      "status": "PASS",
+      "milliseconds": 2362
+    },
+    {
+      "name": "WordPress-origin shared logout ends the reference session and retains its local account on later SSO",
+      "status": "PASS",
+      "milliseconds": 2671
+    },
+    {
+      "name": "real alpha.6 to alpha.7 ZIP upgrade preserves an established SSO session and local data",
+      "status": "PASS",
+      "milliseconds": 9850,
+      "diagnostic": {
+        "headerVersion": "0.1.0-alpha.7",
+        "runtimeStatus": 200,
+        "runningVersion": "0.1.0-alpha.7"
+      }
+    }
+  ]
+}

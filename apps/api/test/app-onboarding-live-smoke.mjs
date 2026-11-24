@@ -106,11 +106,11 @@ async function stopServer() {
   }
 }
 
-try {
-  browser = await chromium.launch();
+async function startServer(preview = false) {
   server = spawn(process.execPath, ['apps/api/dist/main.js'], { cwd: process.cwd(), env: { PATH: process.env.PATH, NODE_ENV: 'test',
     DATABASE_URL: databaseUrl, OIDC_ISSUER: issuer, OIDC_API_AUDIENCE: 'accesslobby-api',
     ALLOWED_CLIENT_IDS: 'accesslobby-web', PORT: '13001', GIT_SHA: 'ci-onboarding-fixture',
+    EXTERNAL_PROFILE_PREVIEW_ENABLED: String(preview),
   }, stdio: ['ignore', 'ignore', 'pipe'] });
   // Failure output is deliberately categorical; never dump token-bearing HTTP bodies.
   server.stderr.on('data', () => {});
@@ -124,6 +124,11 @@ try {
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   assert.ok(ready, 'Disposable API must become ready');
+}
+
+try {
+  browser = await chromium.launch();
+  await startServer();
 
   // This disposable IAM has dynamic hostnames. Pin the operator token to its
   // actual internal request host; human browser OIDC still pins localhost.
@@ -251,6 +256,31 @@ try {
   assert.equal((await (await admin(`/clients/${client.id}`)).json()).enabled, false);
   await api('/v1/application-entry', open.tokens[0], 401);
   console.info('APP_ONBOARDING_PASS registry-first old-token-denied legacy-no-bypass IAM-outage-denied disable-readback retry');
+
+  const disabledPreview = await fetch(apiOrigin + '/v1/preview/external-consents');
+  assert.equal(disabledPreview.status, 404);
+  assert.equal(disabledPreview.headers.get('cache-control'), 'no-store');
+  for (const [method, path] of [['GET', '/v1/preview/external-profiles/' + randomUUID()], ['POST', '/v1/preview/external-consents/' + randomUUID()], ['DELETE', '/v1/preview/external-consents/' + randomUUID()]]) {
+    const disabled = await fetch(apiOrigin + path, { method }); assert.equal(disabled.status, 404);
+  }
+  await stopServer(); await startServer(true);
+  for (const method of ['GET', 'POST', 'DELETE']) {
+    const absent = await fetch(apiOrigin + '/v1/preview/external-consents/' + randomUUID(), { method });
+    assert.equal(absent.status, 404); assert.equal(absent.headers.get('cache-control'), 'no-store');
+  }
+  assert.equal((await pool.query("SELECT count(*) AS count FROM information_schema.tables WHERE table_schema=current_schema() AND table_name LIKE 'external_app_%'")).rows[0].count, '0');
+  const unknownReceipt = await fetch(apiOrigin + '/v1/peer-sessions/status', { method: 'POST',
+    headers: { authorization: 'PeerSession ' + 'x'.repeat(43), 'x-accesslobby-client-id': restricted.clientId } });
+  assert.equal(unknownReceipt.status, 401);
+  const forgedEnd = await fetch(apiOrigin + '/v1/session/end', { method: 'POST',
+    headers: { authorization: 'Bearer ' + webTokens[0], 'content-type': 'application/json' }, body: JSON.stringify({ sid: 'unrelated-browser' }) });
+  assert.equal(forgedEnd.status, 401);
+  const ended = await api('/v1/session/end', webTokens[0], 200, undefined, 'POST');
+  assert.equal(ended.contract, 'accesslobby.browser-session.v0.1'); assert.equal(ended.ended, true);
+  await api('/v1/session/end', webTokens[0], 200, undefined, 'POST'); // Deterministic replay is idempotent.
+  assert.equal((await api('/v1/me', webTokens[0], 401)).error, 'session_ended');
+  await api('/v1/me', webTokens[1], 200); // Independent browser is not an all-devices logout.
+  console.info('APP_ONBOARDING_PASS receipt-http-status unknown-capability forged-sid-denied own-browser-marker idempotence device-isolation external-preview-disabled');
 
   await stopServer();
   await assert.rejects(loadAppEntry(apiOrigin, { accessToken: restricted.tokens[1] }, restricted.clientId),

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
-import { Pool } from 'pg';
+import { openIsolatedDatabase } from './isolated-database.js';
 import { ApplicationError, ApplicationStore, exactApplicationUrl } from '../src/applications.js';
 import { originProofPresent, proofHost, proofValue, verifiableOrigin } from '../src/origin-proof.js';
 
@@ -27,7 +27,7 @@ test('DNS proof requires one exact TXT answer, allowing chunks in that answer', 
 });
 
 test('requested app cannot serve tokens or admit people before controlled activation', { skip: !process.env.TEST_DATABASE_URL }, async () => {
-  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+  const { pool, close } = await openIsolatedDatabase();
   let published = false;
   const apps = new ApplicationStore(pool, ['accesslobby-web', 'reference-consumer'],
     async () => published ? [[proofValue(appChallenge)]] : []);
@@ -84,11 +84,11 @@ test('requested app cannot serve tokens or admit people before controlled activa
     assert.deepEqual(events.rows.map(row => row.action), [
       'application.requested', 'application.origin_verified', 'application.granted', 'application.granted', 'application.revoked'
     ]);
-  } finally { await pool.end(); }
+  } finally { await close(); }
 });
 
 test('discoverable open app admits a person without a resource grant', { skip: !process.env.TEST_DATABASE_URL }, async () => {
-  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+  const { pool, close } = await openIsolatedDatabase();
   let challenge = '';
   const apps = new ApplicationStore(pool, ['accesslobby-web'], async () => [[proofValue(challenge)]]);
   const [owner, visitor] = [randomUUID(), randomUUID()];
@@ -103,5 +103,5 @@ test('discoverable open app admits a person without a resource grant', { skip: !
     assert.equal((await apps.visible(visitor)).length, 1);
     assert.equal((await apps.entry(visitor, app.clientId)).admitted, true);
     await assert.rejects(apps.grant(owner, app.id, visitor, undefined), fails('application_grants_unavailable'));
-  } finally { await pool.end(); }
+  } finally { await close(); }
 });

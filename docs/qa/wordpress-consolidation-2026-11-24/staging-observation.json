@@ -1,0 +1,28 @@
+{
+  "recordedAt": "2026-11-24T10:25:07.338484+00:00",
+  "scope": "Read-only public runtime probes; no candidate deployed",
+  "mainRevision": "3d9220a140d61df5effe633bc72cf5142c4a8371",
+  "results": [
+    {
+      "surface": "web",
+      "httpStatus": 200
+    },
+    {
+      "surface": "api-live",
+      "httpStatus": 200,
+      "status": "ok",
+      "version": "3d9220a140d61df5effe633bc72cf5142c4a8371"
+    },
+    {
+      "surface": "api-ready",
+      "httpStatus": 200,
+      "status": "ready",
+      "version": "3d9220a140d61df5effe633bc72cf5142c4a8371"
+    },
+    {
+      "surface": "oidc-discovery",
+      "httpStatus": 200,
+      "issuer": "https://iam.accesslobby.realjanelove.com/realms/accesslobby-first-party"
+    }
+  ]
+}

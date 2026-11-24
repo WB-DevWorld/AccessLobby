@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-11-24T00:33:47.282488+00:00",
+  "checks": [
+    {
+      "name": "web",
+      "httpStatus": 200
+    },
+    {
+      "name": "apiLive",
+      "httpStatus": 200,
+      "status": "ok",
+      "version": "3d9220a140d61df5effe633bc72cf5142c4a8371"
+    },
+    {
+      "name": "apiReady",
+      "httpStatus": 200,
+      "status": "ready",
+      "version": "3d9220a140d61df5effe633bc72cf5142c4a8371"
+    },
+    {
+      "name": "discovery",
+      "httpStatus": 200,
+      "issuer": "https://iam.accesslobby.realjanelove.com/realms/accesslobby-first-party"
+    }
+  ]
+}

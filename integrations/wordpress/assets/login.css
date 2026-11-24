@@ -1,0 +1,4 @@
+.accesslobby-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .55em 1em; border: 1px solid currentColor; border-radius: 6px; text-decoration: none; font-weight: 600; }
+.accesslobby-button:focus-visible { outline: 3px solid #1545ac; outline-offset: 3px; }
+.accesslobby-login { margin: 1em 0; }
+.accesslobby-account { margin-block: 1.5em; }

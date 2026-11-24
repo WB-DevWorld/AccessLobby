@@ -1,0 +1,11 @@
+{
+  "candidateRevision": "c767b2dd292f8af53bc1ec9e046f119b68e61c81",
+  "runId": 45379569260,
+  "jobId": 138394762678,
+  "recordedAt": "2026-11-24T10:58:34.628Z",
+  "scope": "Regression only, before Store guard fix; disposable WordPress",
+  "markers": [
+    "LATE_HOOK_PROBE {\"hookCalled\":true,\"rejected\":false,\"usersPreserved\":false,\"linksPreserved\":false}",
+    "Fatal error: Uncaught RuntimeException: FAIL: late pre-insert blank username is rejected after hooks in phar:///home/runner/work/_temp/alwp/wp-cli.phar/vendor/wp-cli/eval-command/src/EvalFile_Command.php(85) : eval()'d code:20"
+  ]
+}

@@ -13,6 +13,7 @@ export function logoutVerifier(issuer: string, jwksUri: string, clientId: string
     if (!events || typeof events !== 'object' ||
         !Object.hasOwn(events, eventName) ||
         events[eventName] === null || typeof events[eventName] !== 'object' ||
+        Array.isArray(events[eventName]) || Object.keys(events[eventName]).length !== 0 ||
         Object.keys(events).length !== 1 ||
         typeof payload.sid !== 'string' || !payload.sid ||
         typeof payload.jti !== 'string' || !payload.jti ||

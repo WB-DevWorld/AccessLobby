@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0-alpha.5",
+  "sourceRevision": "f89402321ee0d2432e80164d66c4c39335deaafb",
+  "artifactId": 14877935254,
+  "files": 50,
+  "bytes": 90152,
+  "packageSha256": "f85e2eb00ba3e71742f435e9bb9025c189c6b1f2819081a388d60969bada20c2",
+  "everyPackagedFileMatchesSource": true,
+  "ciArtifactInnerZipMatches": true
+}

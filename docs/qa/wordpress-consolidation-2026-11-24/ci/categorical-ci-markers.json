@@ -1,0 +1,52 @@
+[
+  {
+    "job_id": 138379102904,
+    "kind": "general-verify",
+    "markers": [
+      "Ran 45 tests in 0.014s",
+      "ℹ tests 9",
+      "ℹ pass 9",
+      "ℹ fail 0",
+      "No known vulnerabilities found",
+      "examples/reference-consumer test: ℹ tests 16",
+      "examples/reference-consumer test: ℹ pass 16",
+      "examples/reference-consumer test: ℹ fail 0",
+      "apps/api test: ℹ tests 24",
+      "apps/api test: ℹ pass 24",
+      "apps/api test: ℹ fail 0",
+      "apps/web test: ℹ tests 22",
+      "apps/web test: ℹ pass 22",
+      "apps/web test: ℹ fail 0",
+      "ℹ tests 24",
+      "ℹ pass 24",
+      "ℹ fail 0",
+      "ℹ tests 16",
+      "ℹ pass 16",
+      "ℹ fail 0",
+      "PWA_BROWSER_SMOKE_PASS manifest worker offline protected-route update-A-to-B critical-peer dirty-forms unresponsive-peer retry peer-no-reload state-preserved",
+      "ENBEN_BROWSER_PASS save edit delete two-account-denial no-store outage reconnect local-logout six-widths keyboard-focus touch-target"
+    ]
+  },
+  {
+    "job_id": 138379103033,
+    "kind": "iam-smoke",
+    "markers": [
+      "SCOPED_CLIENT_PROVISIONER_PASS client-management-scope no-human-access temporary-client-cleanup",
+      "APP_ONBOARDING_PASS real-IAM-code-PKCE nonce JWKS stable-two-person-identity",
+      "APP_ONBOARDING_PASS requested-denied DNS-fixture-recheck review-fixture exact-live-IAM-readback retry conflict",
+      "ENBEN_REAL_IAM_PASS browser-code-PKCE peer-callback-JWKS API-entry two-person-note-owner edit delete local-logout SSO-return shared-logout-confirmation IAM-SSO-ended",
+      "APP_ONBOARDING_PASS open-two-people no-grant-list restricted-deny grant expiry revoke hidden-visibility owner-boundary peer-mutation-denied suspended-person membership-and-peer-policy-separation",
+      "APP_ONBOARDING_PASS registry-first old-token-denied legacy-no-bypass IAM-outage-denied disable-readback retry",
+      "APP_ONBOARDING_PASS receipt-http-status unknown-capability forged-sid-denied own-browser-marker idempotence device-isolation external-preview-disabled",
+      "APP_ONBOARDING_LIVE_SMOKE_PASS entry-transport-outage-fails-closed"
+    ]
+  },
+  {
+    "job_id": 138379094827,
+    "kind": "php83-protocol",
+    "markers": [
+      "OK (39 tests, 44 assertions)",
+      "Ran 5 tests in 0.134s"
+    ]
+  }
+]

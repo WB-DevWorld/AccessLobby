@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
-import { Pool } from 'pg';
+import { openIsolatedDatabase } from './isolated-database.js';
 import { ApplicationStore } from '../src/applications.js';
 import { proofValue } from '../src/origin-proof.js';
 import { disableIamClient, suspendRegistry } from '../src/suspend-app.js';
@@ -44,7 +44,7 @@ test('IAM suspension rejects identity drift or failed readback', async () => {
 
 test('registry suspension denies an active client before IAM disable and is idempotent',
   { skip: !process.env.TEST_DATABASE_URL }, async () => {
-    const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+    const { pool, close } = await openIsolatedDatabase();
     let challenge = '';
     const apps = new ApplicationStore(pool, [], async () => [[proofValue(challenge)]]);
     const owner = randomUUID();
@@ -68,5 +68,5 @@ test('registry suspension denies an active client before IAM disable and is idem
       const events = await pool.query('SELECT action FROM application_events WHERE application_id = $1 AND action = $2',
         [app.id, 'application.suspended']);
       assert.equal(events.rowCount, 1);
-    } finally { await pool.end(); }
+    } finally { await close(); }
   });

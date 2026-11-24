@@ -1,11 +1,11 @@
 /** Private, one-app first-party reconciler. Never expose this entry point as an HTTP route. */
 import { Pool } from 'pg';
-import { exactApplicationUrl } from './applications.js';
+import { exactApplicationUrl, type ApplicationPlatform } from './applications.js';
 import { validId } from './organizations.js';
 import { originProofPresent, proofHost, verifiableOrigin } from './origin-proof.js';
 
 interface AppRow { id: string; client_id: string; name: string; redirect_uri: string; logout_uri: string; backchannel_logout_uri: string | null;
-  status: string; trust_class: string; owner_active: boolean; origin_challenge: string;
+  status: string; trust_class: string; owner_active: boolean; origin_challenge: string; platform?: ApplicationPlatform;
   origin_verified_at: Date | null; origin_verified_host: string | null }
 interface ClientRep { clientId: string; name?: string; enabled: boolean; protocol: string; publicClient: boolean;
   standardFlowEnabled: boolean; implicitFlowEnabled: boolean; directAccessGrantsEnabled: boolean;
@@ -14,10 +14,12 @@ interface ClientRep { clientId: string; name?: string; enabled: boolean; protoco
   id?: string }
 
 export function representation(row: AppRow): ClientRep {
-  const redirect = exactApplicationUrl(row.redirect_uri);
-  const logout = exactApplicationUrl(row.logout_uri);
+  const platform = row.platform ?? 'web';
+  const redirect = exactApplicationUrl(row.redirect_uri, platform, 'callback');
+  const logout = exactApplicationUrl(row.logout_uri, platform, 'logout');
   if (new URL(redirect).origin !== new URL(logout).origin) throw new Error('Stored application origin mismatch');
-  const backchannel = row.backchannel_logout_uri ? exactApplicationUrl(row.backchannel_logout_uri) : null;
+  if (platform === 'wordpress' && new URL(redirect).pathname !== new URL(logout).pathname) throw new Error('Stored WordPress path mismatch');
+  const backchannel = row.backchannel_logout_uri ? exactApplicationUrl(row.backchannel_logout_uri, platform, 'backchannel') : null;
   if (backchannel && new URL(redirect).origin !== new URL(backchannel).origin) throw new Error('Stored backchannel origin mismatch');
   return {
     clientId: row.client_id, name: row.name, enabled: true, protocol: 'openid-connect', publicClient: true,

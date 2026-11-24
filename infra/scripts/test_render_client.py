@@ -9,6 +9,23 @@ spec.loader.exec_module(module)
 
 
 class ClientRegistrationTests(unittest.TestCase):
+    def test_wordpress_static_routes_preserve_subdirectory_without_relaxing_web(self):
+        callback = 'https://shop.example.test/gh/wp-login.php?action=al_callback'
+        logout = 'https://shop.example.test/gh/wp-login.php?action=al_signed_out'
+        backchannel = 'https://shop.example.test/gh/?rest_route=%2Faccesslobby%2Fv1%2Fbackchannel-logout'
+        client = module.representation('shop-gh', callback, logout, backchannel, 'wordpress')
+        self.assertEqual(client['redirectUris'], [callback])
+        self.assertEqual(client['attributes']['backchannel.logout.url'], backchannel)
+        for extra in ('&redirect_to=https://evil.example/', '&action=other', '&code=secret', '#x'):
+            with self.assertRaises(ValueError):
+                module.representation('shop-gh', callback + extra, logout, backchannel, 'wordpress')
+        with self.assertRaises(ValueError):
+            module.representation('shop-gh', callback, logout, backchannel)
+        with self.assertRaises(ValueError):
+            module.representation('shop-gh', callback, logout.replace('/gh/', '/intl/'), backchannel, 'wordpress')
+        with self.assertRaises(ValueError):
+            module.representation('shop-gh', callback, logout, backchannel + '&token=secret', 'wordpress')
+
     def test_distinct_client_keeps_generic_contract(self):
         client = module.representation("sample-portal", "https://portal.example.test/auth/callback", "https://portal.example.test/")
         self.assertEqual(client["redirectUris"], ["https://portal.example.test/auth/callback"])

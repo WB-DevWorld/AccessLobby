@@ -1,0 +1,510 @@
+{
+  "candidateRevision": "b683fcf776de50bf8606ca772c38625633c19110",
+  "recordedAt": "2026-11-24T10:35:41.681Z",
+  "runs": [
+    {
+      "run_id": 45375103385,
+      "jobs": [
+        {
+          "id": 138379094692,
+          "name": "Windows installable ZIP",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379094827,
+          "name": "PHP 8.3 protocol and package",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379094861,
+          "name": "WP 7.1.1 PHP 8.4 Woo 11.1.1 kadence SSO",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379094977,
+          "name": "PHP 8.5 protocol and package",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379095053,
+          "name": "WP 6.9.12 PHP 8.3 Woo none default SSO",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379095132,
+          "name": "WP 7.1.5 PHP 8.4 Woo 11.3.1 default SSO",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379095148,
+          "name": "WP 7.1.5 PHP 8.3 Woo 11.3.1 default SSO",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379095171,
+          "name": "WP 7.1.4 PHP 8.4 Woo 11.2.1 default SSO",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379095230,
+          "name": "PHP 8.4 protocol and package",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379095291,
+          "name": "Representative HTTPS fixture",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "run_id": 45375105500,
+      "jobs": [
+        {
+          "id": 138379102904,
+          "name": "verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138379103033,
+          "name": "iam-smoke",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "run_id": 45375103420,
+      "jobs": [
+        {
+          "id": 138379094484,
+          "name": "iam-theme",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "artifactIndex": [
+    {
+      "id": 14911975007,
+      "name": "wordpress-real-sso-7.1.5-php-8.4",
+      "size": 10815
+    },
+    {
+      "id": 14911835167,
+      "name": "wordpress-real-sso-7.1.5-php-8.3",
+      "size": 10799
+    },
+    {
+      "id": 14911545049,
+      "name": "accesslobby-wordpress-pilot-php-8.3",
+      "size": 87056
+    },
+    {
+      "id": 14910898311,
+      "name": "wordpress-real-sso-7.1.4-php-8.4",
+      "size": 10839
+    },
+    {
+      "id": 14910588520,
+      "name": "accesslobby-wordpress-pilot-windows",
+      "size": 87059
+    },
+    {
+      "id": 14910533069,
+      "name": "accesslobby-wordpress-https-report",
+      "size": 2601
+    },
+    {
+      "id": 14910494498,
+      "name": "wordpress-real-sso-7.1.1-php-8.4",
+      "size": 10832
+    },
+    {
+      "id": 14910129756,
+      "name": "accesslobby-wordpress-pilot-php-8.5",
+      "size": 87056
+    },
+    {
+      "id": 14909918515,
+      "name": "accesslobby-wordpress-pilot-php-8.4",
+      "size": 87056
+    },
+    {
+      "id": 14909734684,
+      "name": "wordpress-real-sso-6.9.12-php-8.3",
+      "size": 10538
+    }
+  ],
+  "lanes": [
+    {
+      "artifact": "wordpress-real-sso-6.9.12-php-8.3",
+      "wordpress": "6.9.12",
+      "php": "8.3.37",
+      "woocommerce": null,
+      "theme": {
+        "name": "Twenty Twenty-Five",
+        "version": "1.4"
+      },
+      "hpos": null,
+      "integrationAssertions": [
+        41,
+        41
+      ],
+      "browserCases": 68,
+      "sourceRevision": "ba83650a9399db80103800071188fd4284432f6a",
+      "candidateRevision": "b683fcf776de50bf8606ca772c38625633c19110",
+      "sourceDirty": false,
+      "packageSha256": "64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5",
+      "result": "PASS"
+    },
+    {
+      "artifact": "wordpress-real-sso-7.1.1-php-8.4",
+      "wordpress": "7.1.1",
+      "php": "8.4.28",
+      "woocommerce": "11.1.1",
+      "theme": {
+        "name": "Kadence",
+        "version": "1.5.2"
+      },
+      "hpos": false,
+      "integrationAssertions": [
+        43,
+        41
+      ],
+      "browserCases": 72,
+      "sourceRevision": "ba83650a9399db80103800071188fd4284432f6a",
+      "candidateRevision": "b683fcf776de50bf8606ca772c38625633c19110",
+      "sourceDirty": false,
+      "packageSha256": "64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5",
+      "result": "PASS"
+    },
+    {
+      "artifact": "wordpress-real-sso-7.1.4-php-8.4",
+      "wordpress": "7.1.4",
+      "php": "8.4.28",
+      "woocommerce": "11.2.1",
+      "theme": {
+        "name": "Twenty Twenty-Five",
+        "version": "1.5"
+      },
+      "hpos": false,
+      "integrationAssertions": [
+        43,
+        41
+      ],
+      "browserCases": 72,
+      "sourceRevision": "ba83650a9399db80103800071188fd4284432f6a",
+      "candidateRevision": "b683fcf776de50bf8606ca772c38625633c19110",
+      "sourceDirty": false,
+      "packageSha256": "64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5",
+      "result": "PASS"
+    },
+    {
+      "artifact": "wordpress-real-sso-7.1.5-php-8.3",
+      "wordpress": "7.1.5",
+      "php": "8.3.37",
+      "woocommerce": "11.3.1",
+      "theme": {
+        "name": "Twenty Twenty-Five",
+        "version": "1.5"
+      },
+      "hpos": true,
+      "integrationAssertions": [
+        43,
+        41
+      ],
+      "browserCases": 72,
+      "sourceRevision": "ba83650a9399db80103800071188fd4284432f6a",
+      "candidateRevision": "b683fcf776de50bf8606ca772c38625633c19110",
+      "sourceDirty": false,
+      "packageSha256": "64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5",
+      "result": "PASS"
+    },
+    {
+      "artifact": "wordpress-real-sso-7.1.5-php-8.4",
+      "wordpress": "7.1.5",
+      "php": "8.4.28",
+      "woocommerce": "11.3.1",
+      "theme": {
+        "name": "Twenty Twenty-Five",
+        "version": "1.5"
+      },
+      "hpos": false,
+      "integrationAssertions": [
+        43,
+        41
+      ],
+      "browserCases": 72,
+      "sourceRevision": "ba83650a9399db80103800071188fd4284432f6a",
+      "candidateRevision": "b683fcf776de50bf8606ca772c38625633c19110",
+      "sourceDirty": false,
+      "packageSha256": "64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5",
+      "result": "PASS"
+    }
+  ],
+  "browserCases": 356,
+  "reportManifest": [
+    {
+      "path": "ci/accesslobby-wordpress-https-report/https-qualification-report.json",
+      "sha256": "7c986be5c7c320293328d81b360e445f54ec4d62c4488c99b903ed88118b6495"
+    },
+    {
+      "path": "ci/categorical-ci-markers.json",
+      "sha256": "66fb2949c2dfd766d814c1f3abea852e9aa135bc4dcab6f07800f6f6b06d2dfc"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/browser-report.json",
+      "sha256": "cfbba3e84d8249de83d1fa45e6bd6fd8d5d4f47e753461d62b87c5d58bb37176"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/build.json",
+      "sha256": "65341b70e968eaeb622ad52191e10811d44e4aad9f8bc1d239d1b2651b9624d2"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/concurrency.json",
+      "sha256": "df52feeec536810c5ce24a19b4bf0c9351c9d55a19e47df917896ac29f22dc24"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/external-privacy.json",
+      "sha256": "a486aa179edc1344ce73be08f0a444752c15b2db085803900f53a171a84f7579"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/integration-a.json",
+      "sha256": "8b188a176ab8a02033b86dc784f446d14895ec95d8d0d415205a892376e62e3e"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/integration-b.json",
+      "sha256": "6a0fee88691f35bf09a8894a098bf4f43e2507d55ac5caef9d28be3bc2d58e14"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/inventory-a.json",
+      "sha256": "d1ce13c17a3253495666c3f67199498e1f329df9831199ea96fe1d97c49fcc8a"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/inventory-b.json",
+      "sha256": "8db775444635a50bf5de02f9105d7c3c6312ddc35937e266916820f69a8edf8c"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/lifecycle-a.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/lifecycle-b.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/security-a.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-6.9.12-php-8.3/security-b.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/browser-report.json",
+      "sha256": "4fd272d04d4fac61dec3b047e43c9761c49c3d9f7c088c980a36a49b10d11d5f"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/build.json",
+      "sha256": "4626a3488a0db803953036fa91a15d389d45d3972710626aa0e223cc6f577e1b"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/concurrency.json",
+      "sha256": "df52feeec536810c5ce24a19b4bf0c9351c9d55a19e47df917896ac29f22dc24"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/external-privacy.json",
+      "sha256": "a486aa179edc1344ce73be08f0a444752c15b2db085803900f53a171a84f7579"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/integration-a.json",
+      "sha256": "ed5780017ccea99b31c795f36ea18734d39eb61a7754a80e38e16197278345e4"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/integration-b.json",
+      "sha256": "36b95eb8e70d030b5bbc69810b76d55393c7fb4ee43669dbe53708904b911ede"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/inventory-a.json",
+      "sha256": "81a1aedfbd4a884fafe93c4d1dd294ad4f4485340dfca554fd7085f16723042e"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/inventory-b.json",
+      "sha256": "985cbc103860acead05e04848d9dadbaa93f36dceedf9b54ae921f64165c8f77"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/lifecycle-a.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/lifecycle-b.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/security-a.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.1-php-8.4/security-b.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/browser-report.json",
+      "sha256": "d4320dd81451813f3575b18c634defda8533085b7c4f01ef58964e96156a1210"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/build.json",
+      "sha256": "5482bee96ba1d4d277828d215077858ee0a2c17f155c3913aa0ac7a7549d1658"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/concurrency.json",
+      "sha256": "df52feeec536810c5ce24a19b4bf0c9351c9d55a19e47df917896ac29f22dc24"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/external-privacy.json",
+      "sha256": "a486aa179edc1344ce73be08f0a444752c15b2db085803900f53a171a84f7579"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/integration-a.json",
+      "sha256": "4d2d2b04604978cd0ae34e607c8342f4e0305da4fca96bdb319c9ad1310f11c0"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/integration-b.json",
+      "sha256": "c4ab39db683e9e0742839d4e7b71a378c9724d91929b4150df0997cc44e23dac"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/inventory-a.json",
+      "sha256": "9fa1c933638b1d75a24fb11c432141070745d81835749efc53e3d39e4ad68b58"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/inventory-b.json",
+      "sha256": "639f5db4e204e4220a99d38eca7c6a650f4310a45205afe2e7065f7a1eb52ea3"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/lifecycle-a.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/lifecycle-b.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/security-a.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.4-php-8.4/security-b.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/browser-report.json",
+      "sha256": "f7eac895ea1c0ae3ea6856a38d6516ab2dcbda0713c043cd9e857b9d0c5e9216"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/build.json",
+      "sha256": "17ca5de1e58ac8ef5ad1b8dd046a9b8e0f2306fc3ba0c3021719b3796515d31e"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/concurrency.json",
+      "sha256": "df52feeec536810c5ce24a19b4bf0c9351c9d55a19e47df917896ac29f22dc24"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/external-privacy.json",
+      "sha256": "a486aa179edc1344ce73be08f0a444752c15b2db085803900f53a171a84f7579"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/integration-a.json",
+      "sha256": "8a284a2266238c0b1c649a5bd86dc35beb41727957c53f42588df882b13ee1a4"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/integration-b.json",
+      "sha256": "f4c7baa48f068ef95ae8f2dd7776ac9c279de7f1290631158f126b26bf981dd8"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/inventory-a.json",
+      "sha256": "0c9491939b4d39c0e6cc4e2f06806e5f63496d3ca5c326038edde8cdfb2970a9"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/inventory-b.json",
+      "sha256": "59507d58c5c50a90cff86cd262ba33aad58b28902eaf00e1dd77db6a53fc98bd"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/lifecycle-a.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/lifecycle-b.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/security-a.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.3/security-b.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/browser-report.json",
+      "sha256": "74c9cd5f25fbc77f5223eeeffb6c90209906d0ab4f932b106d70998bf43baf07"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/build.json",
+      "sha256": "13718de0341e6eb067ad3df847280729c2f9818b171a275d4560b674dd5985dd"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/concurrency.json",
+      "sha256": "df52feeec536810c5ce24a19b4bf0c9351c9d55a19e47df917896ac29f22dc24"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/external-privacy.json",
+      "sha256": "a486aa179edc1344ce73be08f0a444752c15b2db085803900f53a171a84f7579"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/integration-a.json",
+      "sha256": "2a8830d4f3919072fac53db6b6c2ef4470231af6bf09fd48bf4f4efb6a71842e"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/integration-b.json",
+      "sha256": "520083fd19d60c5160f8c2ca4737fe218413d478393336340a93327ced5e1085"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/inventory-a.json",
+      "sha256": "7735935b255626f603b6946a656849bb24e463554522b20979075ca722324a3a"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/inventory-b.json",
+      "sha256": "19adb3a95ab1e036a7e1c6edfaf05f33dd15d394495179136b74aa0b2ca0204e"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/lifecycle-a.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/lifecycle-b.json",
+      "sha256": "e3709f67c9d449557f2277c536045ecfa6ad9e451dda327d96b4caebee0adaa6"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/security-a.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    },
+    {
+      "path": "ci/wordpress-real-sso-7.1.5-php-8.4/security-b.json",
+      "sha256": "920c29e92acd60c9c454bdc19d7294f2a665b890380024376251f1899962e230"
+    }
+  ],
+  "scope": "First-party fixture qualification only; actual estate/external activation gates remain open"
+}

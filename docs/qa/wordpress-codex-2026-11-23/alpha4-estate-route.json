@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-11-23T23:34:21.071711+00:00",
+  "operation": "READ_ONLY_TCP22_BEFORE_AUTH",
+  "sites": [
+    {
+      "site": "staging.cetechbpa.com",
+      "tcp22": "unreachable",
+      "errorClass": "OSError",
+      "errno": 101,
+      "sshAuthentication": "NOT_ATTEMPTED"
+    },
+    {
+      "site": "training.cetechbpa.com",
+      "tcp22": "unreachable",
+      "errorClass": "OSError",
+      "errno": 101,
+      "sshAuthentication": "NOT_ATTEMPTED"
+    },
+    {
+      "site": "training.flairoc.com",
+      "tcp22": "unreachable",
+      "errorClass": "OSError",
+      "errno": 101,
+      "sshAuthentication": "NOT_ATTEMPTED"
+    }
+  ]
+}

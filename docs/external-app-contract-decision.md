@@ -2,6 +2,12 @@
 
 Status: **PROPOSAL — owner decision required; no external activation** (2026-09-29).
 
+2026-11-23 implementation update: [ADR011](adr/011-external-identity-closed-preview.md) adds a closed minimal preparatory profile, app-scoped identity/consent storage and negative token-wide privacy tests. These reversible choices do not approve external activation or resolve the wider transfer, retention, consent UX, token/session issuance and pilot gates below. The first-party-only database/API activation boundary remains enforced. Preview management is disabled by default and is never an external relying-party API.
+
+2026-11-24 implementation update: [ADR012](adr/012-external-consent-review-context.md) adds a closed review/withdrawal UI, configuration-bound approval, fresh re-review and re-consent after publisher/site changes. External activation remains blocked; the privacy-safe issuer/API, provisioning, retention and real independent pilot are still separate acceptance gates.
+
+2026-11-24 consolidation: ADR013 separates the preserved PR61 external preview from the first-party alpha.6 candidate. Its runtime migrates only through006 and exposes no external consent/profile feature. Existing preview data is retained; no external activation is approved.
+
 ## Why this is a separate gate
 
 Source Pack DEC-001/010 expects AccessLobby to serve external applications, while DEC-003/005/009 keeps durable identity, broad app entry and peer resource authorization distinct. Q-001/005/011/015/019/027 leave the exact external trust, consent, claims and realm contract open. PR #42 deliberately activates only reviewed first-party clients. Today `/v1/me` returns the universal AccessLobby person ID, `/v1/my-organizations` returns organization IDs/names, and `PostgresIdentityStore` keys the person link by `(issuer, token.sub)`. The current access token and ID token may expose stable provider claims to the client. Simply changing the API response to a pseudonym would not make external sign-in private.

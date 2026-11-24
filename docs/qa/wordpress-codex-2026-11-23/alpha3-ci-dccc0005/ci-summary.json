@@ -1,0 +1,74 @@
+{
+  "candidateRevision": "dccc000530e03f50103c2ea45d03ef7714d6e27b",
+  "runs": [
+    {
+      "id": 45276576922,
+      "jobs": [
+        {
+          "id": 138049809670,
+          "name": "WordPress 6.9.12 PHP 8.3 real SSO",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138049810039,
+          "name": "WordPress 7.1.5 PHP 8.3 real SSO",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138049810056,
+          "name": "PHP 8.5 protocol and package",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138049810204,
+          "name": "WordPress 7.1.5 PHP 8.4 real SSO",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138049810206,
+          "name": "PHP 8.4 protocol and package",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138049810381,
+          "name": "PHP 8.3 protocol and package",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 45276576810,
+      "jobs": [
+        {
+          "id": 138049808331,
+          "name": "iam-smoke",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 138049809107,
+          "name": "verify",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 45276577060,
+      "jobs": [
+        {
+          "id": 138049810544,
+          "name": "iam-theme",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

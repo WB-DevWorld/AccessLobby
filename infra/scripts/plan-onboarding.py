@@ -56,7 +56,7 @@ def plan(request: dict) -> dict:
             raise ValueError('backchannelLogoutUri must be a string')
         client = _client_renderer().representation(
             request.get('clientId'), request.get('redirectUri'),
-            request.get('logoutUri'), request.get('backchannelLogoutUri'))
+            request.get('logoutUri'), request.get('backchannelLogoutUri'), request.get('platform', 'web'))
         return {**base, 'action': action, 'iamAction': 'register-oidc-client-in-existing-realm',
                 'clientRepresentation': client,
                 'apiAction': 'allow-client-after-controlled-registration',

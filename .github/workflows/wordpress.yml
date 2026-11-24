@@ -1,0 +1,254 @@
+name: WordPress connector
+on:
+  pull_request:
+    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml', '.gitattributes']
+  push:
+    branches: [main]
+    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml', '.gitattributes']
+permissions:
+  contents: read
+jobs:
+  windows-package:
+    name: Windows installable ZIP
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: integrations/wordpress
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with native Windows Python and check exact Git source bytes
+        run: |
+          python scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.7.zip
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess, zipfile
+          package = Path('dist/accesslobby-sso-0.1.0-alpha.7.zip')
+          with zipfile.ZipFile(package) as archive:
+              assert archive.testzip() is None
+              assert not any('\\' in name for name in archive.namelist())
+              for name in archive.namelist():
+                  relative = name.removeprefix('accesslobby-sso/')
+                  canonical = subprocess.check_output(['git', 'show', 'HEAD:integrations/wordpress/' + relative])
+                  assert archive.read(name) == canonical, 'Packaged content differs from the Git source'
+          print('WINDOWS_PACKAGE_PASS portable ZIP entries and exact committed runtime bytes')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: accesslobby-wordpress-pilot-windows
+          path: integrations/wordpress/dist/
+          retention-days: 14
+  protocol:
+    name: PHP ${{ matrix.php }} protocol and package
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+    defaults:
+      run:
+        working-directory: integrations/wordpress
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sodium, openssl, mbstring, dom, xml, xmlwriter, simplexml
+          tools: composer:v2
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer audit --no-interaction
+      - run: python3 scripts/prefix-jwt.py
+      - name: Verify locked isolated dependency is reproducible
+        run: git diff --exit-code -- vendor-prefixed
+      - name: PHP syntax
+        run: find src tests scripts -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: composer test
+      - run: composer analyze
+      - name: WordPress coding and security rules
+        run: |
+          vendor/bin/phpcs --config-set installed_paths ../../wp-coding-standards/wpcs,../../phpcsstandards/phpcsutils,../../phpcsstandards/phpcsextra
+          vendor/bin/phpcs --standard=phpcs.xml
+      - name: Fixture safety boundaries
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Build installable pilot ZIP (runtime installation remains a separate gate)
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.7.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: accesslobby-wordpress-pilot-php-${{ matrix.php }}
+          path: integrations/wordpress/dist/
+          retention-days: 14
+  runtime:
+    name: WP ${{ matrix.wordpress }} PHP ${{ matrix.php }} Woo ${{ matrix.woo }} ${{ matrix.theme }} SSO
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - wordpress: '7.1.5'
+            php: '8.4'
+            with_woo: 'true'
+            hpos: 'false'
+            woo: '11.3.1'
+            theme: 'default'
+          - wordpress: '7.1.5'
+            php: '8.3'
+            with_woo: 'true'
+            hpos: 'true'
+            woo: '11.3.1'
+            theme: 'default'
+          - wordpress: '6.9.12'
+            php: '8.3'
+            with_woo: 'false'
+            hpos: 'false'
+            woo: 'none'
+            theme: 'default'
+          # Reproduce reported estate versions on disposable data; these are not estate pilots.
+          - wordpress: '7.1.4'
+            php: '8.4'
+            with_woo: 'true'
+            hpos: 'false'
+            woo: '11.2.1'
+            theme: 'default'
+          - wordpress: '7.1.1'
+            php: '8.4'
+            with_woo: 'true'
+            hpos: 'false'
+            woo: '11.1.1'
+            theme: 'kadence'
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: fixture-only-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_USER: accesslobby
+          POSTGRES_PASSWORD: fixture-only-password
+          POSTGRES_DB: accesslobby
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U accesslobby -d accesslobby"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      ALWP_DISPOSABLE_FIXTURE: '1'
+      ALWP_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      DATABASE_URL: postgres://accesslobby:fixture-only-password@127.0.0.1:5432/accesslobby
+      ALWP_MYSQL_HOST: 127.0.0.1
+      ALWP_MYSQL_PORT: '3306'
+      ALWP_MYSQL_USER: root
+      ALWP_MYSQL_PASSWORD: fixture-only-password
+      NEXT_TELEMETRY_DISABLED: '1'
+      ALWP_WITH_WOO: ${{ matrix.with_woo }}
+      ALWP_HPOS: ${{ matrix.hpos }}
+      ALWP_THEME: ${{ matrix.theme }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sodium, openssl, mysqli, mbstring, dom, xml, xmlwriter, simplexml, curl, zip
+          tools: composer:v2
+          coverage: none
+      - run: npm install -g pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Build candidate ZIP
+        working-directory: integrations/wordpress
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.7.zip
+      - name: Build exact previously qualified upgrade source
+        run: |
+          git fetch --no-tags --depth=1 origin 1c04017e0eeddb505a7b053c7683edb94958cb71
+          mkdir -p "$RUNNER_TEMP/alwp-previous"
+          git archive 1c04017e0eeddb505a7b053c7683edb94958cb71 integrations/wordpress | tar -xf - -C "$RUNNER_TEMP/alwp-previous"
+          python3 "$RUNNER_TEMP/alwp-previous/integrations/wordpress/scripts/package.py" --output "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.6.zip"
+      - name: Download official disposable runtimes
+        run: |
+          mkdir -p "$RUNNER_TEMP/alwp"
+          curl --fail --silent --show-error --location --retry 2 "https://wordpress.org/wordpress-${{ matrix.wordpress }}.zip" -o "$RUNNER_TEMP/alwp/wordpress.zip"
+          if [ '${{ matrix.with_woo }}' = 'true' ]; then
+            curl --fail --silent --show-error --location --retry 2 "https://downloads.wordpress.org/plugin/woocommerce.${{ matrix.woo }}.zip" -o "$RUNNER_TEMP/alwp/woocommerce.zip"
+          fi
+          if [ '${{ matrix.theme }}' = 'kadence' ]; then
+            curl --fail --silent --show-error --location --retry 2 https://downloads.wordpress.org/theme/kadence.1.5.2.zip -o "$RUNNER_TEMP/alwp/kadence.zip"
+          fi
+          curl --fail --silent --show-error --location --retry 2 https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o "$RUNNER_TEMP/alwp/wp-cli.phar"
+          curl --fail --silent --show-error --location --retry 2 https://github.com/keycloak/keycloak/releases/download/26.7.0/keycloak-26.7.0.tar.gz -o "$RUNNER_TEMP/alwp/keycloak.tar.gz"
+          tar -xzf "$RUNNER_TEMP/alwp/keycloak.tar.gz" -C "$RUNNER_TEMP/alwp"
+      - name: Actual IAM API WordPress WooCommerce browser acceptance
+        run: |
+          python3 integrations/wordpress/scripts/qualify.py --runtime "$RUNNER_TEMP/alwp" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.7.zip --upgrade-from "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.6.zip" --keycloak-home "$RUNNER_TEMP/alwp/keycloak-26.7.0"
+      - name: Retain sanitized categorical evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wordpress-real-sso-${{ matrix.wordpress }}-php-${{ matrix.php }}
+          path: |
+            ${{ runner.temp }}/alwp/qualification-*/integration-*.json
+            ${{ runner.temp }}/alwp/qualification-*/inventory-*.json
+            ${{ runner.temp }}/alwp/qualification-*/browser-report.json
+            ${{ runner.temp }}/alwp/qualification-*/http-report.json
+            ${{ runner.temp }}/alwp/qualification-*/security-*.json
+            ${{ runner.temp }}/alwp/qualification-*/lifecycle-*.json
+            ${{ runner.temp }}/alwp/qualification-*/concurrency.json
+            ${{ runner.temp }}/alwp/qualification-*/build.json
+            ${{ runner.temp }}/alwp/qualification-*/external-privacy.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  representative-https:
+    name: Representative HTTPS fixture
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ALWP_DISPOSABLE_FIXTURE: '1'
+      ALWP_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - run: pnpm install --frozen-lockfile
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: sodium, openssl, mbstring, mysqli, curl
+          tools: composer:v2
+          coverage: none
+      - run: sudo apt-get update && sudo apt-get install -y libnss3-tools
+      - working-directory: integrations/wordpress
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          python3 scripts/prefix-jwt.py
+          python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.7.zip
+      - name: Download the pinned WordPress runtime
+        run: |
+          mkdir -p "$RUNNER_TEMP/alwp-runtime"
+          curl -fsSL -o "$RUNNER_TEMP/alwp-runtime/wordpress.zip" https://wordpress.org/wordpress-7.1.5.zip
+          curl -fsSL -o "$RUNNER_TEMP/alwp-runtime/woocommerce.zip" https://downloads.wordpress.org/plugin/woocommerce.11.3.1.zip
+          curl -fsSL -o "$RUNNER_TEMP/alwp-runtime/wp-cli.phar" https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run the nginx and PHP-FPM fixture
+        run: python3 integrations/wordpress/scripts/qualify.py --profile https --runtime "$RUNNER_TEMP/alwp-runtime" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.7.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-wordpress-https-report
+          path: integrations/wordpress/dist/https-qualification-report.json
+          retention-days: 14

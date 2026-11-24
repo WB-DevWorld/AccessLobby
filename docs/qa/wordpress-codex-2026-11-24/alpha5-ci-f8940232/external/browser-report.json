@@ -1,0 +1,42 @@
+{
+  "engine": "real Keycloak + AccessLobby API/PostgreSQL + production Next.js",
+  "activationAllowed": false,
+  "cases": [
+    {
+      "name": "default-off review list and mutation routes return 404",
+      "status": "PASS"
+    },
+    {
+      "name": "real IAM sign-in renders a mobile review without JavaScript or private identity claims",
+      "status": "PASS"
+    },
+    {
+      "name": "native approval saves only the signed-in human and leaves external client inactive",
+      "status": "PASS"
+    },
+    {
+      "name": "foreign and absent origins cannot withdraw an approval through the web session",
+      "status": "PASS"
+    },
+    {
+      "name": "another signed-in person sees no approval and cannot withdraw it",
+      "status": "PASS"
+    },
+    {
+      "name": "withdrawal works without JavaScript and retry remains idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "a registration change invalidates an already rendered form and requires fresh review",
+      "status": "PASS"
+    },
+    {
+      "name": "fresh private review and re-consent preserve one app identity and one canonical human",
+      "status": "PASS"
+    },
+    {
+      "name": "suspension withdraws approval and preview resume never restores it or activates a client",
+      "status": "PASS"
+    }
+  ]
+}
