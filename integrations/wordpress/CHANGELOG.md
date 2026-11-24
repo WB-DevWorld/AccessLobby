@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-alpha.8 — 2026-11-24
+
+- Treat Wordfence Login Security's own-account capabilities `wfls_show_login_security` and `wf2fa_activate_2fa_self` as non-elevating. Real subscriber and customer roles on the estate include them, and alpha.7 refused every settings save and SSO start because of that.
+- Keep administration, shop, and content capabilities unsafe. A regression covers the self-service capabilities and still rejects `manage_options`.
+
 ## 0.1.0-alpha.7 — 2026-11-24
 
 - Reject an empty or whitespace-only stored username after local insertion/registration hooks finish. Roll back the new user and identity mapping together.
