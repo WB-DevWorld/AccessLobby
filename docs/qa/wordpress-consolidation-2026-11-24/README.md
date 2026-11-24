@@ -1,11 +1,17 @@
-# Consolidation qualification ledger
+# Consolidated first-party WordPress qualification
 
-Initial sources: main3d9220a140d61df5effe633bc72cf5142c4a8371, PR61/3131df44bb7f6bb006a2dac6bcbac29591f288e9 and Cursor PR60/6ad3ec96d3c18f06d993c8e72d941fc0d90dd8e1. New branch: `feat/wordpress-consolidation`; version0.1.0-alpha.6. This record never borrows a pass from a comparison branch.
+The implementation cycle is qualified at **b683fcf776de50bf8606ca772c38625633c19110**, version **0.1.0-alpha.6**, on **feat/wordpress-consolidation / PR62**. All **13 CI jobs** pass, including **356 browser cases** across five independent two-WordPress matrices, and the additional distinct-hostname/nginx/PHP-FPM trusted-TLS smoke. This is an isolated first-party pilot candidate, not a real estate or external-publisher rollout.
 
-Local checks: TypeScript API/web typecheck and production builds pass. Web22 and reference16 tests pass; the latter includes Cursor's parallel port test. Fixture safety2 and infrastructure Python45 pass. Production dependency audit reports no known vulnerabilities. PHP/PostgreSQL/Docker/browser runtime checks have not run locally in this workspace; they are assigned to the full CI matrix. No estate site has been changed.
+- [Complete acceptance and actual remaining gates](ACCEPTANCE.md)
+- [CI revisions, jobs, versions and report checksums](ci-index.json)
+- [Exact package/source and Windows/Linux byte verification](package-verification.json)
+- [Read-only public staging observation](staging-observation.json)
+- [Per-lane categorical evidence](ci/)
+- [Standalone controlled staging runbook](../../runbooks/wordpress-consolidation-staging.md)
+- [Consolidation decision and source rationale](../../adr/013-wordpress-first-party-consolidation.md)
 
-Source acceptance reuses the previous37 focused passes. Pass38 reconciles both exact current branch heads and their actual green CI, including Cursor's HTTPS job that had not yet been reflected in its old narrative. Pass39 inspects shared registry URL rejection, missing-extension policy, audit/storage guards, test isolation and TLS fixture trust/resource/lockfile boundaries. Consequential findings are CURRENT-REPO-FACT; ADR013 records the owner-authorized consolidation and Stage A/B scope. No raw source pack, historical conversation or credential is committed.
+The canonical installable ZIP contains 50 files / 91,112 bytes. SHA256: **64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5**. It upgrades the exact alpha.5 package. Build with integrations/wordpress/scripts/package.py from the qualified source; the outer review bundle is not installable.
 
-Expected CI scope: PHP8.3/8.4/8.5 protocol/static/package, native Windows ZIP, five full two-WordPress matrices, representative hostname HTTPS/nginx/PHP-FPM, API/schema/port repeatability, existing UI/PWA/IAM/theme/container regressions. Exact source, results and package hash must be appended only after observation.
+Source acceptance reuses the previous 37 focused passes. Pass 38 reconciles exact comparison heads and actual CI. Pass 39 checks typed WordPress registration, missing-extension enforcement, durable audit/storage/JIT guards, database/port isolation and TLS fixture boundaries. Pass 40 reviews Cursor's independently advancing 04941d9f179c29739de25a3e8d5a277692bc28c2 and incorporates its stronger host/browser certificate gates; broader new Join/lifecycle additions are not claimed for the representative smoke. Consequential findings are **CURRENT-REPO-FACT**; consolidation and Stage A/B separation are owner-authorized decisions recorded in ADR013. No raw chat/source-pack or credential is committed.
 
-Actual CETECH/FLAIROC backup/restore, controlled installation, licensed stack/cache/security/extension behavior and public-site SSO remain separate gates. Multisite and arbitrary external publisher activation remain unsupported. Issue59 stays open.
+The initial fixture startup failure, its generated-script fix and pre-release package changes are retained honestly in the acceptance record. Evidence-only successors must retain the same packaged files and pass their own required checks. Main/public API stays 3d9220a140d61df5effe633bc72cf5142c4a8371. No estate installation, main merge, image promotion or production migration occurred. Issue59 remains open. Actual WoodMart/B2BKing/cache/security/extensions, public-domain two-site adoption and backup/recovery remain gates; multisite is unsupported and arbitrary external activation stays closed.

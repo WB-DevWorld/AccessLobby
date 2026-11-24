@@ -1,0 +1,223 @@
+{
+  "candidateRevision": "b683fcf776de50bf8606ca772c38625633c19110",
+  "version": "0.1.0-alpha.6",
+  "package": "accesslobby-sso-0.1.0-alpha.6.zip",
+  "bytes": 91112,
+  "files": 50,
+  "sha256": "64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5",
+  "everyEntryMatchesCommittedSource": true,
+  "ciArtifacts": [
+    {
+      "artifact": "accesslobby-wordpress-pilot-php-8.3",
+      "identical": true,
+      "sha256": "64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5"
+    },
+    {
+      "artifact": "accesslobby-wordpress-pilot-windows",
+      "identical": true,
+      "sha256": "64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5"
+    }
+  ],
+  "entries": [
+    {
+      "entry": "accesslobby-sso/CHANGELOG.md",
+      "sha256": "fa95c6f8c5082d8cb1e07ee0086c897bd7e489e60a32907f4dbc93e765bc374d"
+    },
+    {
+      "entry": "accesslobby-sso/LICENSE",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    },
+    {
+      "entry": "accesslobby-sso/accesslobby-sso.php",
+      "sha256": "872c3abff822a4509c845fd3d5f0f76ef64e4073809830da38f0914be33ce084"
+    },
+    {
+      "entry": "accesslobby-sso/assets/login.css",
+      "sha256": "01d79c634118a941b1cb18e779404366c0437bce148767d78b4b357a673c5575"
+    },
+    {
+      "entry": "accesslobby-sso/assets/login.js",
+      "sha256": "1660bc9efa0b4c1212a2f75ca1fa1220dda2490cc21fcb5a92a37795062c04e7"
+    },
+    {
+      "entry": "accesslobby-sso/autoload.php",
+      "sha256": "8f1e57ff0e558fca59db7eb46c2ea0bc2669b854dba399b7ddddc664e875c7e6"
+    },
+    {
+      "entry": "accesslobby-sso/blocks/login/block.json",
+      "sha256": "e12f995fef1b243b8d3bb761ff40fc48f38e0b6d28c444a98b88c3bdd25f9689"
+    },
+    {
+      "entry": "accesslobby-sso/blocks/login/editor.js",
+      "sha256": "b37938bd03f122ea8db28b5f68784395fb67dbbb15e9457adaa27ebc80686a66"
+    },
+    {
+      "entry": "accesslobby-sso/docs/administrator.md",
+      "sha256": "acd965a00117e9fc477c17c1d5be2fd22f739135075ba14d8a5d4f7a90efb217"
+    },
+    {
+      "entry": "accesslobby-sso/docs/compatibility.md",
+      "sha256": "d4ba137babc34bfaea6c58dc52ee47f0cb4db5d8a2683236929175cbb4f444cd"
+    },
+    {
+      "entry": "accesslobby-sso/docs/contract-v0.1.md",
+      "sha256": "f0ac9743e885eae5859d2d0513dbfdf017b6a1598228374b447cda5feadfeb22"
+    },
+    {
+      "entry": "accesslobby-sso/docs/developer.md",
+      "sha256": "8fa7833fcb168fd655204ab5ca8aee02fc4a5232c4c2e1ea0b3e065bd62a5703"
+    },
+    {
+      "entry": "accesslobby-sso/docs/external.md",
+      "sha256": "8f5898b6fc5d5d934bc7203d7971ec90db08e4ddefb7737acd33f6714677a748"
+    },
+    {
+      "entry": "accesslobby-sso/docs/frontend.md",
+      "sha256": "24c91d9dfce584413efc52b36b0222330b014f8310d9e0872d89da8163b40aa5"
+    },
+    {
+      "entry": "accesslobby-sso/docs/logout.md",
+      "sha256": "ad45758524f1e601ff6094e3405d4a0900106080066c882560ad489124257737"
+    },
+    {
+      "entry": "accesslobby-sso/docs/migration.md",
+      "sha256": "56f6d3647839f900821a5f154a235d32eea59adf188133222a217ea8d0a07dbf"
+    },
+    {
+      "entry": "accesslobby-sso/docs/recovery.md",
+      "sha256": "0c522d9bd8dba3efc4a3e1aaae0b859cb9ba2f78d74a3585c3e87cb505ec372a"
+    },
+    {
+      "entry": "accesslobby-sso/docs/security.md",
+      "sha256": "9bed6a3d4ed22799d6f8f7458ab88f406ca289d712e94dd8683060388c2898c4"
+    },
+    {
+      "entry": "accesslobby-sso/docs/setup.md",
+      "sha256": "70aa477c53be313d9497958d5e243a6b91f245969a5cb6b313881051cde972df"
+    },
+    {
+      "entry": "accesslobby-sso/docs/site-qualification.md",
+      "sha256": "38d9e4f964e153a6c5bc6b0d185321858fdf617558ce0f77f2dde783ba802968"
+    },
+    {
+      "entry": "accesslobby-sso/docs/source-acceptance.md",
+      "sha256": "910fa5b8ea1f9f5cd068d28fa7dce13b8b6895fcb77964e810975cda467b312f"
+    },
+    {
+      "entry": "accesslobby-sso/docs/troubleshooting.md",
+      "sha256": "184daecbeec837072f9950096dc8d5810bb1d8305537d1e2f8df034451a39372"
+    },
+    {
+      "entry": "accesslobby-sso/functions.php",
+      "sha256": "b37ca4dd4c6143ce54484d204d13998f339ce3f353ceb94fb79e4a5b38a07df5"
+    },
+    {
+      "entry": "accesslobby-sso/readme.txt",
+      "sha256": "90fc36f0f6c4c69451bfd0479677a0ed55b73abadadaea1aa6e1c2fe1df49b1e"
+    },
+    {
+      "entry": "accesslobby-sso/src/Admin.php",
+      "sha256": "7c78fe1ee470f183f0ad288b39f2eb01b38c8b928579a0c8937c9b37c20981f8"
+    },
+    {
+      "entry": "accesslobby-sso/src/Cli.php",
+      "sha256": "cb7cd900b19381a0ab9384c2d4d2b537ffea81870bddd3ad944f445850531ebf"
+    },
+    {
+      "entry": "accesslobby-sso/src/Config.php",
+      "sha256": "6da995180669f3e50f0fa6d750dbe5f0d1397dfd72f8df68e8fd0b6ef113ebd2"
+    },
+    {
+      "entry": "accesslobby-sso/src/Controller.php",
+      "sha256": "15ae78ccd4b259a9fdd6bee83e7406d28a7486c351a4a3821321f1b193314df2"
+    },
+    {
+      "entry": "accesslobby-sso/src/Emergency.php",
+      "sha256": "e7d109b62435e82269ee7d70f791b355e9de8e160b8acf93c67900dd77afdf01"
+    },
+    {
+      "entry": "accesslobby-sso/src/Failure.php",
+      "sha256": "6421337a8703a0a9473670dabef51be2768799cc5e67b4ccea3e21be76bd98a4"
+    },
+    {
+      "entry": "accesslobby-sso/src/Http.php",
+      "sha256": "d63d7c977413c7ebdc9850eaf6e41be5a640708b6cabeb34a1f6f7a0e3a653b2"
+    },
+    {
+      "entry": "accesslobby-sso/src/Oidc.php",
+      "sha256": "72b924b8aa0e8539217a381b9b7f9c12c6e4a3838cd7315667cdbb01920f7163"
+    },
+    {
+      "entry": "accesslobby-sso/src/Plugin.php",
+      "sha256": "1939f415cc2845a7ed11b3493077a5e13ec39470c2cd1f9ccbfaba3d34c582be"
+    },
+    {
+      "entry": "accesslobby-sso/src/Reconciler.php",
+      "sha256": "bf754083ca96514504b53bd17b458f6d9ed137c96cbc3b8debb0a2a5f74281fb"
+    },
+    {
+      "entry": "accesslobby-sso/src/Security.php",
+      "sha256": "9a71ee24f7c2e86522df5a4d0a7e45b4c677fecb2663f77fbc5d301ea20adbaf"
+    },
+    {
+      "entry": "accesslobby-sso/src/Sessions.php",
+      "sha256": "d828d1ba9cf01c49cb7295f2b2ae6cd3259ba918aa88c7040561cca0c72b19ef"
+    },
+    {
+      "entry": "accesslobby-sso/src/Store.php",
+      "sha256": "585edc98ab11223f71daf8117d8c9f238e42f50d16fa9c0f13f2f5f858fd2ac6"
+    },
+    {
+      "entry": "accesslobby-sso/src/Surfaces.php",
+      "sha256": "9a1eb36c2511c4270c2fb61ec789a0fa0dd2a38c36a2767dc148dbf94c838163"
+    },
+    {
+      "entry": "accesslobby-sso/src/TokenValidator.php",
+      "sha256": "2ed5625221b593a69b33e6ff12fac0da8e83dba86c4e053d55078f7efba5e7e3"
+    },
+    {
+      "entry": "accesslobby-sso/uninstall.php",
+      "sha256": "2e1ab5b64cbc2e160a0f4fac5e97a28f0756d0fa93e36f7d68462cc35976914f"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/BeforeValidException.php",
+      "sha256": "74fb3c5a7c4492071807693ee55a5da74608bbb671ea2b88ed31c5eab3bc1441"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/CachedKeySet.php",
+      "sha256": "a9f467f8865a056bc8fb4fc26c59afa478477a303c6e671ca10a9aceeb3972bc"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/ExpiredException.php",
+      "sha256": "b1564ef7df87d1c89a6f2c1427f140e24f446c20e8266c60599972f8956d9f70"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/JWK.php",
+      "sha256": "69062648b7d50c8d12c4049c565170bc5f9e678889bab32448e9cb6d5d954140"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/JWT.php",
+      "sha256": "e0e1d8eb180f40c547cd68875188fbe8533d3ed56c33516fe565ecca2ce9639f"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/JWTExceptionWithPayloadInterface.php",
+      "sha256": "3f96b8134e16e480d5da0fb30d0ff8e57441c487aa3b3c4e459881808db8e876"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/Key.php",
+      "sha256": "2c9db28a6e7e4f94f4529bf204a71e28db196a17170a72d29a9210955b3e91d4"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/LICENSE",
+      "sha256": "00e641cb185172e752bb3ab744925502c099dca06c9ecf53ea6fba941a65910c"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/SignatureInvalidException.php",
+      "sha256": "79979f488497a8092327e2374b887f0c2c3eb1ae0ce7d825bf7dfa00105a9a7b"
+    },
+    {
+      "entry": "accesslobby-sso/vendor-prefixed/jwt/provenance.json",
+      "sha256": "632e558784732689f9794cc0005efc8058e138a10e1fe1682c227e2d098f4a96"
+    }
+  ]
+}
