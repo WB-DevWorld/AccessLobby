@@ -1,5 +1,9 @@
 # Execution ledger — MVP-0
 
+## Late WordPress hook regression investigation — 2026-11-24 UTC
+
+Cursor PR60/0ecc60eb20984cb24e0c185a420484b9ea978646 run45378656583 fails its representative HTTPS job after TLS, cancelled/unverified/collision Join and denied admission pass. Its partial-provisioning hook leaves a local account or mapping. Official wp_insert_user source places wp_pre_insert_user_data after initial username validation. The consolidated post-hook guard currently checks user/role/capabilities but not blank login data; this is a source-confirmed suspected gap, not yet reproduced on this branch. A real WordPress regression now injects empty/whitespace usernames after validation and requires no user/mapping residue. The alpha.6 qualification remains historical bounded evidence; hold estate adoption pending this regression and fix. No main/staging/estate changes. Relates to #59.
+
 ## Owner-authorized first-party consolidation — 2026-11-24 UTC
 
 Branch **feat/wordpress-consolidation / PR62** retains PR61/3131df44bb7f6bb006a2dac6bcbac29591f288e9's hardened connector and selectively incorporates Cursor PR60/6ad3ec96d3c18f06d993c8e72d941fc0d90dd8e1's test isolation, port claims, dependencies and representative nginx/PHP-FPM/hostname TLS fixture. Cursor independently advanced to 04941d9f179c29739de25a3e8d5a277692bc28c2 during consolidation; its stricter host/browser certificate checks are incorporated too. Neither source branch is modified by this work. Source acceptance extends through 40 focused passes; ADR013 records scope and selection rationale.

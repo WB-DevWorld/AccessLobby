@@ -29,6 +29,35 @@ $config['jit'] = true;
 $identity = static fn() => array( 'issuer' => $config['issuer'], 'identity' => wp_generate_uuid4(),
 	'subject' => wp_generate_uuid4(), 'email' => wp_generate_uuid4() . '@example.test', 'email_verified' => true );
 
+// Cursor's HTTPS Join probe exposed a late hook that runs after core validation.
+// Exercise real wp_insert_user(), not a mocked WP_Error or an email collision.
+foreach ( array( '', " \t " ) as $invalid_login ) {
+	$probe = $identity();
+	$before_users = count_users()['total_users'];
+	$before_links = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $store->table( 'links' ) ) );
+	$hook_called = false;
+	$corrupt_login = static function ( array $data, bool $update, $user_id, array $userdata ) use ( $probe, $invalid_login, &$hook_called ): array {
+		if ( ! $update && $probe['email'] === ( $userdata['user_email'] ?? '' ) ) {
+			$hook_called = true;
+			$data['user_login'] = $invalid_login;
+		}
+		return $data;
+	};
+	add_filter( 'wp_pre_insert_user_data', $corrupt_login, 10, 4 );
+	$failure = '';
+	try { $store->resolve( $probe, $config ); }
+	catch ( Failure $error ) { $failure = $error->getMessage(); }
+	finally { remove_filter( 'wp_pre_insert_user_data', $corrupt_login, 10 ); }
+	$users_preserved = $before_users === count_users()['total_users'];
+	$links_preserved = $before_links === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $store->table( 'links' ) ) );
+	WP_CLI::line( 'LATE_HOOK_PROBE ' . wp_json_encode( array(
+		'hookCalled' => $hook_called, 'rejected' => 'unsafe_provisioning_result' === $failure,
+		'usersPreserved' => $users_preserved, 'linksPreserved' => $links_preserved,
+	) ) );
+	$check( $hook_called && 'unsafe_provisioning_result' === $failure, 'late pre-insert blank username is rejected after hooks' );
+	$check( $users_preserved && $links_preserved && ! email_exists( $probe['email'] ), 'late hook rejection rolls back user and mapping' );
+}
+
 $count = count_users()['total_users'];
 $escalate = static function ( int $id ): void { ( new WP_User( $id ) )->set_role( 'administrator' ); };
 add_action( 'user_register', $escalate );
