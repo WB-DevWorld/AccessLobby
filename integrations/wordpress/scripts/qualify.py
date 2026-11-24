@@ -25,6 +25,7 @@ parser.add_argument('--package', type=Path, required=True)
 parser.add_argument('--keycloak-home', type=Path)
 parser.add_argument('--keep', action='store_true')
 parser.add_argument('--reuse-config', type=Path)
+parser.add_argument('--profile', choices=('http', 'https'), default='http')
 args = parser.parse_args()
 runtime = args.runtime.resolve()
 plugin = Path(__file__).resolve().parents[1]
@@ -32,9 +33,13 @@ repo = plugin.parents[1]
 if not (plugin / 'tests/browser.mjs').is_file():
     raise SystemExit('Browser driver is missing. No fixture started.')
 if args.reuse_config:
-    os.environ['NO_PROXY'] = '127.0.0.1,localhost'
+    os.environ['NO_PROXY'] = '127.0.0.1,localhost,.alwp.test'
     subprocess.run(['node', str(plugin / 'tests/browser.mjs'), str(args.reuse_config.resolve())], check=True, cwd=repo)
     raise SystemExit(0)
+if args.profile == 'https':
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import fixture_https
+    raise SystemExit(fixture_https.main(args, plugin, repo, runtime))
 work = runtime / ('qualification-' + uuid.uuid4().hex[:8])
 work.mkdir(parents=True)
 env = os.environ.copy()

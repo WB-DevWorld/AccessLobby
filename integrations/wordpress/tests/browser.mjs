@@ -6,13 +6,17 @@ import { fileURLToPath } from 'node:url';
 
 const { chromium } = createRequire(fileURLToPath(new URL('../../../package.json', import.meta.url)))('playwright');
 const config = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-const loopback = host => host === '127.0.0.1' || host === 'localhost';
+const allowedHost = host => host === '127.0.0.1' || host === 'localhost' || host.endsWith('.alwp.test');
 for (const site of config.sites) {
   const url = new URL(site.base);
-  if (!loopback(url.hostname)) throw new Error('Refusing a fixture outside loopback');
+  if (!allowedHost(url.hostname)) throw new Error('Refusing a fixture outside the disposable hosts');
 }
-if (!loopback(new URL(config.issuer).hostname) || !loopback(new URL(config.api).hostname)) {
-  throw new Error('Refusing a fixture outside loopback');
+if (!allowedHost(new URL(config.issuer).hostname) || !allowedHost(new URL(config.api).hostname)) {
+  throw new Error('Refusing a fixture outside the disposable hosts');
+}
+function returnedTo(site) {
+  const expected = new URL(site.base);
+  return url => url.hostname === expected.hostname && url.port === expected.port;
 }
 const siteA = config.sites.find(site => site.label === 'a');
 const siteB = config.sites.find(site => site.label === 'b');
@@ -33,8 +37,8 @@ function optionPatch(site, php) {
 }
 
 function backchannelDeliveries(label) {
-  const text = readFileSync(join(config.artifactDir, `wordpress-${label}.log`), 'utf8');
-  return text.split(/\r?\n/).filter(line => line.includes('backchannel-logout') && /\s200\s/.test(line)).length;
+  const text = readFileSync(join(config.logDir || config.artifactDir, `wordpress-${label}.log`), 'utf8');
+  return text.split(/\r?\n/).filter(line => line.includes('backchannel-logout') && /\s200(?:\s|$)/.test(line)).length;
 }
 
 function auditCount(site, event) {
@@ -83,19 +87,31 @@ async function continueWith(page, site) {
   await page.locator('[data-accesslobby-start]').first().click();
 }
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  args: config.tls ? ['--host-resolver-rules=MAP a.alwp.test 127.0.0.1, MAP b.alwp.test 127.0.0.1, MAP auth.alwp.test 127.0.0.1, MAP api.alwp.test 127.0.0.1'] : [],
+});
 try {
   const device1 = await browser.newContext();
   const first = await device1.newPage();
   await continueWith(first, siteA);
   await keycloak(first, 'newperson');
-  await first.waitForURL(url => url.hostname === '127.0.0.1' && url.port === '8081', { timeout: 30000 });
+  await first.waitForURL(returnedTo(siteA), { timeout: 30000 });
   const created = await identity(first);
   if (!(created.user > 0) || created.admin !== 'no' || created.user === siteA.legacyUser) {
     throw new Error(`JIT sign-in did not create an unprivileged local user: ${JSON.stringify(created)}`);
   }
   const role = wpEval(siteA, `echo implode(',', get_userdata(${created.user})->roles);`);
   if (role !== 'customer') throw new Error(`JIT role was ${role}`);
+  if (config.tls) {
+    const hostA = new URL(siteA.base).hostname;
+    const hostB = new URL(siteB.base).hostname;
+    const session = (await device1.cookies()).filter(cookie => cookie.domain === hostA && cookie.name.startsWith('wordpress_logged_in_'));
+    if (session.length !== 1 || !session[0].secure) throw new Error('Site A session cookie was not one Secure host-only cookie');
+    if ((await device1.cookies()).some(cookie => cookie.name === session[0].name && cookie.domain === hostB)) {
+      throw new Error('Site A session cookie was visible to site B');
+    }
+  }
   console.log('FLOW jit-sign-in', created.user);
 
   const collision = await (await browser.newContext()).newPage();
@@ -130,6 +146,13 @@ try {
   if (prompted) throw new Error('Second site asked for credentials while the browser SSO session was active');
   const second = await identity(quiet);
   if (!(second.user > 0) || second.admin !== 'no') throw new Error(`Quiet SSO did not enter site B: ${JSON.stringify(second)}`);
+  if (config.tls) {
+    const hostB = new URL(siteB.base).hostname;
+    const session = (await device1.cookies()).filter(cookie => cookie.domain === hostB && cookie.name.startsWith('wordpress_logged_in_'));
+    if (session.length !== 1 || !session[0].secure || !session[0].path.startsWith('/gh')) {
+      throw new Error('Site B session cookie was not a Secure subdirectory cookie');
+    }
+  }
   console.log('FLOW quiet-sso', second.user);
 
   await openPage(quiet, `${siteB.base}/wp-login.php?action=al_logout`);
@@ -152,7 +175,7 @@ try {
   await openPage(first, `${siteA.base}/wp-login.php?action=al_logout`);
   await first.getByRole('button', { name: 'Sign out of all connected apps' }).click();
   await Promise.race([
-    first.waitForURL(url => url.port === '8081', { timeout: 20000 }),
+    first.waitForURL(returnedTo(siteA), { timeout: 20000 }),
     first.waitForURL(/\/realms\/accesslobby-first-party\//, { timeout: 20000 }),
   ]);
   if (first.url().includes('/realms/')) {
@@ -161,7 +184,7 @@ try {
       throw new Error(`Keycloak did not end the session and offered no confirm control at ${first.url()}`);
     }
     await confirmLogout.first().click();
-    await first.waitForURL(url => url.port === '8081', { timeout: 20000 });
+    await first.waitForURL(returnedTo(siteA), { timeout: 20000 });
   }
   let accepted = acceptedBefore;
   for (let attempt = 0; attempt < 20 && accepted <= acceptedBefore; attempt += 1) {
@@ -176,8 +199,8 @@ try {
   if (siteAAfter.user !== 0) throw new Error(`All-apps logout left the existing site A session usable for user ${siteAAfter.user}`);
   await device2.reload({ waitUntil: 'domcontentloaded' });
   if ((await identity(device2)).user !== created.user) throw new Error('All-apps logout ended a different device session');
-  const logoutHeaders = await device1.request.get(`${siteA.base}/wp-login.php?action=al_logout`);
-  const logoutCache = logoutHeaders.headers()['cache-control'] || '';
+  const logoutResponse = await first.goto(`${siteA.base}/wp-login.php?action=al_logout`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+  const logoutCache = logoutResponse.headers()['cache-control'] || '';
   if (!logoutCache.includes('private') || !logoutCache.includes('no-store')) {
     throw new Error(`Logout response did not carry the application cache header: ${logoutCache}`);
   }
@@ -185,13 +208,16 @@ try {
   await first.locator('[data-accesslobby-start]').first().click();
   if (!(await first.locator('#username').isVisible())) throw new Error(`All-apps logout left the shared browser session signed in at ${first.url()}`);
   console.log('FLOW all-apps-logout-revokes-both-sites');
-  const forged = await device1.request.post(`${siteB.base}/?rest_route=/accesslobby/v1/backchannel-logout`, {
-    form: { logout_token: 'not-a-signed-logout-token' },
-    failOnStatusCode: false,
-  });
-  const forgedCache = forged.headers()['cache-control'] || '';
-  if (forged.status() !== 400 || !forgedCache.includes('no-store')) {
-    throw new Error(`Malformed logout was not refused with the application cache header: ${forged.status()} ${forgedCache}`);
+  const forged = await quiet.evaluate(async (url) => {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ logout_token: 'not-a-signed-logout-token' }),
+    });
+    return { status: response.status, cache: response.headers.get('cache-control') || '' };
+  }, `${siteB.base}/?rest_route=/accesslobby/v1/backchannel-logout`);
+  if (forged.status !== 400 || !forged.cache.includes('no-store')) {
+    throw new Error(`Malformed logout was not refused with the application cache header: ${forged.status}`);
   }
   if (auditCount(siteB, 'backchannel_rejected') <= rejectedBefore) throw new Error('Malformed logout did not reach the controller rejection audit');
   await device2.reload({ waitUntil: 'domcontentloaded' });

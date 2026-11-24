@@ -44,5 +44,45 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: accesslobby-wordpress-pilot-php-${{ matrix.php }}
-          path: integrations/wordpress/dist/
+          path: integrations/wordpress/dist/*.zip
+          retention-days: 14
+  runtime:
+    name: Representative HTTPS fixture
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - run: pnpm install --frozen-lockfile
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: sodium, openssl, mbstring, mysqli, curl
+          tools: composer:v2
+          coverage: none
+      - run: sudo apt-get update && sudo apt-get install -y libnss3-tools
+      - working-directory: integrations/wordpress
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          python3 scripts/prefix-jwt.py
+          python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.1.zip
+      - name: Download the pinned WordPress runtime
+        run: |
+          mkdir -p "$RUNNER_TEMP/alwp-runtime"
+          curl -fsSL -o "$RUNNER_TEMP/alwp-runtime/wordpress.zip" https://wordpress.org/wordpress-7.1.5.zip
+          curl -fsSL -o "$RUNNER_TEMP/alwp-runtime/woocommerce.zip" https://downloads.wordpress.org/plugin/woocommerce.11.3.1.zip
+          curl -fsSL -o "$RUNNER_TEMP/alwp-runtime/wp-cli.phar" https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Run the nginx and PHP-FPM fixture
+        run: python3 integrations/wordpress/scripts/qualify.py --profile https --runtime "$RUNNER_TEMP/alwp-runtime" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.1.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-wordpress-https-report
+          path: integrations/wordpress/dist/https-qualification-report.json
           retention-days: 14
