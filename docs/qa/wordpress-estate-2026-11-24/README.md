@@ -1,6 +1,6 @@
 # WordPress estate qualification — 2026-11-24
 
-Status: **PARTIALLY QUALIFIED**. AccessLobby SSO 0.1.0-alpha.8 is hybrid with JIT off on all three sites. Local customer login, order visibility and this-site sign-out are proved on all three. Three inactive WordPress application requests exist. DNS proof, activation, Join, linking, cross-site SSO and emergency recovery are not qualified.
+Status: **PARTIALLY QUALIFIED**. AccessLobby SSO 0.1.0-alpha.8 is hybrid with JIT off on all three sites. Local customer login, order visibility and this-site sign-out are proved on all three. All three WordPress clients are active first-party registrations. Linking, quiet SSO, Join/JIT and logout are not qualified. Enforced mode stays off.
 
 The earlier “API promotion blocked” note is historical. [PR62](https://github.com/WB-DevWorld/AccessLobby/pull/62) merged as `d875712ecb41e06d8905046e0f4bc93bb8e9e7a5`. Public `/health/ready` reports that revision. Running images, unchanged IAM and gateway pins:
 
@@ -21,15 +21,17 @@ Alpha.7 from CI run 45382011687, SHA256 `373dce094881278b9f08e28ba3e847bb6634719
 | training.flairoc.com | `flairoc-training-wp`, `043bb9fe-9e16-4cd1-9e1d-120c819d58ee` | `https://training.flairoc.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://training.flairoc.com/wp-json/accesslobby/v1/backchannel-logout` |
 | staging.cetechbpa.com | `cetech-staging-wp`, `39cdfa01-e33b-4116-948e-9d832a314c19` | `https://staging.cetechbpa.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://staging.cetechbpa.com/wp-json/accesslobby/v1/backchannel-logout` |
 
-Application requests are **created and unreviewed**. The signed-in owner at `https://accesslobby.realjanelove.com/apps/manage` now has exactly these three rows. Each is platform WordPress, visibility hidden, admission authenticated open, and status Requested. The page shows “Waiting for verification. A first-party review is still required.” No Keycloak client was created. `ALLOWED_CLIENT_IDS` was not changed and no row was inserted by hand. A full-page form submit from the narrow layout left the window on `/account` without saving. A same-origin POST of the same fields to `/apps/action` saved the FLAIROC and staging requests.
+Application requests were created unreviewed, then verified and activated. Each is platform WordPress, visibility hidden, and admission authenticated open. `ALLOWED_CLIENT_IDS` remains `accesslobby-web,reference-consumer`. No row was inserted by hand.
 
-DNS publication remains **BLOCKED**. Both domains use `jason.ns.cloudflare.com` and `roxy.ns.cloudflare.com`. The Wrangler OAuth token expired at 2026-11-10T11:43:48.288Z. Its scopes include `zone:read` and do not include DNS edit. Publish these TXT records before verification or activation:
+Both Cloudflare nameservers, `jason.ns.cloudflare.com` and `roxy.ns.cloudflare.com`, returned these exact TXT values:
 
 | Host | Value |
 |---|---|
 | `_accesslobby-verify.training.cetechbpa.com` | `accesslobby-verify=cabCC4l7m8P_wdY4XjFFQp0wp23gn3ithk8IwD1SCSo` |
 | `_accesslobby-verify.training.flairoc.com` | `accesslobby-verify=XU3YgkTD1YoNgS58-egP-YyY6I9Y-8CKNAa7QdQEtHs` |
 | `_accesslobby-verify.staging.cetechbpa.com` | `accesslobby-verify=-MMCIPgf8-FBgukZ7RBTgBFfmHTgJ73DyyzrirwhbbQ` |
+
+The API `verifyOrigin` check, from the running API container, recorded `originVerified: true` for those three hosts. The private plan for each client was a public authorization-code client with PKCE S256, one exact callback, the matching signed-out return, backchannel logout with session required, and an access-token audience of `accesslobby-api`. Implicit flow, direct access grants and service accounts were off. That plan was accepted as first-party review `wordpress-estate-2026-11-24` and activated. A later full IAM read confirmed the same callback, logout, backchannel, PKCE and audience mapper on each client. The registry rows are `active` / `first_party`. A filtered client list omits the attribute map; the full client representation contains it.
 
 ## Installations
 
@@ -38,8 +40,8 @@ All three are single-site, `wp_get_environment_type()=staging`, HPOS runtime ena
 | Site | WordPress / PHP / Woo | Theme | Commerce policy | Notable active stack | Result |
 |---|---|---|---|---|---|
 | `https://staging.cetechbpa.com/` | 7.1.5 / 8.4.27 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9, WP Rocket 3.24, Redis Object Cache 3.0.0, Wordfence 9.1.1, delivery engine 1.0.0-m2.5, Jetpack 16.4. Paystack gateway disabled. B2BKing installed, inactive. | Alpha.8 hybrid, JIT off. Local customer login, order 54346 and this-site sign-out **QUALIFIED**. |
-| `https://training.cetechbpa.com/` | 7.1.4 / 8.4.24 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout on; My Account registration on | B2BKing Core 5.2.61 and B2BKing 5.6.80, WPML 5.0.2, WP Rocket 3.24, Redis Object Cache 3.0.0, delivery engine 1.0.0-m2.4, POS bridge 0.6.0-stg05, MailPoet 5.44.0. Paystack enabled with its test-mode flag set. COD and B2BKing invoice/PO gateways enabled. Wordfence installed, inactive. | Alpha.8 hybrid, JIT off, owned by `cetechtraining` (directory 775, plugin file 664). Local browser login, order 50402 and this-site sign-out **QUALIFIED** again after the alpha.8 upgrade. SSO **BLOCKED** on client registration. |
-| `https://training.flairoc.com/` | 7.1.1 / 8.4.25 / 11.1.1 | Kadence 1.5.2 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9 is active while the theme is Kadence. ShopLentor 3.5.2, pre-orders 2.3.1, Mailchimp for WP 4.14.1. BACS and COD enabled. | Alpha.8 hybrid, JIT off. WooCommerce coming-soon mode covers the whole site. A logged-in account-page exemption now lets the customer see order 4043. Anonymous visitors still see the coming-soon page. This-site sign-out **QUALIFIED**. SSO **BLOCKED** on client registration. |
+| `https://training.cetechbpa.com/` | 7.1.4 / 8.4.24 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout on; My Account registration on | B2BKing Core 5.2.61 and B2BKing 5.6.80, WPML 5.0.2, WP Rocket 3.24, Redis Object Cache 3.0.0, delivery engine 1.0.0-m2.4, POS bridge 0.6.0-stg05, MailPoet 5.44.0. Paystack enabled with its test-mode flag set. COD and B2BKing invoice/PO gateways enabled. Wordfence installed, inactive. | Alpha.8 hybrid, JIT off, owned by `cetechtraining` (directory 775, plugin file 664). Local browser login, order 50402 and this-site sign-out **QUALIFIED** again after the alpha.8 upgrade. Client `cetech-training-wp` is active. AccessLobby login is not yet qualified. |
+| `https://training.flairoc.com/` | 7.1.1 / 8.4.25 / 11.1.1 | Kadence 1.5.2 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9 is active while the theme is Kadence. ShopLentor 3.5.2, pre-orders 2.3.1, Mailchimp for WP 4.14.1. BACS and COD enabled. | Alpha.8 hybrid, JIT off. WooCommerce coming-soon mode covers the whole site. A logged-in account-page exemption now lets the customer see order 4043. Anonymous visitors still see the coming-soon page. This-site sign-out **QUALIFIED**. Client `flairoc-training-wp` is active. AccessLobby login is not yet qualified. |
 
 `p06-physical.cetechbpa.com` is a separate staging schema on the training database host. It was inventoried only and not backed up or changed. No subdirectory installation was found. Estate subdirectory coverage remains **UNTESTED**; fixture subdirectory evidence stays in the consolidation CI record.
 
@@ -99,11 +101,11 @@ Enforced mode stays off. Recovery accepts a session only when `ACCESSLOBBY_EMERG
 |---|---|
 | Local customer login, own order, and this-site sign-out on alpha.8 | **QUALIFIED** on all three sites |
 | FLAIROC coming-soon account exemption | **QUALIFIED** for a signed-in account page. Anonymous My Account login and signed-out return remain **UNTESTED**. |
-| Application request | **QUALIFIED** as three inactive requested rows. Origin proof and reviewed activation remain **BLOCKED** on DNS edit. |
+| Application request, origin proof, reviewed activation and IAM readback | **QUALIFIED** for the three hidden, authenticated-open WordPress clients |
 | Unlinked-identity refusal, explicit linking, repeat login | **BLOCKED** until the clients are active |
 | Quiet SSO, Join/JIT, all-apps logout, backchannel negatives | **BLOCKED** until the clients are active |
 | Enforced mode and emergency recovery | **BLOCKED** until a single-administrator route is rehearsed |
 
 ## Not claimed
 
-Three inactive application requests exist. No AccessLobby client is registered. Join, JIT, account linking, cross-site SSO, all-apps logout, backchannel delivery and emergency recovery were not run. Enforced mode stays off. Subdirectory estate coverage remains **UNTESTED**. External publisher activation and multisite remain unsupported. Production hosts, `p06-physical.cetechbpa.com` and the other FLAIROC installations were not changed. Issue 59 stays open.
+Three first-party WordPress clients are registered and active. Join, JIT, account linking, cross-site SSO, all-apps logout, backchannel delivery and emergency recovery were not run. Enforced mode stays off. Subdirectory estate coverage remains **UNTESTED**. External publisher activation and multisite remain unsupported. Production hosts, `p06-physical.cetechbpa.com` and the other FLAIROC installations were not changed. Issue 59 stays open.
