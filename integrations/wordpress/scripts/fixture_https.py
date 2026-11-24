@@ -12,6 +12,7 @@ import socket
 import ssl
 import subprocess
 import time
+import urllib.parse
 import urllib.request
 import uuid
 import zipfile
@@ -99,6 +100,8 @@ def main(args, plugin, repo, runtime):
         browser = run_browser(repo, plugin, work, env, sites, issuer, api, password, ca)
         phases['browser'] = round(time.monotonic() - mark, 3)
         report['scenarios'] = [line for line in browser.splitlines() if line.startswith('FLOW ') or line == 'BROWSER_PASS']
+        report['tls']['browser'] = browser_tls(browser)
+        assert_browser_tls(report['tls']['browser'])
         report['result'] = 'PASS'
         print('QUALIFICATION_PASS profile=https artifacts=' + str(work), flush=True)
         return 0
@@ -187,7 +190,8 @@ def write_certificates(work, ca_path):
     san.write_text('subjectAltName=DNS:a.alwp.test,DNS:b.alwp.test,DNS:auth.alwp.test,DNS:api.alwp.test\n'
                    'basicConstraints=CA:FALSE\nkeyUsage=digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\n')
     run([openssl, 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', str(key), '-out', str(ca_path),
-         '-days', '2', '-nodes', '-subj', '/CN=AccessLobby Fixture CA'])
+         '-days', '2', '-nodes', '-subj', '/CN=AccessLobby Fixture CA',
+         '-addext', 'basicConstraints=critical,CA:TRUE', '-addext', 'keyUsage=critical,keyCertSign,cRLSign'])
     run([openssl, 'req', '-newkey', 'rsa:2048', '-keyout', str(work / 'tls.key'), '-out', str(work / 'tls.csr'),
          '-nodes', '-subj', '/CN=a.alwp.test'])
     run([openssl, 'x509', '-req', '-in', str(work / 'tls.csr'), '-CA', str(ca_path), '-CAkey', str(key),
@@ -606,11 +610,20 @@ def wp(site, command, *, extra=None, quiet=False):
 
 def tls_probe(base, ca, report):
     response = edge_request(base + '/wp-login.php?action=al_logout')
-    if response['status'] != 200 or 'private' not in response['headers'] or 'no-store' not in response['headers']:
-        raise RuntimeError('TLS logout response did not carry the application cache header')
-    report['tls'] = {'networkCaVerified': True, 'logoutStatus': response['status'],
-                     'logoutCacheControl': cache_control(response['headers']),
-                     'hostPresentedFixtureCertificate': host_presents_fixture_ca(base, ca)}
+    cache = cache_control(response['headers'])
+    if response['status'] != 200 or 'private' not in cache or 'no-store' not in cache:
+        raise RuntimeError('Docker-network TLS logout response did not carry the application cache header')
+    host = host_tls(base, ca)
+    if host['verification'] != 'verified' or host['httpStatus'] != 200:
+        raise RuntimeError('Host TLS verification did not succeed: ' + str(host.get('exceptionCategory') or host['verification']))
+    if 'AccessLobby Fixture CA' not in str(host.get('issuer')) or base.split('/')[2].split(':')[0] not in (host.get('san') or []):
+        raise RuntimeError('Host certificate was not the fixture certificate for this site')
+    if host.get('protocol') not in ('TLSv1.2', 'TLSv1.3'):
+        raise RuntimeError('Host negotiated an unexpected TLS version')
+    report['tls'] = {
+        'network': {'verification': 'verified', 'trustStore': 'fixture-ca', 'httpStatus': response['status'], 'cacheControl': cache},
+        'host': host,
+    }
 
 
 def cache_control(headers):
@@ -620,13 +633,47 @@ def cache_control(headers):
     return ''
 
 
-def host_presents_fixture_ca(base, ca):
-    context = ssl.create_default_context(cafile=str(ca))
+def certificate_name(certificate, field):
+    values = []
+    for item in certificate.get(field, ()):
+        for pair in item:
+            values.append(pair[1])
+    return ', '.join(values)
+
+def host_tls(base, ca):
+    url = urllib.parse.urlparse(base + '/wp-login.php?action=al_logout')
+    observation = {'urlHost': url.hostname, 'resolvedAddress': None, 'httpStatus': None, 'verification': 'not-completed',
+                   'exceptionCategory': None, 'subject': None, 'issuer': None, 'protocol': None, 'san': []}
     try:
-        with urllib.request.urlopen(base + '/', timeout=10, context=context) as response:
-            return response.status > 0
-    except Exception:
-        return False
+        observation['resolvedAddress'] = socket.getaddrinfo(url.hostname, url.port or EDGE_PORT, socket.AF_INET, socket.SOCK_STREAM)[0][4][0]
+        context = ssl.create_default_context(cafile=str(ca))
+        with socket.create_connection((observation['resolvedAddress'], int(url.port or EDGE_PORT)), timeout=20) as raw:
+            with context.wrap_socket(raw, server_hostname=url.hostname) as tls:
+                certificate = tls.getpeercert()
+                observation.update({'verification': 'verified', 'protocol': tls.version(),
+                                    'subject': certificate_name(certificate, 'subject'),
+                                    'issuer': certificate_name(certificate, 'issuer'),
+                                    'san': [value for kind, value in certificate.get('subjectAltName', ()) if kind == 'DNS']})
+                tls.sendall(f'GET {url.path}?{url.query} HTTP/1.1\r\nHost: {url.hostname}:{url.port}\r\nConnection: close\r\n\r\n'.encode())
+                status = tls.recv(80).decode('latin1', 'replace')
+                observation['httpStatus'] = int(status.split(' ', 2)[1]) if status.startswith('HTTP/') else None
+    except ssl.SSLCertVerificationError as error:
+        observation.update({'verification': 'rejected', 'exceptionCategory': 'SSLCertVerificationError', 'verifyCode': error.verify_code})
+    except Exception as error:
+        observation.update({'verification': 'not-completed', 'exceptionCategory': type(error).__name__})
+    return observation
+
+def browser_tls(output):
+    for line in output.splitlines():
+        if line.startswith('TLS_BROWSER '):
+            return json.loads(line.split(' ', 1)[1])
+    raise RuntimeError('Browser TLS verification was not recorded')
+
+def assert_browser_tls(details):
+    if details.get('verification') != 'verified' or 'AccessLobby Fixture CA' not in str(details.get('issuer')):
+        raise RuntimeError('Browser certificate was not verified as the fixture CA')
+    if details.get('protocol') not in ('TLS 1.2', 'TLS 1.3') or details.get('subjectName') != 'a.alwp.test':
+        raise RuntimeError('Browser TLS session did not match the site certificate')
 
 
 def load_assertions(work):
@@ -637,11 +684,20 @@ def load_assertions(work):
 
 
 def component_versions(work):
-    versions = {'edgePort': EDGE_PORT, 'nginx': '1.28-alpine', 'phpImage': '8.4-fpm', 'keycloak': '26.7.0', 'mariadb': '11.4'}
+    versions = {'edgePort': EDGE_PORT, 'nginx': '1.28-alpine', 'phpImage': '8.4.28-fpm-bookworm', 'keycloak': '26.7.0', 'mariadb': '11.4',
+                'images': {name: image_reference(name) for name in (
+                    'nginx:1.28-alpine', 'mariadb:11.4', 'postgres:17', 'quay.io/keycloak/keycloak:26.7.0',
+                    'alwp-fixture-api:consolidated', 'alwp-fixture-php:8.4')}}
     for path in (work / 'logs').glob('integration-a.json'):
         data = json.loads(path.read_text(encoding='utf-8'))
         versions.update({'wordpress': data.get('wordpress'), 'php': data.get('php'), 'woocommerce': data.get('woocommerce')})
     return versions
+
+
+def image_reference(name):
+    result = subprocess.run(['docker', 'image', 'inspect', '--format', '{{if .RepoDigests}}{{index .RepoDigests 0}}{{else}}{{.Id}}{{end}}', name],
+                            capture_output=True, text=True)
+    return (result.stdout or '').strip()
 
 
 def run_browser(repo, plugin, work, env, sites, issuer, api, password, ca):

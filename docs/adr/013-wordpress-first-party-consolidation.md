@@ -2,7 +2,7 @@
 
 Status: owner-authorized consolidation, 2026-11-24. Relates to #59; actual estate adoption and external activation remain open.
 
-The owner selected a new consolidation branch after comparing PR60 and PR61. `feat/wordpress-consolidation` starts from PR61/3131df44bb7f6bb006a2dac6bcbac29591f288e9. The other source is Cursor PR60/6ad3ec96d3c18f06d993c8e72d941fc0d90dd8e1. Both comparison branches remain unchanged. This is selective integration, not a merge that discards either candidate's history or silently downgrades its safety contract.
+The owner selected a new consolidation branch after comparing PR60 and PR61. `feat/wordpress-consolidation` starts from PR61/3131df44bb7f6bb006a2dac6bcbac29591f288e9. The other source is Cursor PR60/6ad3ec96d3c18f06d993c8e72d941fc0d90dd8e1. Neither comparison branch is modified by consolidation. Cursor independently advanced to 04941d9f179c29739de25a3e8d5a277692bc28c2 during this work; the stricter CA/host/browser certificate checks from that source are also incorporated. This is selective integration, not a merge that discards either candidate's history or silently downgrades its safety contract.
 
 | Source | Retained work |
 |---|---|

@@ -14,6 +14,17 @@ fixture = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fixture)
 
 class FixtureSafety(unittest.TestCase):
+    def test_browser_tls_gate_rejects_unverified_or_unrelated_certificates(self):
+        expected={'verification':'verified','issuer':'AccessLobby Fixture CA','protocol':'TLS 1.3','subjectName':'a.alwp.test'}
+        fixture.assert_browser_tls(expected)
+        for patch_value in [{'verification':'rejected'},{'issuer':'Unrelated CA'},
+                            {'protocol':'TLS 1.1'},{'subjectName':'unrelated.example'}]:
+            with self.assertRaises(RuntimeError):
+                fixture.assert_browser_tls({**expected, **patch_value})
+        self.assertEqual(fixture.browser_tls('TLS_BROWSER {"verification":"verified"}')['verification'],'verified')
+        with self.assertRaises(RuntimeError):
+            fixture.browser_tls('BROWSER_PASS')
+
     @unittest.skipUnless(shutil.which('node'), 'Generated JavaScript syntax needs Node')
     def test_generated_onboarding_runner_is_valid_javascript(self):
         with tempfile.TemporaryDirectory() as name:

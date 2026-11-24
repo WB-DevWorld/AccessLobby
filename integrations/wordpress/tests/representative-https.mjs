@@ -87,6 +87,20 @@ async function continueWith(page, site) {
   await page.locator('[data-accesslobby-start]').first().click();
 }
 
+async function assertBrowserTls(browser) {
+  const page = await (await browser.newContext()).newPage();
+  const response = await page.goto('https://a.alwp.test:8443/wp-login.php', { waitUntil: 'domcontentloaded', timeout: 20000 });
+  const security = response && await response.securityDetails();
+  const now = Date.now() / 1000;
+  if (!security || security.validFrom > now || security.validTo < now) throw new Error('Browser did not expose a current verified certificate');
+  const details = { verification: 'verified', subjectName: security.subjectName, issuer: security.issuer, protocol: security.protocol };
+  console.log('TLS_BROWSER', JSON.stringify(details));
+  if (!String(security.issuer).includes('AccessLobby Fixture CA') || security.subjectName !== 'a.alwp.test' || !['TLS 1.2', 'TLS 1.3'].includes(security.protocol)) {
+    throw new Error('Browser TLS session did not present the fixture certificate');
+  }
+  await page.context().close();
+}
+
 const browser = await chromium.launch({
   headless: true,
   args: config.tls ? ['--host-resolver-rules=MAP a.alwp.test 127.0.0.1, MAP b.alwp.test 127.0.0.1, MAP auth.alwp.test 127.0.0.1, MAP api.alwp.test 127.0.0.1'] : [],
@@ -107,7 +121,7 @@ try {
     const hostA = new URL(siteA.base).hostname;
     const hostB = new URL(siteB.base).hostname;
     const session = (await device1.cookies()).filter(cookie => cookie.domain === hostA && cookie.name.startsWith('wordpress_logged_in_'));
-    if (session.length !== 1 || !session[0].secure) throw new Error('Site A session cookie was not one Secure host-only cookie');
+    if (session.length !== 1 || !session[0].secure || !session[0].httpOnly) throw new Error('Site A session cookie was not one Secure host-only cookie');
     if ((await device1.cookies()).some(cookie => cookie.name === session[0].name && cookie.domain === hostB)) {
       throw new Error('Site A session cookie was visible to site B');
     }
@@ -149,7 +163,7 @@ try {
   if (config.tls) {
     const hostB = new URL(siteB.base).hostname;
     const session = (await device1.cookies()).filter(cookie => cookie.domain === hostB && cookie.name.startsWith('wordpress_logged_in_'));
-    if (session.length !== 1 || !session[0].secure || !session[0].path.startsWith('/gh')) {
+    if (session.length !== 1 || !session[0].secure || !session[0].httpOnly || !session[0].path.startsWith('/gh')) {
       throw new Error('Site B session cookie was not a Secure subdirectory cookie');
     }
   }
@@ -244,6 +258,7 @@ try {
   } finally {
     optionPatch(siteB, `$o['mode']='hybrid';`);
   }
+  if (config.tls) await assertBrowserTls(browser);
   console.log('BROWSER_PASS');
 } catch (error) {
   console.error('HTTPS_BROWSER_FAIL ' + error.name);

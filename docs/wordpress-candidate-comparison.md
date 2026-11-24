@@ -1,6 +1,10 @@
 # WordPress candidate comparison
 
-The owner authorized independent work alongside Cursor on 2026-11-23. Compare exact commits against the same acceptance cases before selecting a candidate. Neither branch is merged or promoted by this record.
+## Consolidation selected — 2026-11-24
+
+The owner authorized `feat/wordpress-consolidation` / PR62. It retains PR61 at `3131df44bb7f6bb006a2dac6bcbac29591f288e9` as the base and selectively incorporates Cursor PR60 at `6ad3ec96d3c18f06d993c8e72d941fc0d90dd8e1`. A subsequent review of Cursor's advancing branch at `04941d9f179c29739de25a3e8d5a277692bc28c2` also incorporates the stricter host/browser TLS certificate checks. Neither source branch is modified by this work. See [ADR013](adr/013-wordpress-first-party-consolidation.md) and the [consolidation qualification ledger](qa/wordpress-consolidation-2026-11-24/README.md). The external consent/profile preview is preserved in PR61 and excluded from the first-party consolidated runtime. The tables below remain the historical comparison criteria, not a live statement that selection is still pending.
+
+The owner authorized independent work alongside Cursor on 2026-11-23. No candidate is merged or promoted by this record.
 
 | Candidate | Reference | Current disposition |
 |---|---|---|
