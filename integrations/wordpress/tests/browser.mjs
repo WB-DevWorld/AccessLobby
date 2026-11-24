@@ -253,9 +253,10 @@ async function joinFlows(browser, site) {
   const partial = await (await browser.newContext()).newPage();
   await openJoin(partial, site);
   await finishVerifiedRegistration(partial, 'partial-join@example.test');
-  if (!(await partial.locator('body').innerText()).includes('local_account_creation_failed')) throw new Error('Partial provisioning completed Join');
-  if (Number(wpEval(site, `echo email_exists('partial-join@example.test') ? 1 : 0;`)) !== 0) throw new Error('Partial provisioning left a local account');
-  if (userCount(site) !== partialUsers || linkCount(site) !== partialLinks) throw new Error('Partial provisioning created a local account or mapping');
+  const partialText = await partial.locator('body').innerText();
+  const partialExists = Number(wpEval(site, `echo email_exists('partial-join@example.test') ? 1 : 0;`));
+  if (partialExists !== 0 || userCount(site) !== partialUsers || linkCount(site) !== partialLinks) throw new Error('Partial provisioning created a local account or mapping');
+  if (!partialText.includes('local_account_creation_failed')) throw new Error('Partial provisioning did not report local account creation failure');
   console.log('FLOW join-partial-provisioning');
 
   const joined = await (await browser.newContext()).newPage();
