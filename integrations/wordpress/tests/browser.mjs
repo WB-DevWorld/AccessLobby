@@ -322,7 +322,9 @@ try {
     wp(a, 'update_option("alwp_fixture_blank_jit_login",true);');
     try {
       await tab.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.protected));
-      await iamLogin(tab, 'latehook');
+      await tab.locator('#username').fill('latehook');
+      await tab.locator('#password').fill(fixture.password);
+      await tab.locator('#kc-login').click();
       await tab.waitForFunction(() => document.body?.textContent?.includes('unsafe_provisioning_result'));
       assert.equal(users(), beforeUsers);
       assert.equal(links(), beforeLinks);
