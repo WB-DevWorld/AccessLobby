@@ -19,11 +19,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build with native Windows Python and check exact Git source bytes
         run: |
-          python scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.6.zip
+          python scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.7.zip
           python - <<'PY'
           from pathlib import Path
           import subprocess, zipfile
-          package = Path('dist/accesslobby-sso-0.1.0-alpha.6.zip')
+          package = Path('dist/accesslobby-sso-0.1.0-alpha.7.zip')
           with zipfile.ZipFile(package) as archive:
               assert archive.testzip() is None
               assert not any('\\' in name for name in archive.namelist())
@@ -72,7 +72,7 @@ jobs:
       - name: Fixture safety boundaries
         run: python3 -m unittest discover -s tests -p 'test_*.py'
       - name: Build installable pilot ZIP (runtime installation remains a separate gate)
-        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.6.zip
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.7.zip
       - uses: actions/upload-artifact@v4
         with:
           name: accesslobby-wordpress-pilot-php-${{ matrix.php }}
@@ -168,13 +168,13 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Build candidate ZIP
         working-directory: integrations/wordpress
-        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.6.zip
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.7.zip
       - name: Build exact previously qualified upgrade source
         run: |
-          git fetch --no-tags --depth=1 origin 3131df44bb7f6bb006a2dac6bcbac29591f288e9
+          git fetch --no-tags --depth=1 origin 1c04017e0eeddb505a7b053c7683edb94958cb71
           mkdir -p "$RUNNER_TEMP/alwp-previous"
-          git archive 3131df44bb7f6bb006a2dac6bcbac29591f288e9 integrations/wordpress | tar -xf - -C "$RUNNER_TEMP/alwp-previous"
-          python3 "$RUNNER_TEMP/alwp-previous/integrations/wordpress/scripts/package.py" --output "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.5.zip"
+          git archive 1c04017e0eeddb505a7b053c7683edb94958cb71 integrations/wordpress | tar -xf - -C "$RUNNER_TEMP/alwp-previous"
+          python3 "$RUNNER_TEMP/alwp-previous/integrations/wordpress/scripts/package.py" --output "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.6.zip"
       - name: Download official disposable runtimes
         run: |
           mkdir -p "$RUNNER_TEMP/alwp"
@@ -190,7 +190,7 @@ jobs:
           tar -xzf "$RUNNER_TEMP/alwp/keycloak.tar.gz" -C "$RUNNER_TEMP/alwp"
       - name: Actual IAM API WordPress WooCommerce browser acceptance
         run: |
-          python3 integrations/wordpress/scripts/qualify.py --runtime "$RUNNER_TEMP/alwp" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.6.zip --upgrade-from "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.5.zip" --keycloak-home "$RUNNER_TEMP/alwp/keycloak-26.7.0"
+          python3 integrations/wordpress/scripts/qualify.py --runtime "$RUNNER_TEMP/alwp" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.7.zip --upgrade-from "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.6.zip" --keycloak-home "$RUNNER_TEMP/alwp/keycloak-26.7.0"
       - name: Retain sanitized categorical evidence only
         if: always()
         uses: actions/upload-artifact@v4
@@ -236,7 +236,7 @@ jobs:
         run: |
           composer install --no-interaction --prefer-dist --no-progress
           python3 scripts/prefix-jwt.py
-          python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.6.zip
+          python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.7.zip
       - name: Download the pinned WordPress runtime
         run: |
           mkdir -p "$RUNNER_TEMP/alwp-runtime"
@@ -245,7 +245,7 @@ jobs:
           curl -fsSL -o "$RUNNER_TEMP/alwp-runtime/wp-cli.phar" https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
       - run: pnpm exec playwright install --with-deps chromium
       - name: Run the nginx and PHP-FPM fixture
-        run: python3 integrations/wordpress/scripts/qualify.py --profile https --runtime "$RUNNER_TEMP/alwp-runtime" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.6.zip
+        run: python3 integrations/wordpress/scripts/qualify.py --profile https --runtime "$RUNNER_TEMP/alwp-runtime" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.7.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -39,8 +39,8 @@ if args.profile == 'https':
     raise SystemExit(main(args, plugin, plugin.parents[1], args.runtime.resolve()))
 if not args.upgrade_from or not args.keycloak_home:
     raise SystemExit('Native profile requires --upgrade-from and --keycloak-home; no service started.')
-if hashlib.sha256(args.upgrade_from.read_bytes()).hexdigest() != 'f85e2eb00ba3e71742f435e9bb9025c189c6b1f2819081a388d60969bada20c2':
-    raise SystemExit('Upgrade requires the exact previously qualified alpha.5 ZIP; no service started.')
+if hashlib.sha256(args.upgrade_from.read_bytes()).hexdigest() != '64eea67c7c71a8504d1dde3df1b3241f4d32b1185ae693479eb286e4f1be9fc5':
+    raise SystemExit('Upgrade requires the exact previously qualified alpha.6 ZIP; no service started.')
 runtime = args.runtime.resolve()
 plugin = Path(__file__).resolve().parents[1]
 repo = plugin.parents[1]
@@ -215,7 +215,7 @@ realm['clients'].append(reference_client)
 realm['users'] = [{'id': str(uuid.uuid4()), 'username': name, 'enabled': True, 'emailVerified': True,
     'email': name + '@example.test', 'firstName': name, 'lastName': 'Fixture',
     'credentials': [{'type': 'password', 'value': password, 'temporary': False}]}
-    for name in ['shopper', 'newperson', 'staff']]
+    for name in ['shopper', 'newperson', 'staff', 'latehook']]
 imports = args.keycloak_home / 'data/import'
 imports.mkdir(parents=True, exist_ok=True)
 (imports / 'wordpress-fixture-realm.json').unlink(missing_ok=True)

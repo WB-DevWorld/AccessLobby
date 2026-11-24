@@ -1,4 +1,6 @@
-# Consolidated alpha.6 qualification
+# Consolidated alpha.7 qualification
+
+Alpha.7 adds rollback for blank usernames introduced by late WordPress hooks. The earlier alpha.6 passes do not include this newly discovered case; only the release record's exact new revision and CI qualify the fix.
 
 This package is a reviewed first-party pilot candidate. Its exact consolidated source, ZIP and results are recorded in the [consolidation acceptance record](https://github.com/WB-DevWorld/AccessLobby/tree/feat/wordpress-consolidation/docs/qa/wordpress-consolidation-2026-11-24). The earlier alpha.3/alpha.4/alpha.5 records below are historical evidence for the retained connector; they do not substitute for the combined branch's own checks.
 

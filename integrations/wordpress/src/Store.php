@@ -311,8 +311,9 @@ final class Store {
 									throw new Failure( 'local_account_creation_failed' ); }
 								$created_user = $local_user;
 								$new_user     = get_userdata( $local_user );
-								// Enforce the result after user_register and local plugin hooks have run.
-								if ( ! $new_user || array( $config['default_role'] ) !== $new_user->roles || self::privileged( $new_user ) ) {
+								// Late insertion/registration hooks run after core's initial login checks.
+								if ( ! $new_user || '' === trim( (string) $new_user->user_login ) ||
+									array( $config['default_role'] ) !== $new_user->roles || self::privileged( $new_user ) ) {
 									throw new Failure( 'unsafe_provisioning_result' );
 								}
 								$provenance = 'validated_jit';

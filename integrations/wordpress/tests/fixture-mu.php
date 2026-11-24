@@ -84,6 +84,14 @@ add_action( 'wp_footer', $fixture_identity );
 add_action( 'login_footer', $fixture_identity );
 // Prevent real mail from disposable fixtures; never relax authentication/authorization.
 add_filter( 'pre_wp_mail', '__return_false' );
+// Deliberately malformed JIT result after core validation; never shipped.
+add_filter( 'wp_pre_insert_user_data', static function ( array $data, bool $update ): array {
+	if ( ! $update && get_option( 'alwp_fixture_blank_jit_login' ) &&
+		str_starts_with( (string) ( $data['user_login'] ?? '' ), 'al_' ) ) {
+		$data['user_login'] = '';
+	}
+	return $data;
+}, 10, 2 );
 
 if ( defined( 'ACCESSLOBBY_FIXTURE_TLS' ) && ACCESSLOBBY_FIXTURE_TLS ) {
  add_filter( 'http_allowed_safe_ports', static fn( $ports ) => array_merge( $ports, array( 8443 ) ) );

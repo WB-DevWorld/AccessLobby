@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-alpha.7 — 2026-11-24
+
+- Reject an empty or whitespace-only stored username after local insertion/registration hooks finish. Roll back the new user and identity mapping together.
+- Preserve valid local username customization, repeat identity resolution and ordinary core-error behavior. Existing users, roles and commerce are not rewritten.
+- Add real WordPress late-hook regressions inspired by Cursor's partial-Join probe and qualify the exact alpha.6 to alpha.7 ZIP upgrade.
+
 ## 0.1.0-alpha.6 — 2026-11-24
 
 - Consolidate the hardened first-party connector with Cursor's representative nginx/PHP-FPM/hostname TLS fixture and isolated database/parallel-port tests.

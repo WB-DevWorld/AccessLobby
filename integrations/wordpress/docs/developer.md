@@ -28,7 +28,7 @@ Dedicated membership login pages can be configured in the admin or through `acce
 
 ## Consolidated testing
 
-`qualify.py --profile native` retains the broad behavior matrix and requires the exact alpha.5 upgrade ZIP, an isolated runtime and a disposable Keycloak distribution. `qualify.py --profile https` invokes the additional Cursor-derived nginx/PHP-FPM hostname smoke and requires Docker, OpenSSL and fixture authorization (`ALWP_DISPOSABLE_FIXTURE=1`). Both use the same candidate plugin ZIP; they report different coverage.
+`qualify.py --profile native` retains the broad behavior matrix and requires the exact alpha.6 upgrade ZIP, an isolated runtime and a disposable Keycloak distribution. `qualify.py --profile https` invokes the additional Cursor-derived nginx/PHP-FPM hostname smoke and requires Docker, OpenSSL and fixture authorization (`ALWP_DISPOSABLE_FIXTURE=1`). Both use the same candidate plugin ZIP; they report different coverage.
 
 The HTTPS smoke trusts only its disposable CA, labels owned resources, refuses to replace unlabelled containers/networks, and uses a frozen-lockfile API image. Private-address/8443/CA exceptions live solely in the unshipped test MU plugin. Authentication query strings and raw logs never enter public evidence. Only categorical JSON may be retained.
 

@@ -313,6 +313,37 @@ try {
     assert.equal(Number(await joined.locator('#fixture-identity').getAttribute('data-user')), joinedId);
     assert.equal(Number(wp(a, 'echo count_users()["total_users"];')), count + 1);
   });
+  await test('late-hook JIT callback leaves no account or cookie and quiet retry creates one safe user', async () => {
+    const fresh = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(fresh);
+    const tab = await fresh.newPage();
+    const users = () => Number(wp(a, 'echo count_users()["total_users"];'));
+    const links = () => Number(wp(a, 'global $wpdb;echo $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}accesslobby_links");'));
+    const beforeUsers = users(), beforeLinks = links();
+    wp(a, 'update_option("alwp_fixture_blank_jit_login",true);');
+    try {
+      await tab.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.protected));
+      await iamLogin(tab, 'latehook');
+      await tab.waitForFunction(() => document.body?.textContent?.includes('unsafe_provisioning_result'));
+      assert.equal(users(), beforeUsers);
+      assert.equal(links(), beforeLinks);
+      assert.equal(Number(wp(a, 'echo email_exists("latehook@example.test") ? 1 : 0;')), 0);
+      assert.equal((await fresh.cookies()).filter(cookie => cookie.name.startsWith('wordpress_logged_in_')).length, 0);
+    } finally { wp(a, 'delete_option("alwp_fixture_blank_jit_login");'); }
+    await tab.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.protected));
+    await tab.waitForURL(a.protected);
+    const user = Number(await tab.locator('#fixture-identity').getAttribute('data-user'));
+    assert(user > 0);
+    assert.equal(users(), beforeUsers + 1);
+    assert.equal(links(), beforeLinks + 1);
+    assert.equal(wp(a, 'echo trim(get_userdata(' + user + ')->user_login) === "" ? "invalid" : "valid";'), 'valid');
+    assert.equal(wp(a, 'echo implode(",",get_userdata(' + user + ')->roles);'), a.woo ? 'customer' : 'subscriber');
+    await siteLogout(a, tab);
+    await tab.goto(a.base + '/wp-login.php?action=al_start&redirect_to=' + encodeURIComponent(a.protected));
+    await tab.waitForURL(a.protected);
+    assert.equal(Number(await tab.locator('#fixture-identity').getAttribute('data-user')), user);
+    assert.equal(users(), beforeUsers + 1);
+    assert.equal(links(), beforeLinks + 1);
+  });
   const adminContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(adminContext);
   const admin = await adminContext.newPage();
   await test('enforced migration gate refuses an unprepared administrator', async () => {

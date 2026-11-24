@@ -58,6 +58,35 @@ foreach ( array( '', " \t " ) as $invalid_login ) {
 	$check( $users_preserved && $links_preserved && ! email_exists( $probe['email'] ), 'late hook rejection rolls back user and mapping' );
 }
 
+// Legitimate site-local username customization must still work; the login name
+// is not the external identity key and need not equal the connector suggestion.
+$probe = $identity();
+$custom_login = 'local_' . substr( wp_generate_uuid4(), 0, 12 );
+$rename_login = static function ( array $data, bool $update, $user_id, array $userdata ) use ( $probe, $custom_login ): array {
+	if ( ! $update && $probe['email'] === ( $userdata['user_email'] ?? '' ) ) { $data['user_login'] = $custom_login; }
+	return $data;
+};
+add_filter( 'wp_pre_insert_user_data', $rename_login, 10, 4 );
+try { $custom_user = $store->resolve( $probe, $config ); }
+finally { remove_filter( 'wp_pre_insert_user_data', $rename_login, 10 ); }
+$check( $custom_login === get_userdata( $custom_user )->user_login, 'valid site-local username customization survives JIT' );
+$check( $custom_user === $store->resolve( $probe, $config ), 'custom username retains the same durable mapping on repeat' );
+
+// A failure before insertion is a separate core error, not a malformed success.
+$probe = $identity();
+$before_users = count_users()['total_users'];
+$before_links = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $store->table( 'links' ) ) );
+$empty_core_login = static fn( string $login ): string => '';
+add_filter( 'pre_user_login', $empty_core_login );
+$failure = '';
+try { $store->resolve( $probe, $config ); }
+catch ( Failure $error ) { $failure = $error->getMessage(); }
+finally { remove_filter( 'pre_user_login', $empty_core_login ); }
+$check( 'local_account_creation_failed' === $failure, 'core user creation error remains fail-closed' );
+$check( $before_users === count_users()['total_users'] &&
+	$before_links === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $store->table( 'links' ) ) ),
+	'core creation failure leaves no user or mapping' );
+
 $count = count_users()['total_users'];
 $escalate = static function ( int $id ): void { ( new WP_User( $id ) )->set_role( 'administrator' ); };
 add_action( 'user_register', $escalate );
