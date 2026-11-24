@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { qualifyHybrid, qualifyEditor, qualifyEnforced, qualifyUpgrade } from './frontend-linking.mjs';
+import { qualifyHybrid, qualifyEditor, qualifyEnforced, qualifyDedicatedLogin, qualifyUpgrade } from './frontend-linking.mjs';
 import { qualifyCrossApp } from './cross-app.mjs';
 
 const fixture = JSON.parse(readFileSync(process.argv[2], 'utf8'));
@@ -353,10 +353,13 @@ try {
     for (const key of ['ack_unlinked', 'ack_privileged', 'ack_invalidate']) {
       await admin.locator('input[name="accesslobby_sso[' + key + ']"]').check();
     }
+    await admin.locator('#alwp_login_pages').selectOption([String(a.shortcodePageId), String(a.blockPageId)]);
     await admin.locator('select[name="accesslobby_sso[mode]"]').selectOption('enforced');
     await admin.getByRole('button', { name: 'Save Changes', exact: true }).click();
     assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
+    assert.deepEqual(JSON.parse(wp(a, 'echo wp_json_encode(get_option("accesslobby_sso")["login_pages"]);')), [a.shortcodePageId, a.blockPageId]);
   });
+  await qualifyDedicatedLogin({ test, browser, browsers, fixture, iamLogin, identity }, a);
   await qualifyEnforced({ test, browser, browsers, fixture, a, page, context, wp, iamLogin, identity });
   await test('enforced cookie guard denies a valid local-password frontend that bypasses authenticate', async () => {
     const deniedContext = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(deniedContext);
@@ -516,7 +519,8 @@ try {
     assert.equal(wp(a, 'echo get_option("accesslobby_sso")["mode"];'), 'enforced');
   });
   // The readiness UI is exercised on A. A host-only fixture setting isolates B's path-prefixed routing behavior.
-  config(b, { mode: 'enforced' });
+  config(b, { mode: 'enforced', login_pages: [b.shortcodePageId, b.blockPageId] });
+  await qualifyDedicatedLogin({ test, browser, browsers, fixture, iamLogin, identity }, b, bUser);
   for (const [name, target] of [['core', b.base + '/wp-login.php'], ['admin', b.base + '/wp-admin/'], ['frontend', b.frontend]]) {
     await test('subdirectory enforced ' + name + ' starts IAM automatically', async () => {
       const isolated = await browser.newContext({ ignoreHTTPSErrors: true }); browsers.push(isolated);

@@ -83,6 +83,19 @@ $attempt = Config::get(); $attempt['mode'] = 'enforced';
 $result = $admin->sanitize( $attempt );
 $check( 'hybrid' === $result['mode'], 'enforcement fails closed before migration readiness' );
 
+$attempt = Config::get();
+$page = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Dedicated login fixture' ) );
+$attempt['login_pages'] = array( '', (string) $page, (string) $page );
+$check( array( $page ) === $admin->sanitize( $attempt )['login_pages'], 'admin accepts only published unique page IDs' );
+foreach ( array( array( 'not-a-page' ), array( array( $page ) ), array( '999999999' ), 'all-pages' ) as $invalid ) {
+	$attempt['login_pages'] = $invalid;
+	$check( Config::get()['login_pages'] === $admin->sanitize( $attempt )['login_pages'], 'malformed login page selection cannot alter settings' );
+}
+wp_set_current_user( $user );
+$attempt['login_pages'] = array( $page );
+$check( Config::get() === $admin->sanitize( $attempt ), 'ordinary local user cannot configure dedicated login pages' );
+wp_set_current_user( 1 );
+wp_delete_post( $page, true );
 $link_before = $store->link_for_user( $user );
 $wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN reference_hash', $audit_table ) );
 update_option( 'accesslobby_schema', '1' );

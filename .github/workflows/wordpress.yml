@@ -19,11 +19,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build with native Windows Python and check exact Git source bytes
         run: |
-          python scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.4.zip
+          python scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.5.zip
           python - <<'PY'
           from pathlib import Path
           import subprocess, zipfile
-          package = Path('dist/accesslobby-sso-0.1.0-alpha.4.zip')
+          package = Path('dist/accesslobby-sso-0.1.0-alpha.5.zip')
           with zipfile.ZipFile(package) as archive:
               assert archive.testzip() is None
               assert not any('\\' in name for name in archive.namelist())
@@ -70,7 +70,7 @@ jobs:
           vendor/bin/phpcs --config-set installed_paths ../../wp-coding-standards/wpcs,../../phpcsstandards/phpcsutils,../../phpcsstandards/phpcsextra
           vendor/bin/phpcs --standard=phpcs.xml
       - name: Build installable pilot ZIP (runtime installation remains a separate gate)
-        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.4.zip
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.5.zip
       - uses: actions/upload-artifact@v4
         with:
           name: accesslobby-wordpress-pilot-php-${{ matrix.php }}
@@ -166,7 +166,7 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Build candidate ZIP
         working-directory: integrations/wordpress
-        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.4.zip
+        run: python3 scripts/package.py --output dist/accesslobby-sso-0.1.0-alpha.5.zip
       - name: Build exact previously qualified upgrade source
         run: |
           git fetch --no-tags --depth=1 origin 8ede31e7218178d81192a8f4b72156bb64cb6875
@@ -188,7 +188,7 @@ jobs:
           tar -xzf "$RUNNER_TEMP/alwp/keycloak.tar.gz" -C "$RUNNER_TEMP/alwp"
       - name: Actual IAM API WordPress WooCommerce browser acceptance
         run: |
-          python3 integrations/wordpress/scripts/qualify.py --runtime "$RUNNER_TEMP/alwp" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.4.zip --upgrade-from "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.2.zip" --keycloak-home "$RUNNER_TEMP/alwp/keycloak-26.7.0"
+          python3 integrations/wordpress/scripts/qualify.py --runtime "$RUNNER_TEMP/alwp" --package integrations/wordpress/dist/accesslobby-sso-0.1.0-alpha.5.zip --upgrade-from "$RUNNER_TEMP/alwp-previous/accesslobby-sso-0.1.0-alpha.2.zip" --keycloak-home "$RUNNER_TEMP/alwp/keycloak-26.7.0"
       - name: Retain sanitized categorical evidence only
         if: always()
         uses: actions/upload-artifact@v4

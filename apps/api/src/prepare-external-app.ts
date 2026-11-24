@@ -4,14 +4,15 @@ import { ExternalProfiles } from './external-profiles.js';
 
 async function main() {
   const [appId, mode, reference, extra] = process.argv.slice(2);
-  if (!appId || !['--plan', '--prepare', '--suspend'].includes(mode ?? '') || extra || (mode === '--plan' && reference)) {
-    throw new Error('Usage: prepare-external-app <application-uuid> --plan | --prepare <review-reference> | --suspend <review-reference>');
+  if (!appId || !['--plan', '--prepare', '--suspend', '--reverify', '--resume-preview'].includes(mode ?? '') || extra || (mode === '--plan' && reference)) {
+    throw new Error('Usage: prepare-external-app <application-uuid> --plan | --prepare <review-reference> | --suspend <review-reference> | --reverify <review-reference> | --resume-preview <review-reference>');
   }
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL required');
   const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
   try {
     const profiles = new ExternalProfiles(pool);
     console.info(JSON.stringify(mode === '--suspend' ? await profiles.suspend(appId, reference ?? '') :
+      ['--reverify', '--resume-preview'].includes(mode ?? '') ? await profiles.reverify(appId, reference ?? '', mode === '--resume-preview') :
       await profiles.prepare(appId, reference, mode === '--plan')));
   }
   finally { await pool.end(); }

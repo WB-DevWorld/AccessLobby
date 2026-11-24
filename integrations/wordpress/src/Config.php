@@ -14,6 +14,7 @@ final class Config {
 				'machine_auth'        => true,
 				'migration_reference' => '',
 				'ack_unlinked'        => false,
+				'login_pages'         => array(),
 			),
 			(array) get_option( 'accesslobby_sso', array() )
 		);
@@ -33,6 +34,15 @@ final class Config {
 		}
 		if ( is_multisite() ) {
 			throw new Failure( 'multisite_not_supported' );
+		}
+		$pages = $c['login_pages'] ?? array();
+		if ( ! is_array( $pages ) || count( $pages ) > 50 ) {
+			throw new Failure( 'invalid_login_pages' );
+		}
+		foreach ( $pages as $id ) {
+			if ( ! is_int( $id ) || $id < 1 ) {
+				throw new Failure( 'invalid_login_pages' );
+			}
 		}
 		self::safe_role( $c['default_role'] );
 	}

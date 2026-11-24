@@ -15,3 +15,5 @@ Configure cache exclusions from security.md. Enable opt-in JIT only after select
 For subdirectories use the displayed URLs verbatim. `home` and `siteurl` can differ; do not strip `/gh/` or `/intl/`. Configure HTTPS correctly at the trusted proxy/WordPress layer. The connector does not trust arbitrary forwarded headers to manufacture HTTPS or an emergency IP.
 
 Production must not define `ACCESSLOBBY_ALLOW_LOCAL_HTTP`. Its only exception is exact localhost/127.0.0.1/::1 when WordPress environment type is `local`. There is no staging HTTP exception.
+
+For dedicated theme or membership login pages, select the published pages under **Settings → AccessLobby → Frontend login pages**. Hybrid mode keeps their normal UI. AccessLobby only starts SSO on entry, even without JavaScript; a validated `redirect_to` returns to the original resource, otherwise the site home is used. Do not select ordinary browsing pages. A login action in a footer, shortcode or block does not by itself turn that public page into a mandatory login page. Read [frontend integration](frontend.md).

@@ -1,5 +1,13 @@
 # Execution ledger — MVP-0
 
+## Continued WordPress and external-consent implementation — 2026-11-24 UTC
+
+Independent comparison branch/PR61 continues from a0583c09; Cursor PR60 remains separate. Alpha.5 adds site-admin selected dedicated frontend login pages with enforced server-side/no-JavaScript SSO and safe original destinations, while leaving unselected public pages with login actions public. No theme edits, new authentication mode or local role/commerce ownership change is introduced.
+
+API migration008 and preview contract0.2 bind minimal inactive external consent to reviewed owner/site/routes/policy. A DB trigger invalidates review and withdraws grants on covered changes, including later-restored configurations. Private reverify/resume requires fresh origin proof and fresh user consent; concurrent retries are idempotent and preserve one app identity/canonical Person. Default-off production Next.js review/withdrawal routes resume a tightly allowlisted review after complete OIDC/person/context validation. No external client is activated or provisioned and the real pairwise token privacy gate remains closed. ADR012 and the preview runbook record exact scope and remaining gates.
+
+Local PostgreSQL API25, web26, PHP39/44, static/coding checks and web production build pass. Fresh native two-WP and clean CI/browser qualification are in progress; no runtime, production, estate-pilot or clean-CI success is inferred from these source edits. Source acceptance continues through37 passes. Issue59 remains an umbrella; Relates to #59.
+
 ## WordPress alpha.4 qualification — 2026-11-23 UTC
 
 Release tooling now uses portable ZIP paths/order, rejects symlinks/backslashes and fixes LF/binary checkout policy. A dedicated Windows packaging CI job checks every archived byte against Git; actual Windows WordPress runtime is not implied. The canonical Linux ZIP remains byte-identical.

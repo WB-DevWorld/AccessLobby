@@ -80,9 +80,11 @@ export function AvailabilityPanel({
   );
 }
 
-export function AccountAccessState({ result }: { result: Exclude<CurrentIdentityResult, { state: 'ready' }> }) {
+export function AccountAccessState({ result, returnTo }: { result: Exclude<CurrentIdentityResult, { state: 'ready' }>; returnTo?: string }) {
   const signedOut = result.state === 'signed-out';
   const restricted = result.state === 'restricted';
+  const query = new URLSearchParams({ ...(restricted ? { intent: 'switch' } : {}), ...(returnTo ? { returnTo } : {}) });
+  const loginUrl = `/auth/login${query.size ? `?${query}` : ''}`;
   return (
     <div className="state-page">
       <SkipLink />
@@ -102,7 +104,7 @@ export function AccountAccessState({ result }: { result: Exclude<CurrentIdentity
             : 'Your account information was not changed or replaced. Please try again when the service is available.'}
         </p>
         <div className="state-actions">
-          {signedOut || restricted ? <Link className="button button-primary" href={restricted ? '/auth/login?intent=switch' : '/auth/login'}>
+          {signedOut || restricted ? <Link className="button button-primary" href={loginUrl}>
             {restricted ? 'Sign in as a different person' : 'Sign in'}
           </Link> : <RetryButton />}
           <Link className="button button-secondary" href="/">Return home</Link>

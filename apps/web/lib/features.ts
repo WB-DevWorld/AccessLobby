@@ -1,3 +1,7 @@
+export function isExternalConnectionPreviewEnabled(value = process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED) {
+  return value === 'true';
+}
+
 export function isPublicRegistrationEnabled(value = process.env.PUBLIC_REGISTRATION_ENABLED) {
   return value?.trim().toLowerCase() === 'true';
 }

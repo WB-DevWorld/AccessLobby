@@ -24,6 +24,22 @@ final class Admin {
 			$c[ $key ] = ! empty( $input[ $key ] );
 		}
 		try {
+			$pages = $input['login_pages'] ?? array();
+			if ( ! is_array( $pages ) || count( $pages ) > 51 ) {
+				throw new Failure( 'invalid_login_pages' );
+			}
+			$c['login_pages'] = array();
+			foreach ( $pages as $id ) {
+				if ( '' === $id ) {
+					continue;
+				}
+				if ( ( ! is_string( $id ) && ! is_int( $id ) ) || ! ctype_digit( (string) $id ) ||
+					'page' !== get_post_type( (int) $id ) || 'publish' !== get_post_status( (int) $id ) ) {
+					throw new Failure( 'invalid_login_pages' );
+				}
+				$c['login_pages'][] = (int) $id;
+			}
+			$c['login_pages'] = array_values( array_unique( $c['login_pages'] ) );
 			Config::validate( $c );
 			if ( Config::fingerprint( $c ) !== Config::fingerprint( $old ) ) {
 				global $wpdb;
@@ -146,7 +162,12 @@ final class Admin {
 		) as $value => $label ) {
 			echo '<option value="' . esc_attr( $value ) . '" ' . selected( $c['mode'], $value, false ) . '>' . esc_html( $label ) . '</option>';
 		}
-		echo '</select></td></tr><tr><th>' . esc_html__( 'JIT local role', 'accesslobby-sso' ) . '</th><td><select name="accesslobby_sso[default_role]">';
+		echo '</select></td></tr><tr><th><label for="alwp_login_pages">' . esc_html__( 'Frontend login pages', 'accesslobby-sso' ) . '</label></th><td>';
+		echo '<input type="hidden" name="accesslobby_sso[login_pages][]" value=""><select multiple size="5" id="alwp_login_pages" name="accesslobby_sso[login_pages][]" aria-describedby="alwp_login_pages_help">';
+		foreach ( get_pages( array( 'post_status' => 'publish' ) ) as $page ) {
+			echo '<option value="' . esc_attr( (string) $page->ID ) . '" ' . selected( in_array( $page->ID, $c['login_pages'], true ), true, false ) . '>' . esc_html( $page->post_title ) . '</option>';
+		}
+		echo '</select><p id="alwp_login_pages_help">' . esc_html__( 'Select dedicated login pages. In AccessLobby only mode, opening one starts SSO automatically, including without JavaScript. Other pages with a login button remain public.', 'accesslobby-sso' ) . '</p></td></tr><tr><th>' . esc_html__( 'JIT local role', 'accesslobby-sso' ) . '</th><td><select name="accesslobby_sso[default_role]">';
 		foreach ( array( 'subscriber', 'customer' ) as $role ) {
 			if ( get_role( $role ) ) {
 				echo '<option value="' . esc_attr( $role ) . '" ' . selected( $c['default_role'], $role, false ) . '>' . esc_html( $role ) . '</option>';

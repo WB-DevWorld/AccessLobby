@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-alpha.5 — 2026-11-24
+
+- Let administrators select dedicated frontend login pages without editing a theme. Enforced mode starts SSO server-side, including with JavaScript disabled.
+- Preserve validated return destinations, avoid redirecting public pages merely because they contain a login action, and expose a dedicated membership adapter filter.
+- Keep local accounts, commerce, roles, guest policy and both logout choices unchanged. External consent review is a separately gated AccessLobby server feature; it does not activate external WordPress clients.
+
 ## 0.1.0-alpha.4 — 2026-11-23
 
 - Negotiate optional opaque AccessLobby session receipts, seal them server-side and check fresh SSO sessions for durable shared logout, application admission and identity suspension.

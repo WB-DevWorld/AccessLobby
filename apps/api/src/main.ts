@@ -10,7 +10,7 @@ import { logoutVerifier, SessionRevocations } from './logout.js';
 import { OrganizationError, OrganizationStore, validId } from './organizations.js';
 import { ApplicationError, ApplicationStore, ClientRegistryUnavailable } from './applications.js';
 import { PeerSessions, PeerSessionError } from './peer-sessions.js';
-import { ExternalProfiles } from './external-profiles.js';
+import { ExternalProfiles, externalPreviewContract } from './external-profiles.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
@@ -158,15 +158,22 @@ class ApiController {
   externalConsents(@Req() req: any, @Res() res: any) {
     res.setHeader('cache-control', 'no-store');
     if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
-    return this.withPerson(req, res, async id => ({ contract: 'accesslobby.external-preview.v0.1',
+    return this.withPerson(req, res, async id => ({ contract: externalPreviewContract,
       consents: await externalProfiles.mine(id), activationAllowed: false }), true);
+  }
+
+  @Get('v1/preview/external-profiles/:applicationId')
+  externalProfile(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    res.setHeader('cache-control', 'no-store');
+    if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
+    return this.withPerson(req, res, id => externalProfiles.review(id, appId), true);
   }
 
   @Post('v1/preview/external-consents/:applicationId')
   grantExternalConsent(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
     res.setHeader('cache-control', 'no-store');
     if (process.env.EXTERNAL_PROFILE_PREVIEW_ENABLED !== 'true') return res.status(404).json({ error: 'not_found' });
-    return this.withPerson(req, res, id => externalProfiles.grant(id, appId, body?.policyVersion, body?.scopes), true);
+    return this.withPerson(req, res, id => externalProfiles.grant(id, appId, body?.policyVersion, body?.scopes, body?.fingerprint), true);
   }
 
   @Delete('v1/preview/external-consents/:applicationId')

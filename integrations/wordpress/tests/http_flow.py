@@ -247,6 +247,28 @@ try:
         page = request(target)
         assert 'kc-form-login' in page[1] and 'id="user_pass"' not in page[1]
     check('enforced core admin and Woo account surfaces initiate IAM automatically', lambda: None)
+    for site in (a, b):
+        saved = wp(site, 'echo base64_encode(wp_json_encode(get_option("accesslobby_sso")));')
+        pages = json.dumps([site['shortcodePageId'], site['blockPageId']])
+        wp(site, '$c=get_option("accesslobby_sso");$c["mode"]="enforced";$c["login_pages"]=' + pages + ';update_option("accesslobby_sso",$c);')
+        try:
+            for target in [site['shortcodes'], site['loginBlock']]:
+                client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+                page = request(target)
+                assert urlparse(page[0]).port == 8083 and 'kc-form-login' in page[1]
+            check(site['label'] + ' selected shortcode and block login pages start SSO without JavaScript', lambda: None)
+            for target, expected in [(site['protected'], site['protected']), ('https://foreign.example.test/account', site['base'] + '/')]:
+                client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+                page = request(site['shortcodes'] + '&' + urlencode({'redirect_to': target}))
+                page = submit(page, form(page, lambda f: f['id'] == 'kc-form-login'), {'username': 'shopper', 'password': fixture['password']})
+                assert page[0] == expected and account(site) == (a['legacyUser'] if site is a else b_user)
+            check(site['label'] + ' selected login preserves protected return and refuses foreign return', lambda: None)
+            client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
+            page = request(site['publicEntry'])
+            assert page[0] == site['publicEntry'] and page[2] == 200 and account(site) == 0
+            check(site['label'] + ' unselected public page with login action stays anonymous', lambda: None)
+        finally:
+            wp(site, 'update_option("accesslobby_sso",json_decode(base64_decode("' + saved + '"),true));')
     client = build_opener(HTTPCookieProcessor(CookieJar()), HTTPSHandler(context=ssl.create_default_context(cafile=fixture['certificate'])))
     page = request(a['protected'])
     page = submit(page, form(page, lambda f: f['id'] == 'kc-form-login'), {'username': 'shopper', 'password': fixture['password']})

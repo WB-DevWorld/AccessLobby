@@ -11,6 +11,7 @@ import { provisionApp, reconcileClient } from '../dist/provision-app.js';
 import { suspendRegistry, disableIamClient } from '../dist/suspend-app.js';
 import { loadAppEntry, AppEntryError } from '../../../examples/reference-consumer/app-entry.mjs';
 import { mayViewPrivate } from '../../../examples/reference-consumer/policy.mjs';
+import { qualifyExternalConsent } from './external-consent-ui.mjs';
 import { qualifyEnbenPeer } from './enben-live-peer.mjs';
 import { withScopedClientToken } from '../../../infra/scripts/private-client-token.mjs';
 
@@ -106,11 +107,11 @@ async function stopServer() {
   }
 }
 
-try {
-  browser = await chromium.launch();
+async function startServer(preview = false) {
   server = spawn(process.execPath, ['apps/api/dist/main.js'], { cwd: process.cwd(), env: { PATH: process.env.PATH, NODE_ENV: 'test',
     DATABASE_URL: databaseUrl, OIDC_ISSUER: issuer, OIDC_API_AUDIENCE: 'accesslobby-api',
     ALLOWED_CLIENT_IDS: 'accesslobby-web', PORT: '13001', GIT_SHA: 'ci-onboarding-fixture',
+    EXTERNAL_PROFILE_PREVIEW_ENABLED: String(preview),
   }, stdio: ['ignore', 'ignore', 'pipe'] });
   // Failure output is deliberately categorical; never dump token-bearing HTTP bodies.
   server.stderr.on('data', () => {});
@@ -124,6 +125,11 @@ try {
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   assert.ok(ready, 'Disposable API must become ready');
+}
+
+try {
+  browser = await chromium.launch();
+  await startServer();
 
   // This disposable IAM has dynamic hostnames. Pin the operator token to its
   // actual internal request host; human browser OIDC still pins localhost.
@@ -255,6 +261,11 @@ try {
   const disabledPreview = await fetch(apiOrigin + '/v1/preview/external-consents');
   assert.equal(disabledPreview.status, 404);
   assert.equal(disabledPreview.headers.get('cache-control'), 'no-store');
+  for (const [method, path] of [['GET', '/v1/preview/external-profiles/' + randomUUID()], ['POST', '/v1/preview/external-consents/' + randomUUID()], ['DELETE', '/v1/preview/external-consents/' + randomUUID()]]) {
+    const disabled = await fetch(apiOrigin + path, { method }); assert.equal(disabled.status, 404);
+  }
+  await stopServer(); await startServer(true);
+  await qualifyExternalConsent({ browser, pool, apps, proofs, api, apiOrigin, issuer, users, password, people, webTokens, peerToken: restricted.tokens[1] });
   const unknownReceipt = await fetch(apiOrigin + '/v1/peer-sessions/status', { method: 'POST',
     headers: { authorization: 'PeerSession ' + 'x'.repeat(43), 'x-accesslobby-client-id': restricted.clientId } });
   assert.equal(unknownReceipt.status, 401);

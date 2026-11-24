@@ -153,6 +153,12 @@ final class Surfaces {
 		return add_query_arg( 'redirect_to', Security::destination( $redirect, home_url( '/' ), site_url( '/' ) ), Config::route( 'start' ) );
 	}
 
+	private function dedicated_login_page(): bool {
+		$pages = Config::get()['login_pages'];
+		$known = is_array( $pages ) && count( $pages ) > 0 && is_page( $pages );
+		return (bool) apply_filters( 'accesslobby_is_login_page', $known );
+	}
+
 	public function frontend_redirect(): void {
 		if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'customer-logout' ) ) {
 			wp_safe_redirect( Config::route( 'logout' ), 303 );
@@ -165,9 +171,13 @@ final class Surfaces {
 		$account           = function_exists( 'is_account_page' ) && is_account_page();
 		$required_checkout = function_exists( 'is_checkout' ) && is_checkout() && ! is_wc_endpoint_url() &&
 			\WC_Checkout::instance()->is_registration_required();
-		if ( $account || $required_checkout ) {
+		$dedicated         = $this->dedicated_login_page();
+		if ( $account || $required_checkout || $dedicated ) {
 			Security::private_headers();
 			$destination = Security::origin( home_url() ) . ( $_SERVER['REQUEST_URI'] ?? '/' );
+			if ( $dedicated && ! $account && ! $required_checkout ) {
+				$destination = isset( $_GET['redirect_to'] ) && is_string( $_GET['redirect_to'] ) ? wp_unslash( $_GET['redirect_to'] ) : home_url( '/' );
+			}
 			wp_safe_redirect( add_query_arg( 'redirect_to', Security::destination( $destination, home_url( '/' ), site_url( '/' ) ), Config::route( 'start' ) ), 303 );
 			exit;
 		}
@@ -177,7 +187,7 @@ final class Surfaces {
 		$post    = get_queried_object();
 		$account = function_exists( 'is_account_page' ) && is_account_page();
 		$content = $post instanceof \WP_Post ? $post->post_content : '';
-		$known   = $account || has_shortcode( $content, 'accesslobby_account' ) ||
+		$known   = $account || $this->dedicated_login_page() || has_shortcode( $content, 'accesslobby_account' ) ||
 			has_shortcode( $content, 'accesslobby_login' ) || has_block( 'accesslobby/login', $content );
 		if ( apply_filters( 'accesslobby_is_auth_surface', $known ) ) {
 			Security::private_headers();

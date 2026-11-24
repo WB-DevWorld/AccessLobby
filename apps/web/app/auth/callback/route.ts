@@ -1,3 +1,5 @@
+import { connectionReturnPath } from '@/lib/external-connections';
+import { isExternalConnectionPreviewEnabled } from '@/lib/features';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { clearCookie, exchange, flowCookie, origin, secureCookie, seal, sessionCookie, unseal } from '@/lib/oidc';
@@ -24,7 +26,8 @@ export async function GET(request: NextRequest) {
     if (pending.state !== state || typeof pending.verifier !== 'string' || typeof pending.nonce !== 'string') return failure();
     const tokens = await exchange(code, pending.verifier, pending.nonce);
     authenticated = true;
-    const destination = await resolveAccountLanding(tokens.access_token);
+    const landing = await resolveAccountLanding(tokens.access_token);
+    const destination = connectionReturnPath(pending.returnTo, isExternalConnectionPreviewEnabled()) ?? landing;
     const response = NextResponse.redirect(new URL(destination, origin()));
     clearCookie(response, flowCookie());
     clearCookie(response, contextCookie());

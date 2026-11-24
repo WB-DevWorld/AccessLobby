@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { isPublicRegistrationEnabled } from '@/lib/features';
+import { connectionReturnPath } from '@/lib/external-connections';
+import { isExternalConnectionPreviewEnabled, isPublicRegistrationEnabled } from '@/lib/features';
 import { callbackUrl, challenge, clientId, discover, flowCookie, origin, seal, secureCookie } from '@/lib/oidc';
 
 export async function GET(request: Request) {
@@ -28,7 +29,8 @@ export async function GET(request: Request) {
     if (intent === 'register') url.searchParams.set('prompt', 'create');
     if (intent === 'switch') url.searchParams.set('prompt', 'login');
     const response = NextResponse.redirect(url);
-    response.cookies.set(flowCookie(), await seal({ state, nonce, verifier }, 300), {
+    const returnTo = connectionReturnPath(new URL(request.url).searchParams.get('returnTo'), isExternalConnectionPreviewEnabled());
+    response.cookies.set(flowCookie(), await seal({ state, nonce, verifier, ...(returnTo ? { returnTo } : {}) }, 300), {
       httpOnly: true,
       secure: secureCookie(),
       sameSite: 'lax',

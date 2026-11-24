@@ -332,6 +332,7 @@ jobs:
           npm install -g pnpm@11.19.0
           pnpm install --frozen-lockfile
           pnpm --filter @accesslobby/api build
+          pnpm --filter @accesslobby/web build
           pnpm --filter @accesslobby/api migrate
           pnpm exec playwright install --with-deps chromium
           IAM_SMOKE_TOKEN=$(curl --fail --silent --show-error \
@@ -343,6 +344,13 @@ jobs:
           node apps/api/test/iam-live-smoke.mjs
           node apps/api/test/app-onboarding-live-smoke.mjs
           unset IAM_SMOKE_TOKEN
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-external-consent-preview
+          path: artifacts/external-consent/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Verify public IAM gateway path and proxy headers
         run: |
           docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .

@@ -219,6 +219,45 @@ export async function qualifyEnforced(s) {
   });
 }
 
+export async function qualifyDedicatedLogin(s, site, expectedUser = site.legacyUser) {
+  const { test, browser, browsers, iamLogin, identity } = s;
+  const noScript = async () => {
+    const context = await browser.newContext({ ignoreHTTPSErrors: true, javaScriptEnabled: false });
+    browsers.push(context); return { context, tab: await context.newPage() };
+  };
+  for (const [name, url] of [['shortcode', site.shortcodes], ['block', site.loginBlock]]) {
+    await test(site.label + ' dedicated ' + name + ' page starts SSO server-side without JavaScript', async () => {
+      const { tab, context } = await noScript();
+      const redirect = await context.request.get(url, { maxRedirects: 0 });
+      assert.equal(redirect.status(), 303); assert.match(redirect.headers()['cache-control'], /private.*no-store/);
+      await tab.goto(url);
+      await tab.locator('#username').waitFor();
+      assert.equal(new URL(tab.url()).origin, new URL(s.fixture.issuer).origin);
+      await iamLogin(tab, 'shopper'); await tab.waitForURL(site.base + '/');
+      assert.equal(await identity(site, tab), expectedUser);
+    });
+  }
+  await test(site.label + ' dedicated login preserves a protected destination without JavaScript', async () => {
+    const { tab } = await noScript();
+    await tab.goto(site.shortcodes + '&redirect_to=' + encodeURIComponent(site.protected));
+    await iamLogin(tab, 'shopper'); await tab.waitForURL(site.protected);
+    assert.equal(await identity(site, tab), expectedUser);
+  });
+  await test(site.label + ' dedicated login rejects a foreign return target', async () => {
+    const { tab } = await noScript();
+    await tab.goto(site.loginBlock + '&redirect_to=' + encodeURIComponent('https://unrelated.example.test/account'));
+    await iamLogin(tab, 'shopper'); await tab.waitForURL(site.base + '/');
+    assert.equal(await identity(site, tab), expectedUser);
+  });
+  await test(site.label + ' public page containing a login action stays public in enforced mode', async () => {
+    const { tab } = await noScript();
+    const response = await tab.goto(site.publicEntry);
+    assert.equal(response.status(), 200); assert.equal(tab.url(), site.publicEntry);
+    assert.equal(await tab.locator('a[data-accesslobby-start]').count(), 1);
+    assert.equal(await tab.locator('#fixture-identity').getAttribute('data-user'), '0');
+  });
+}
+
 export async function qualifyUpgrade(s) {
   const { test, a, fixture, wp, wpCommand, iamLogin, identity, stage, diagnose } = s;
   const version = () => wp(a, 'echo get_file_data(WP_PLUGIN_DIR . "/accesslobby-sso/accesslobby-sso.php",["Version"=>"Version"])["Version"];');
@@ -238,7 +277,7 @@ export async function qualifyUpgrade(s) {
     }
     assert.equal(observed.runningVersion, expected);
   };
-  await test('real alpha.2 to alpha.4 ZIP upgrade preserves an established SSO session and local data', async () => {
+  await test('real alpha.2 to alpha.5 ZIP upgrade preserves an established SSO session and local data', async () => {
     try {
       stage('install_previous_qualified_zip');
       wpCommand(a, ['plugin', 'install', fixture.upgradePackage, '--force']);
@@ -256,16 +295,16 @@ export async function qualifyUpgrade(s) {
       wpCommand(a, ['plugin', 'install', fixture.package, '--force']);
       wpCommand(a, ['plugin', 'is-active', 'accesslobby-sso']);
       observed.headerVersion = version(); diagnose({ ...observed });
-      assert.equal(observed.headerVersion, '0.1.0-alpha.4');
-      stage('upgraded_web_runtime'); await runningVersion(tab, '0.1.0-alpha.4', a.account);
+      assert.equal(observed.headerVersion, '0.1.0-alpha.5');
+      stage('upgraded_web_runtime'); await runningVersion(tab, '0.1.0-alpha.5', a.account);
       assert.equal(await identity(a, tab), a.legacyUser);
-      assert.equal(await tab.locator('#fixture-runtime').getAttribute('data-plugin-version'), '0.1.0-alpha.4');
+      assert.equal(await tab.locator('#fixture-runtime').getAttribute('data-plugin-version'), '0.1.0-alpha.5');
       const after = linkState(s);
       assert.equal(after.link.id, before.link.id); assert.equal(after.link.link_state, 'active');
       for (const key of ['roles', 'count', 'address', 'business', ...(a.woo ? ['orderCustomer', 'orderTotal'] : [])]) assert.deepEqual(after[key], before[key]);
     } finally {
       // Restore the disposable site's candidate even if an upgrade assertion fails.
-      if (version() !== '0.1.0-alpha.4') wpCommand(a, ['plugin', 'install', fixture.package, '--force', '--activate']);
+      if (version() !== '0.1.0-alpha.5') wpCommand(a, ['plugin', 'install', fixture.package, '--force', '--activate']);
     }
   });
 }

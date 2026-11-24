@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { isExternalConnectionPreviewEnabled } from '@/lib/features';
 import type { ReactNode } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { AccountMenu } from '@/components/account-menu';
@@ -53,12 +54,12 @@ export function AppShell({ active, title, description, children, actions, contex
           {!loading && <Link className="context-switch" href="/contexts" aria-label={`Personal and organization selection${contextName ? `: ${contextName}` : ''}`}>
             <span aria-hidden="true">◈</span><span>{contextName ?? 'Personal & organizations'}</span><span aria-hidden="true">⌄</span>
           </Link>}
-          <ThemeToggle />{actions}{!loading && <AccountMenu />}
+          <ThemeToggle />{actions}{!loading && <AccountMenu connectionsPreview={isExternalConnectionPreviewEnabled()} />}
         </div>
       </header>
       <nav className="tablet-nav" aria-label="Account sections"><AccountLinks active={active} itemClassName="tablet-nav-item" /></nav>
       <main className="app-main" id="main-content">{children}</main>
     </div>
-    <nav className="mobile-nav" aria-label="Mobile account navigation"><AccountLinks active={active} itemClassName="mobile-nav-item" mobile /><AccountMenu mobile /></nav>
+    <nav className="mobile-nav" aria-label="Mobile account navigation"><AccountLinks active={active} itemClassName="mobile-nav-item" mobile /><AccountMenu mobile connectionsPreview={isExternalConnectionPreviewEnabled()} /></nav>
   </div>;
 }
