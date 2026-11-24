@@ -150,15 +150,19 @@ async function openJoin(page, site) {
 }
 
 async function submitRegistration(page, email) {
+  await page.locator('#kc-register-form').waitFor({ timeout: 20000 });
   await page.locator('#firstName').fill('Join');
   await page.locator('#lastName').fill('Fixture');
   const username = page.locator('#username');
   if (await username.isVisible()) await username.fill(email);
   await page.locator('#email').fill(email);
-  await page.locator('#password').fill(config.password);
-  const confirm = page.locator('#password-confirm');
-  if (await confirm.count()) await confirm.fill(config.password);
-  await page.locator('#kc-form-buttons input, input[type="submit"]').first().click();
+  const password = page.locator('#password');
+  if (await password.count()) {
+    await password.fill(config.password);
+    const confirm = page.locator('#password-confirm');
+    if (await confirm.count()) await confirm.fill(config.password);
+  }
+  await page.locator('#kc-register-form input[type="submit"], #kc-register-form button[type="submit"]').first().click();
 }
 
 async function finishVerifiedRegistration(page, email) {
@@ -168,15 +172,26 @@ async function finishVerifiedRegistration(page, email) {
   } catch (error) {
     throw new Error('Verification link did not open');
   }
-  const submit = page.locator('input[type="submit"], button[type="submit"]');
-  if (await submit.count()) await submit.first().click();
-  const proceed = page.getByRole('link', { name: /proceed|continue|log in|sign in/i });
-  if (await proceed.count()) await proceed.first().click();
-  const username = page.locator('#username');
-  if (await username.isVisible().catch(() => false)) {
-    await username.fill(email);
-    await page.locator('#password').fill(config.password);
-    await page.locator('#kc-login').click();
+  for (let step = 0; step < 4 && !page.url().includes('a.alwp.test'); step += 1) {
+    const password = page.locator('#password');
+    if (await password.isVisible().catch(() => false)) {
+      await password.fill(config.password);
+      const confirm = page.locator('#password-confirm');
+      if (await confirm.isVisible().catch(() => false)) await confirm.fill(config.password);
+      await page.locator('#kc-form-buttons input, #kc-form-buttons button, input[type="submit"], button[type="submit"]').first().click();
+      continue;
+    }
+    const proceed = page.getByRole('link', { name: /proceed|continue|log in|sign in|click here/i });
+    if (await proceed.count()) {
+      await proceed.first().click();
+      continue;
+    }
+    const submit = page.locator('input[type="submit"], button[type="submit"]');
+    if (await submit.first().isVisible().catch(() => false)) {
+      await submit.first().click();
+      continue;
+    }
+    break;
   }
   if (!page.url().includes('a.alwp.test')) {
     await page.waitForURL(url => url.hostname === 'a.alwp.test', { timeout: 30000 });

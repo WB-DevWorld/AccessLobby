@@ -313,7 +313,7 @@ def start_mail(network, containers):
 
 def start_keycloak(work, plugin, repo, network, containers, issuer, api, sites, admin_password, ca):
     realm = json.loads((repo / 'infra/keycloak/realm.template.json').read_text(encoding='utf-8'))
-    realm.update({'loginTheme': 'keycloak', 'sslRequired': 'none', 'registrationAllowed': True,
+    realm.update({'loginTheme': 'keycloak.v2', 'sslRequired': 'none', 'registrationAllowed': True,
                   'registrationEmailAsUsername': True, 'verifyEmail': True, 'resetPasswordAllowed': False,
                   'smtpServer': {'host': 'mailpit', 'port': '1025', 'from': 'noreply@alwp.test',
                                  'fromDisplayName': 'AccessLobby Fixture', 'ssl': 'false', 'starttls': 'false', 'auth': 'false'}})
