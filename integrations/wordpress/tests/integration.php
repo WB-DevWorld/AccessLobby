@@ -156,6 +156,15 @@ if ( $order_id ) {
 $check( get_option( 'woocommerce_enable_guest_checkout' ) === $guest_before, 'guest-checkout policy unchanged' );
 $check( get_userdata( $legacy )->ID === $legacy && get_userdata( $legacy )->roles === $roles, 'local history and permissions survive session/link operations' );
 $check( ! str_contains( wp_json_encode( $wpdb->get_results( 'SELECT * FROM ' . $store->table( 'audit' ), ARRAY_A ) ), $first_token ), 'session token never appears in audit' );
+$stable = Config::fingerprint( $c );
+$slash  = static function ( $url ) { return untrailingslashit( $url ); };
+add_filter( 'home_url', $slash, 100 );
+$check( hash_equals( $stable, Config::fingerprint( $c ) ), 'home slash filter does not look like a configuration change' );
+remove_filter( 'home_url', $slash, 100 );
+$host = static function () { return 'https://other.example.test'; };
+add_filter( 'home_url', $host, 100 );
+$check( ! hash_equals( $stable, Config::fingerprint( $c ) ), 'home host change still changes the configuration fingerprint' );
+remove_filter( 'home_url', $host, 100 );
 
 $result = array( 'wordpress' => get_bloginfo( 'version' ), 'php' => PHP_VERSION, 'woocommerce' => defined( 'WC_VERSION' ) ? WC_VERSION : null,
 	'theme' => array( 'name' => wp_get_theme()->get( 'Name' ), 'version' => wp_get_theme()->get( 'Version' ) ),
