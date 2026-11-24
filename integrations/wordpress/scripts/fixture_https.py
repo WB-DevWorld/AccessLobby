@@ -433,44 +433,60 @@ echo json_encode( array( 'status' => curl_getinfo( $ch, CURLINFO_RESPONSE_CODE )
 
 def prepare_api(repo, work, network, database_url, issuer, sites, ca, admin_password):
     clients = json.dumps([{key: value for key, value in site.items() if key != 'password'} for site in sites])
-    seed = """import {Pool} from 'pg';
+    seed = r"""import {Pool} from 'pg';
 import {writeFileSync} from 'node:fs';
 import {ApplicationStore} from './dist/applications.js';
 import {provisionApp} from './dist/provision-app.js';
 const p=new Pool({connectionString:process.env.DATABASE_URL});
+let phase='owner';
+const checkpoint=value=>{phase=value;console.log('API_FIXTURE_PHASE '+value);};
 try {
+ checkpoint('owner');
  const owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
  await p.query("INSERT INTO persons(id,status) VALUES($1,'active')",[owner]);
  const proofs=new Map();
  const lookupTxt=async host=>proofs.get(host) ?? [];
  const apps=new ApplicationStore(p,[],lookupTxt);
  const issuer=process.env.OIDC_ISSUER;
+ checkpoint('operator-auth');
  const response=await fetch(new URL('/realms/master/protocol/openid-connect/token',issuer),{method:'POST',
   body:new URLSearchParams({grant_type:'password',client_id:'admin-cli',username:'fixture_operator',password:process.env.ALWP_IAM_OPERATOR_PASSWORD}),signal:AbortSignal.timeout(8000)});
- if(!response.ok) throw Error('Fixture operator authentication rejected');
+ if(!response.ok) {console.log('API_FIXTURE_HTTP '+response.status);throw Error('Fixture operator authentication rejected');}
  const operator=await response.json();
  const report=[];
  for(const site of JSON.parse(process.env.ALWP_SITE_CLIENTS)){
+  checkpoint('application-request');
   const app=await apps.request(owner,{clientId:site.client,name:site.client,platform:'wordpress',
    redirectUri:site.base+'/wp-login.php?action=al_callback',logoutUri:site.base+'/wp-login.php?action=al_signed_out',
    backchannelLogoutUri:site.base+'/?rest_route=/accesslobby/v1/backchannel-logout',visibility:'hidden',admission:'authenticated_open'});
   proofs.set(app.originVerificationHost,[[app.originVerificationValue]]);
+  checkpoint('origin-proof');
   await apps.verifyOrigin(owner,app.id);
+  checkpoint('iam-provision');
   const result=await provisionApp(p,app.id,'--activate-first-party','disposable-first-party-review',{
    issuer,base:'http://iam:8080',token:operator.access_token,lookupTxt});
   if(result.status!=='active'||!await apps.allowedClient(site.client))throw Error('Fixture client readback/activation rejected');
   report.push({clientId:site.client,platform:'wordpress',originProof:'explicit synthetic TXT lookup',review:'explicit synthetic first-party review',iamClientCreatedAndReadBack:true,registryActive:true});
  }
+ checkpoint('onboarding-report');
  writeFileSync('/fixture-logs/onboarding.json',JSON.stringify(report,null,2)+'\n');
+} catch(error) {
+ const safe=value=>typeof value==='string'&&/^[A-Za-z0-9_]{1,80}$/.test(value)?value:'unclassified';
+ console.error('API_FIXTURE_FAILURE '+phase+' '+safe(error?.name)+' '+safe(error?.code)+' '+safe(error?.cause?.code));
+ process.exitCode=1;
 } finally {await p.end();}
 """
     (work / 'api-seed.mjs').write_bytes(seed.replace('\r\n', '\n').encode())
+    run(['node', '--check', str(work / 'api-seed.mjs')], quiet=True)
     start = """#!/bin/sh
 set -e
 cd /app/apps/api
+echo API_FIXTURE_PHASE migrate
 node dist/migrate.js
+echo API_FIXTURE_PHASE seed
 node seed.mjs
 unset ALWP_IAM_OPERATOR_PASSWORD
+echo API_FIXTURE_PHASE serve
 exec node dist/main.js
 """
     (work / 'api-start.sh').write_bytes(start.replace('\r\n', '\n').encode())
@@ -483,8 +499,21 @@ exec node dist/main.js
          '-v', f'{ca}:/certs/ca.crt:ro', '-v', f'{work / "logs"}:/fixture-logs',
          '-v', f'{work / "api-seed.mjs"}:/app/apps/api/seed.mjs:ro', '-v', f'{work / "api-start.sh"}:/api-start.sh:ro',
          'alwp-fixture-api:consolidated', 'sh', '/api-start.sh'], quiet=True)
-    wait_https(f'https://api.alwp.test:{EDGE_PORT}/health/ready', ca, 180)
+    try:
+        wait_https(f'https://api.alwp.test:{EDGE_PORT}/health/ready', ca, 180)
+    except RuntimeError:
+        result = subprocess.run(['docker','logs','alwp-https-api'], capture_output=True, text=True)
+        # Only bounded categorical markers may leave the private container logs.
+        for line in (result.stdout + '\n' + result.stderr).splitlines():
+            if safe_api_marker(line):
+                print(line, flush=True)
+        raise
     print('FIXTURE HTTPS API ready', flush=True)
+
+
+def safe_api_marker(line):
+    import re
+    return re.fullmatch(r'API_FIXTURE_(?:PHASE [a-z-]{1,32}|HTTP [1-5][0-9]{2}|FAILURE [a-z-]{1,32}(?: [A-Za-z0-9_]{1,80}){3})', line) is not None
 
 
 def stop_api():

@@ -2,6 +2,8 @@
 import importlib.util
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -12,6 +14,26 @@ fixture = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fixture)
 
 class FixtureSafety(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'), 'Generated JavaScript syntax needs Node')
+    def test_generated_onboarding_runner_is_valid_javascript(self):
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            with patch.object(fixture, 'run'), patch.object(fixture, 'wait_https'), \
+                 patch.object(fixture, 'git_sha', return_value='synthetic-source'):
+                fixture.prepare_api(root, root, 'synthetic-network', 'postgres://fixture',
+                    'https://auth.alwp.test:8443/realms/accesslobby-first-party', [], root/'ca.crt', 'synthetic-only')
+            result = subprocess.run(['node','--check',str(root/'api-seed.mjs')], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_api_diagnostics_allow_only_bounded_categorical_markers(self):
+        self.assertTrue(fixture.safe_api_marker('API_FIXTURE_FAILURE operator-auth TypeError unclassified ENOTFOUND'))
+        self.assertTrue(fixture.safe_api_marker('API_FIXTURE_PHASE iam-provision'))
+        self.assertTrue(fixture.safe_api_marker('API_FIXTURE_HTTP 401'))
+        for line in ['Bearer private-token', 'Error: postgres://user:secret@host/db',
+                     'API_FIXTURE_PHASE operator-auth token=secret',
+                     'API_FIXTURE_FAILURE iam-provision Error unclassified https://private/callback?code=secret']:
+            self.assertFalse(fixture.safe_api_marker(line))
+
     def test_missing_explicit_authorization_has_no_side_effect(self):
         with patch.dict(os.environ, {}, clear=True), patch.object(fixture, 'map_fixture_names') as mapping:
             with self.assertRaises(SystemExit):

@@ -18,6 +18,7 @@ with zipfile.ZipFile(args.output, "w", compression=zipfile.ZIP_DEFLATED, compres
     for file in sorted(files, key=lambda path: path.relative_to(root).as_posix()):
         assert file.is_file() and not file.is_symlink(), file
         info = zipfile.ZipInfo("accesslobby-sso/" + file.relative_to(root).as_posix(), date_time=(2026, 11, 23, 0, 0, 0))
+        info.create_system = 3  # Stable Unix metadata even when built on Windows.
         info.external_attr = 0o100644 << 16
         info.compress_type = zipfile.ZIP_DEFLATED
         archive.writestr(info, file.read_bytes())
