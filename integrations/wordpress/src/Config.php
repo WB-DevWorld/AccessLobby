@@ -21,7 +21,18 @@ final class Config {
 	}
 
 	public static function fingerprint( array $c ): string {
-		return hash( 'sha256', wp_json_encode( array( $c['issuer'], $c['api'], $c['client_id'], site_url(), home_url() ) ) );
+		// Request-phase URL filters can add or remove only a trailing slash. That is not a configuration change.
+		return self::digest( $c, untrailingslashit( site_url() ), untrailingslashit( home_url() ) );
+	}
+
+	/** Accept the canonical fingerprint and a session sealed before slash normalization. */
+	public static function recognizes( array $c, string $stored ): bool {
+		return hash_equals( self::fingerprint( $c ), $stored ) ||
+			hash_equals( self::digest( $c, site_url(), home_url() ), $stored );
+	}
+
+	private static function digest( array $c, string $site, string $home ): string {
+		return hash( 'sha256', wp_json_encode( array( $c['issuer'], $c['api'], $c['client_id'], $site, $home ) ) );
 	}
 
 	public static function validate( array $c ): void {

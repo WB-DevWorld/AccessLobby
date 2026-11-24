@@ -277,7 +277,7 @@ export async function qualifyUpgrade(s) {
     }
     assert.equal(observed.runningVersion, expected);
   };
-  await test('real alpha.6 to alpha.8 ZIP upgrade preserves an established SSO session and local data', async () => {
+  await test('real alpha.6 to alpha.9 ZIP upgrade preserves an established SSO session and local data', async () => {
     try {
       stage('install_previous_qualified_zip');
       wpCommand(a, ['plugin', 'install', fixture.upgradePackage, '--force']);
@@ -295,16 +295,16 @@ export async function qualifyUpgrade(s) {
       wpCommand(a, ['plugin', 'install', fixture.package, '--force']);
       wpCommand(a, ['plugin', 'is-active', 'accesslobby-sso']);
       observed.headerVersion = version(); diagnose({ ...observed });
-      assert.equal(observed.headerVersion, '0.1.0-alpha.8');
-      stage('upgraded_web_runtime'); await runningVersion(tab, '0.1.0-alpha.8', a.account);
+      assert.equal(observed.headerVersion, '0.1.0-alpha.9');
+      stage('upgraded_web_runtime'); await runningVersion(tab, '0.1.0-alpha.9', a.account);
       assert.equal(await identity(a, tab), a.legacyUser);
-      assert.equal(await tab.locator('#fixture-runtime').getAttribute('data-plugin-version'), '0.1.0-alpha.8');
+      assert.equal(await tab.locator('#fixture-runtime').getAttribute('data-plugin-version'), '0.1.0-alpha.9');
       const after = linkState(s);
       assert.equal(after.link.id, before.link.id); assert.equal(after.link.link_state, 'active');
       for (const key of ['roles', 'count', 'address', 'business', ...(a.woo ? ['orderCustomer', 'orderTotal'] : [])]) assert.deepEqual(after[key], before[key]);
     } finally {
       // Restore the disposable site's candidate even if an upgrade assertion fails.
-      if (version() !== '0.1.0-alpha.8') wpCommand(a, ['plugin', 'install', fixture.package, '--force', '--activate']);
+      if (version() !== '0.1.0-alpha.9') wpCommand(a, ['plugin', 'install', fixture.package, '--force', '--activate']);
     }
   });
 }
