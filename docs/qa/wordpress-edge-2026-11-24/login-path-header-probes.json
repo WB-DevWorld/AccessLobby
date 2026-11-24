@@ -1,0 +1,39 @@
+{
+  "vantage": "ChatGPT Work executor; credential-free HTTP client, not a human browser or the owner's network",
+  "scope": "One header-only GET to each public wp-login.php. No response bodies, cookies or redirect locations retained. This does not qualify browser login or identify a Cloudflare rule without Events.",
+  "observed": [
+    {
+      "host": "training.cetechbpa.com",
+      "path": "/wp-login.php",
+      "method": "GET",
+      "recordedAt": "2026-11-24T19:21:48.726449+00:00",
+      "browserFlowQualified": false,
+      "status": 403,
+      "cloudflareChallenge": true,
+      "tlsVerified": true,
+      "cfRay": "a5fac7840e6b3a0f-ORD"
+    },
+    {
+      "host": "staging.cetechbpa.com",
+      "path": "/wp-login.php",
+      "method": "GET",
+      "recordedAt": "2026-11-24T19:21:54.626509+00:00",
+      "browserFlowQualified": false,
+      "status": 403,
+      "cloudflareChallenge": true,
+      "tlsVerified": true,
+      "cfRay": "a5fac7a44f9a3a0f-ORD"
+    },
+    {
+      "host": "training.flairoc.com",
+      "path": "/wp-login.php",
+      "method": "GET",
+      "recordedAt": "2026-11-24T19:21:59.790451+00:00",
+      "browserFlowQualified": false,
+      "status": 403,
+      "cloudflareChallenge": true,
+      "tlsVerified": true,
+      "cfRay": "a5fac7bf784b23d3-ORD"
+    }
+  ]
+}

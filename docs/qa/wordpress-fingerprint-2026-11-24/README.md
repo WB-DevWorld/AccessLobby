@@ -46,7 +46,7 @@ PR64's integrated head743afe9 also passes all13 jobs: [WordPress45460141296](htt
 
 PR64 merged as **99f4a45138be0ced62488f851cdd63d59d81aae8**. Its Git tree d257d908c43ac9593039e7ede6b5ce734413a4cf equals the qualified fixed source and PR65 integration. Post-merge main checks are separate from those completed pre-merge checks; consult the exact run when selecting an artifact.
 
-The [estate snapshot](../wordpress-estate-2026-11-24/README.md) is copied unchanged from operator c2fcee8. It records alpha.8 estate results, not an alpha.9 installation or acceptance.
+The [release-time estate snapshot](https://github.com/WB-DevWorld/AccessLobby/blob/c2fcee80509be04ff2f273d8c33988097e0817e6/docs/qa/wordpress-estate-2026-11-24/README.md) recorded alpha.8 before rollout. The [living estate ledger](../wordpress-estate-2026-11-24/README.md) advances with later operator observations; this fixture report does not establish those estate results.
 
 ## Estate acceptance still required
 
