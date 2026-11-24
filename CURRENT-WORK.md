@@ -1,5 +1,11 @@
 # Execution ledger — MVP-0
 
+## PR64 fingerprint compatibility review — 2026-11-24 UTC
+
+Relates to #59 and PR64. Candidate source 7a09d7b normalizes new fingerprints, but its legacy reader recognizes only canonical URLs and the current raw pair. An old slashed site URL with an unslashed home URL is still rejected when the next request spells both with trailing slashes. A local digest reproduction confirms this counterexample; PHP is unavailable locally, so native PHP and browser evidence must come from CI.
+
+This review branch adds all sixteen old/current site/home slash combinations, real issuer/API/client/host/path/scheme/port rejection, and a real login_init-to-storefront browser regression using a disposable MU filter. It does not install an estate package, change IAM/API pins, modify the existing dual-proof link, or qualify estate SSO. The operator's c2fcee8 record remains the current estate result; enforced mode stays off.
+
 ## Wordfence own-account role capabilities — 2026-11-24 UTC
 
 Alpha.7 is installed and active on staging.cetechbpa.com, training.cetechbpa.com and training.flairoc.com, but `Config::validate` rejects the subscriber role before any client can be saved or SSO can start. Each site's subscriber has `read`, `level_0` and Wordfence Login Security's `wfls_show_login_security`. FLAIROC training also has `wf2fa_activate_2fa_self` on subscriber and customer. Those capabilities let a person open their own login-security screen and enroll their own second factor. Alpha.8 treats only those two as non-elevating and still rejects administration capabilities. This commit is the source change; it does not by itself qualify the estate. Issue 59 stays open.
