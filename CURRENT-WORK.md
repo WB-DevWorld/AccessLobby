@@ -4,7 +4,9 @@
 
 Relates to #59 and PR64. Candidate source 7a09d7b normalizes new fingerprints, but its legacy reader recognizes only canonical URLs and the current raw pair. An old slashed site URL with an unslashed home URL is still rejected when the next request spells both with trailing slashes. A local digest reproduction confirms this counterexample; PHP is unavailable locally, so native PHP and browser evidence must come from CI.
 
-This review branch adds all sixteen old/current site/home slash combinations, real issuer/API/client/host/path/scheme/port rejection, and a real login_init-to-storefront browser regression using a disposable MU filter. It does not install an estate package, change IAM/API pins, modify the existing dual-proof link, or qualify estate SSO. The operator's c2fcee8 record remains the current estate result; enforced mode stays off.
+Stacked PR65 adds all sixteen old/current site/home slash combinations, real issuer/API/client/host/path/scheme/port rejection, and a real login_init-to-storefront browser regression using a disposable MU filter. Regression-only 0aeee42b3f47f55689b90e52a3158a5824bd9416 fails native PHPUnit on PHP8.3/8.4/8.5 in run45458219445 at the legacy compatibility assertion. The reader fix compares the four independently slashed spellings of the current site/home pair and retains exact-current legacy matching. Its full CI is a separate gate.
+
+No estate package is installed, IAM/API pins are unchanged, and the existing dual-proof link is not modified. The operator's c2fcee8 record remains the current estate result; enforced mode stays off. See [fingerprint review](docs/qa/wordpress-fingerprint-2026-11-24/README.md). Relates to #59.
 
 ## Wordfence own-account role capabilities — 2026-11-24 UTC
 

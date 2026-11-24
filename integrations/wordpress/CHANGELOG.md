@@ -4,6 +4,7 @@
 
 - Canonicalize trailing slashes in the WordPress configuration fingerprint. A request-phase `home_url` filter that only adds or removes that slash no longer ends a valid AccessLobby session.
 - A different site or home host still changes the fingerprint. Sessions sealed before this change remain valid, including through an upgrade.
+- Legacy-session recognition covers independent site/home trailing-slash spellings. Real issuer, API, client, host, path, scheme and port changes still fail closed. The browser fixture reproduces a login-init-only slash change across a real callback and later storefront requests.
 
 ## 0.1.0-alpha.8 — 2026-11-24
 
