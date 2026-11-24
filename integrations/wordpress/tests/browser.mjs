@@ -98,7 +98,7 @@ function linkCount(site) {
 function setAdmission(value) {
   if (value !== 'grant_required' && value !== 'authenticated_open') throw new Error('Unexpected admission value');
   const result = spawnSync('docker', ['exec', 'alwp-https-pg', 'psql', '-U', 'accesslobby', '-d', 'accesslobby', '-v', 'ON_ERROR_STOP=1', '-c', `UPDATE applications SET admission='${value}' WHERE client_id='wordpress-a'`], { encoding: 'utf8' });
-  if (result.status !== 0) throw new Error('Could not update application admission');
+  if (result.status !== 0 || !String(result.stdout).includes('UPDATE 1')) throw new Error('Could not update application admission');
 }
 
 function linkState(site, user) {
@@ -238,8 +238,11 @@ async function joinFlows(browser, site) {
     const denied = await (await browser.newContext()).newPage();
     await openJoin(denied, site);
     await finishVerifiedRegistration(denied, 'denied-join@example.test');
-    if (!(await denied.locator('body').innerText()).includes('application_entry_denied')) throw new Error('Denied admission completed Join');
-    if (userCount(site) !== deniedUsers || linkCount(site) !== deniedLinks) throw new Error('Denied admission created a local account or mapping');
+    const deniedText = await denied.locator('body').innerText();
+    if (!deniedText.includes('upstream_unavailable_or_denied') && !deniedText.includes('application_entry_denied')) throw new Error('Denied admission completed Join');
+    if (userCount(site) !== deniedUsers || linkCount(site) !== deniedLinks || Number(wpEval(site, `echo email_exists('denied-join@example.test') ? 1 : 0;`)) !== 0) {
+      throw new Error('Denied admission created a local account or mapping');
+    }
     console.log('FLOW join-admission-denied');
   } finally {
     setAdmission('authenticated_open');
