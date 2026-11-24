@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-11-24T00:28:30.129449+00:00",
+  "routes": [
+    {
+      "environment": "staging.cetechbpa.com",
+      "tcp22": "blocked",
+      "errno": 101,
+      "authentication": "not reached"
+    },
+    {
+      "environment": "training.cetechbpa.com",
+      "tcp22": "blocked",
+      "errno": 101,
+      "authentication": "not reached"
+    },
+    {
+      "environment": "training.flairoc.com",
+      "tcp22": "blocked",
+      "errno": 101,
+      "authentication": "not reached"
+    },
+    {
+      "environment": "flairoc-estate",
+      "tcp22": "blocked",
+      "errno": 101,
+      "authentication": "not reached"
+    }
+  ]
+}
