@@ -1,6 +1,6 @@
 # WordPress estate qualification — 2026-11-24
 
-Status: **PARTIALLY QUALIFIED**. The matching API is promoted, alpha.7 is installed on all three sites, and one real browser proved local Woo login, the preserved order, and this-site sign-out. SSO configuration, client registration, Join, linking, cross-site SSO and emergency recovery are not qualified.
+Status: **PARTIALLY QUALIFIED**. The matching API is promoted and AccessLobby SSO 0.1.0-alpha.8 is configured in hybrid mode with JIT off on all three sites. Local login is proved on both training sites. Client registration, Join, linking, cross-site SSO and emergency recovery are not qualified.
 
 The earlier “API promotion blocked” note is historical. [PR62](https://github.com/WB-DevWorld/AccessLobby/pull/62) merged as `d875712ecb41e06d8905046e0f4bc93bb8e9e7a5`. Public `/health/ready` reports that revision. Running images, unchanged IAM and gateway pins:
 
@@ -11,15 +11,17 @@ The earlier “API promotion blocked” note is historical. [PR62](https://githu
 
 Migrations 001–006 are applied and the existing 9 Person records were preserved. Keycloak and the gateway were not redeployed.
 
-Installed package is AccessLobby SSO for WordPress 0.1.0-alpha.7 from CI run 45382011687, SHA256 `373dce094881278b9f08e28ba3e847bb6634719605bef761ee251d80fa771afa`, 50 files / 91,493 bytes. The digest matched before and after transfer. A local Python 3.14 rebuild did not match that digest, so it was not installed.
+Alpha.7 from CI run 45382011687, SHA256 `373dce094881278b9f08e28ba3e847bb6634719605bef761ee251d80fa771afa`, 50 files / 91,493 bytes, was installed first. Its digest matched before and after transfer. A local Python 3.14 rebuild did not match that digest, so it was not installed. `Config::validate` then rejected subscriber on every site because Wordfence Login Security adds `wfls_show_login_security` (and, on FLAIROC, `wf2fa_activate_2fa_self`). No role capability was removed.
 
-## Why SSO is not configured
+[PR63](https://github.com/WB-DevWorld/AccessLobby/pull/63) merged as `344cd8cee6ac48b952d9eaffac29b3b7e7473a95`. Alpha.8 treats only those two own-account capabilities as non-elevating and still rejects `manage_options`. The installed ZIP is the main Windows artifact from run 45415908064, SHA256 `5760b2daa738d7eab2b055548b67407e04bc0f60cf60a111a63987c424e58c3b`, 92,107 bytes. It matches the green PR artifact. The digest matched on each host before upgrade. Each site is now `0.1.0-alpha.8`, hybrid, JIT off, and its discovery call reached API ready `d875712`.
 
-`Config::validate` calls `safe_role` before discovery. On every site the subscriber role has Wordfence Login Security's `wfls_show_login_security` in addition to `read` and `level_0`. FLAIROC training also has `wf2fa_activate_2fa_self` on subscriber and customer. Alpha.7 treats any other capability as unsafe, so settings cannot be saved and SSO cannot start. The plugin remains active with its default hybrid mode and JIT off. No role capability was removed.
+| Site | Client ID, not yet registered | Callback and signed-out return | Backchannel |
+|---|---|---|---|
+| training.cetechbpa.com | `cetech-training-wp` | `https://training.cetechbpa.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://training.cetechbpa.com/wp-json/accesslobby/v1/backchannel-logout` |
+| training.flairoc.com | `flairoc-training-wp` | `https://training.flairoc.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://training.flairoc.com/wp-json/accesslobby/v1/backchannel-logout` |
+| staging.cetechbpa.com | `cetech-staging-wp` | `https://staging.cetechbpa.com/wp-login.php?action=al_callback` and `?action=al_signed_out` | `https://staging.cetechbpa.com/wp-json/accesslobby/v1/backchannel-logout` |
 
-[PR63](https://github.com/WB-DevWorld/AccessLobby/pull/63) is the alpha.8 source change. It treats only those two own-account capabilities as non-elevating and still rejects `manage_options`. It is not installed. The alpha.7 checksum will not be reused for that code.
-
-First-party registration is also blocked: the sites' DNS is Cloudflare (`jason.ns.cloudflare.com`, `roxy.ns.cloudflare.com`). The available Wrangler OAuth token expired at 2026-11-10T11:43:48Z and its scopes include `zone:read` but not DNS edit. No TXT proof was published and no client was requested.
+Registration is blocked on DNS. Both domains use `jason.ns.cloudflare.com` and `roxy.ns.cloudflare.com`. The available Wrangler token expired at 2026-11-10T11:43:48Z and does not include DNS edit. No TXT proof was published and no client was requested. Admission will be `authenticated_open` for these customer sites once a reviewed request exists. `ALLOWED_CLIENT_IDS` was not changed.
 
 ## Installations
 
@@ -27,9 +29,9 @@ All three are single-site, `wp_get_environment_type()=staging`, HPOS runtime ena
 
 | Site | WordPress / PHP / Woo | Theme | Commerce policy | Notable active stack | Result |
 |---|---|---|---|---|---|
-| `https://staging.cetechbpa.com/` | 7.1.5 / 8.4.27 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9, WP Rocket 3.24, Redis Object Cache 3.0.0, Wordfence 9.1.1, delivery engine 1.0.0-m2.5, Jetpack 16.4. Paystack gateway disabled. B2BKing installed, inactive. | Alpha.7 active. Configuration **FAILED** (`unsafe_default_role`). Browser login **UNTESTED**. |
-| `https://training.cetechbpa.com/` | 7.1.4 / 8.4.24 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout on; My Account registration on | B2BKing Core 5.2.61 and B2BKing 5.6.80, WPML 5.0.2, WP Rocket 3.24, Redis Object Cache 3.0.0, delivery engine 1.0.0-m2.4, POS bridge 0.6.0-stg05, MailPoet 5.44.0. Paystack enabled with its test-mode flag set. COD and B2BKing invoice/PO gateways enabled. Wordfence installed, inactive. | Alpha.7 active, owned by `cetechtraining` (directory 775, plugin file 664). Local browser login, order 50402 and this-site sign-out **QUALIFIED**. SSO **FAILED** until alpha.8. |
-| `https://training.flairoc.com/` | 7.1.1 / 8.4.25 / 11.1.1 | Kadence 1.5.2 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9 is active while the theme is Kadence. ShopLentor 3.5.2, pre-orders 2.3.1, Mailchimp for WP 4.14.1. BACS and COD enabled. | Alpha.7 active. Configuration **FAILED** (`unsafe_default_role`). Local login created a session, then `wp-admin` returned to My Account. The account page contains the Woo shortcode, but the rendered page shows the coming-soon hero and not the account dashboard. Order display **UNTESTED**. |
+| `https://staging.cetechbpa.com/` | 7.1.5 / 8.4.27 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9, WP Rocket 3.24, Redis Object Cache 3.0.0, Wordfence 9.1.1, delivery engine 1.0.0-m2.5, Jetpack 16.4. Paystack gateway disabled. B2BKing installed, inactive. | Alpha.8 hybrid, JIT off. Configuration saved. Browser login **UNTESTED**. |
+| `https://training.cetechbpa.com/` | 7.1.4 / 8.4.24 / 11.2.1 | Woodmart Child 1.0.0, parent Woodmart 8.6.6 | Guest checkout on; My Account registration on | B2BKing Core 5.2.61 and B2BKing 5.6.80, WPML 5.0.2, WP Rocket 3.24, Redis Object Cache 3.0.0, delivery engine 1.0.0-m2.4, POS bridge 0.6.0-stg05, MailPoet 5.44.0. Paystack enabled with its test-mode flag set. COD and B2BKing invoice/PO gateways enabled. Wordfence installed, inactive. | Alpha.8 hybrid, JIT off, owned by `cetechtraining` (directory 775, plugin file 664). Local browser login, order 50402 and this-site sign-out **QUALIFIED** on alpha.7 before the upgrade. SSO **BLOCKED** on client registration. |
+| `https://training.flairoc.com/` | 7.1.1 / 8.4.25 / 11.1.1 | Kadence 1.5.2 | Guest checkout off; My Account registration on | Woodmart Core 1.1.9 is active while the theme is Kadence. ShopLentor 3.5.2, pre-orders 2.3.1, Mailchimp for WP 4.14.1. BACS and COD enabled. | Alpha.8 hybrid, JIT off. Local login created a session on alpha.7, then `wp-admin` returned to My Account. The account page contains the Woo shortcode, but the rendered page shows the coming-soon hero and not the account dashboard. Order display **UNTESTED**. SSO **BLOCKED** on client registration. |
 
 `p06-physical.cetechbpa.com` is a separate staging schema on the training database host. It was inventoried only and not backed up or changed. No subdirectory installation was found. Estate subdirectory coverage remains **UNTESTED**; fixture subdirectory evidence stays in the consolidation CI record.
 
