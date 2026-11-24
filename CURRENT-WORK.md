@@ -1,8 +1,10 @@
 # Execution ledger — MVP-0
 
-## Estate qualification blocked on matching API — 2026-11-24 UTC
+## Estate installation in progress — 2026-11-24 UTC
 
-Three designated non-production WordPress hosts were inventoried read-only and backed up. None has the AccessLobby connector. Public API live/ready still reports main `3d9220a140d61df5effe633bc72cf5142c4a8371`. PR62 remains draft at evidence head `161e05bc0a81e70c60ad23cf287f29a3abb5b8b6`; its 13 CI jobs passed and the branch has not advanced. Typed WordPress registration and opaque session receipts are not on the running API. Dokploy is on the host that serves `accesslobby.realjanelove.com`, `api.accesslobby.realjanelove.com` and `iam.accesslobby.realjanelove.com`. The existing operator key is accepted by that host and is passphrase-protected; the local SSH agent is not running, so the image pin cannot be changed from here. No plugin was installed and no authentication case was run. Issue 59 stays open. Details: [estate inventory](docs/qa/wordpress-estate-2026-11-24/README.md).
+The earlier API-promotion block is historical. PR62 merged as `d875712ecb41e06d8905046e0f4bc93bb8e9e7a5`. Staging API and web run `sha256:ba3b0205278ac9f76f6f37559c71b803d1b569ce1945240e3974e8ba9d82679f` and `sha256:57eeb4d83243c813c5a1eb20c444b9cfc3dc6c68cfbde7657a8f121e2c8eb999`. IAM and gateway remain `sha256:e0e92a6697f8d022a8e96dbff6966f272687c32ff8637fa331a0fa8ec984653f` and `sha256:0596f93a8bf4662f811645aedae7c28e4c5a5bebdce48fe94eefd531974d1558`. Public ready reports `d875712`. Migrations 001–006 are applied and 9 Person records remain.
+
+Alpha.7 (`373dce094881278b9f08e28ba3e847bb6634719605bef761ee251d80fa771afa`) is active on all three sites after the recorded backups were rechecked. Configuration and SSO fail closed with `unsafe_default_role` because subscriber includes `wfls_show_login_security` (and FLAIROC also `wf2fa_activate_2fa_self`). [PR63](https://github.com/WB-DevWorld/AccessLobby/pull/63) is the alpha.8 fix and is not installed. A real browser on training.cetechbpa.com completed local customer login, saw order 50402, and signed out of that site only. Client registration is blocked on Cloudflare DNS edit access. Emergency recovery and enforced mode remain off. Issue 59 stays open. Details: [estate record](docs/qa/wordpress-estate-2026-11-24/README.md).
 
 ## Late WordPress hook rollback qualified — 2026-11-24 UTC
 
