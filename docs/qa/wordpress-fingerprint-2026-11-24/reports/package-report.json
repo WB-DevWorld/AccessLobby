@@ -1,0 +1,16 @@
+[
+  {
+    "platform": "windows",
+    "bytes": 92760,
+    "sha256": "6521df67c33a34d8ccdebd8832d26f13355ea5ea66d67397cc645f4254df7d42",
+    "files": 50,
+    "mismatches": []
+  },
+  {
+    "platform": "linux",
+    "bytes": 92760,
+    "sha256": "6521df67c33a34d8ccdebd8832d26f13355ea5ea66d67397cc645f4254df7d42",
+    "files": 50,
+    "mismatches": []
+  }
+]
