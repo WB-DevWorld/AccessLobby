@@ -1,5 +1,9 @@
 # Execution ledger — MVP-0
 
+## Estate qualification blocked on matching API — 2026-11-24 UTC
+
+Three designated non-production WordPress hosts were inventoried read-only and backed up. None has the AccessLobby connector. Public API live/ready still reports main `3d9220a140d61df5effe633bc72cf5142c4a8371`. PR62 remains draft at evidence head `161e05bc0a81e70c60ad23cf287f29a3abb5b8b6`; its 13 CI jobs passed and the branch has not advanced. Typed WordPress registration and opaque session receipts are not on the running API. Dokploy is on the host that serves `accesslobby.realjanelove.com`, `api.accesslobby.realjanelove.com` and `iam.accesslobby.realjanelove.com`. The existing operator key is accepted by that host and is passphrase-protected; the local SSH agent is not running, so the image pin cannot be changed from here. No plugin was installed and no authentication case was run. Issue 59 stays open. Details: [estate inventory](docs/qa/wordpress-estate-2026-11-24/README.md).
+
 ## Late WordPress hook rollback qualified — 2026-11-24 UTC
 
 Cursor PR60/0ecc60eb20984cb24e0c185a420484b9ea978646 run 45378656583 fails its later partial-Join case after TLS and earlier Join negatives pass. Regression-only **c767b2dd292f8af53bc1ec9e046f119b68e61c81** independently reproduces the defect on all five consolidated native lanes: hookCalled=true, rejected=false, usersPreserved=false, linksPreserved=false. Official WordPress source confirms the late hook runs after initial username validation. The old role/capability guard missed the malformed login. CURRENT-REPO-FACT; acceptance pass 41. The existing native Join already handled Keycloak password-new; the stopped local Mailpit experiment supplies no pass.
