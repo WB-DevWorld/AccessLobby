@@ -1,0 +1,115 @@
+{
+  "contract": "accesslobby.operator-staging-release.v1",
+  "preparedOn": "2026-11-25",
+  "sourceSha": "29292fbe80a99804eaf069144f9103b935902293",
+  "sourceTree": "656e12fb7064d71b3e8d228e01c9484e489421d1",
+  "integration": [
+    {
+      "pr": 73,
+      "head": "eb661bdc7f8e9661dbbe58c2ef04bb278ebca875",
+      "merge": "78a3fb9ad7b6470d9eff90bfd5f443b34bcec14f",
+      "mergeTreeMatchesQualifiedHead": true
+    },
+    {
+      "pr": 75,
+      "head": "750f51a890d65d3b17306b7d47e2f8f2012880fc",
+      "merge": "8d7fd911eb9916beb557de2cb67f7c7e4e268291",
+      "mergeTreeMatchesQualifiedHead": true
+    },
+    {
+      "pr": 78,
+      "head": "36db713964d6c143ac806edd402e372486d29dcf",
+      "merge": "29292fbe80a99804eaf069144f9103b935902293",
+      "mergeTreeMatchesQualifiedHead": true
+    }
+  ],
+  "qualification": {
+    "mainCi": {
+      "run": 45716397215,
+      "conclusion": "success",
+      "verifyJob": 139563436825,
+      "iamJob": 139563437551,
+      "privateConsoleJob": 139563437331
+    },
+    "mainWordPress": {
+      "run": 45716397328,
+      "conclusion": "success"
+    },
+    "mainTheme": {
+      "run": 45716397378,
+      "conclusion": "success"
+    },
+    "privateConsoleArtifact": {
+      "id": 15070635884,
+      "digest": "sha256:9c3ac6ac4303d7371209ac5128eff5fe1d75ac5b01583ea3935f0193190fdb8d"
+    },
+    "stagingQualified": false,
+    "productionQualified": false
+  },
+  "publication": {
+    "run": 45717235382,
+    "job": 139566298575,
+    "conclusion": "success",
+    "checkoutShaVerified": "29292fbe80a99804eaf069144f9103b935902293",
+    "allFourTagsMatchSource": true,
+    "hostPullReadbackPending": true
+  },
+  "promoteImages": {
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:73361254da9189e747d07561abaaee18d9b08d222f390b8f9af9165fed3199d1",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:5da7761fdcd833d7503ff59a037def5c930a42efd343d137669af3882dab6e69"
+  },
+  "privateProxyImageCandidate": "ghcr.io/wb-devworld/accesslobby-iam-gateway@sha256:4a92d5cae69f224ace45981a58cd8c324175cce495a55f771bf005fa8cf17edc",
+  "preserveRuntimeImages": [
+    "iam",
+    "iam-gateway",
+    "iam-db",
+    "identity-db",
+    "consumer"
+  ],
+  "migrationManifest": [
+    "001_identity.sql",
+    "002_session_revocation.sql",
+    "003_organizations.sql",
+    "004_applications.sql",
+    "005_peer_session_receipts.sql",
+    "006_wordpress_platform.sql",
+    "009_platform_operators.sql",
+    "010_application_reviews.sql",
+    "011_person_controls.sql",
+    "012_application_lifecycle.sql",
+    "013_activation_jobs.sql",
+    "014_application_suspension.sql",
+    "015_session_inspection.sql"
+  ],
+  "reservedMigrationsExcluded": [
+    "007",
+    "008"
+  ],
+  "acceptedWordPressEvidence": {
+    "sourceSha": "6e4cb0fda389fc6a3d1cb2b4ea3f1a205a6a65e1",
+    "trainingUsers": 41,
+    "activeMappings": 3,
+    "mode": "hybrid",
+    "jit": false,
+    "enforced": false
+  },
+  "protectedInputsRequired": [
+    "authorizedHostRoute",
+    "actualComposeProjectAndGeneratedConfiguration",
+    "currentRuntimePinsAndProtectedEnvironment",
+    "recoverableBackupsAndIsolatedRestore",
+    "ownerConfirmedExistingHumanAccessLobbyId",
+    "trustedExistingPrivateIamCertificatePathsAndMasterAdministrator"
+  ],
+  "staging": {
+    "promoted": false,
+    "operatorGranted": false,
+    "privateIamCompanionInstalled": false,
+    "remainingIssues": [
+      59,
+      72,
+      74,
+      76
+    ]
+  }
+}
