@@ -72,6 +72,14 @@ Training was exported to `/home/cetechtraining/al-jit-before-20261125.sql` (112,
 
 Email-collision refusal was not run. The delivered mailbox does not belong to an existing WordPress user, and the realm rejects a second account with the same address, so no second verified identity was available for that branch. `emailVerified` was not set by the operator API. Enforced mode stays off. Issue 59 stays open.
 
+## Collision and new-registration mailbox gate — 2026-11-25 UTC
+
+Main remains `de71ec978d9c5dcc2eaa4e3076eb7a7da94ed223`. Accepted delivery and Join evidence remains `a83634f3e7c228014449c0269c9a01d4ddcc1d79`. Training still has 40 users, two links, both active, hybrid, JIT off. Customer 45, subscriber 47, order 50402 and guest checkout were not changed. No new IAM identity and no WordPress fixture were created.
+
+`jane@cetechbpa.com`, `partners@cetechbpa.com`, `suppliers@cetechbpa.com` and `support@cetechbpa.com` already exist as Forward Email mailboxes and are unused by the realm and by training. The dashboard Webmail action opens the already signed-in `official@cetechbpa.com` mailbox. The qualification profile has a saved password only for `jane@cetechbpa.com` among those unused mailboxes. Submitting it on the webmail sign-in form stays on “Signing in…” and does not open that inbox, so inbox access is not confirmed. No alias was created, no mailbox password was generated, and plus-addressing was not assumed.
+
+Email-collision refusal is **BLOCKED**. A new WordPress-originated registration is **BLOCKED**. Both need a confirmed inbox for an address other than the accepted `official@cetechbpa.com` account, and the registration test needs a second such address. Enforced mode stays off. Issue 59 stays open.
+
 ## PR64 fingerprint compatibility review — 2026-11-24 UTC
 
 Relates to #59 and PR64. Candidate source 7a09d7b normalizes new fingerprints, but its legacy reader recognizes only canonical URLs and the current raw pair. An old slashed site URL with an unslashed home URL is still rejected when the next request spells both with trailing slashes. A local digest reproduction confirms this counterexample; PHP is unavailable locally, so native PHP and browser evidence must come from CI.
