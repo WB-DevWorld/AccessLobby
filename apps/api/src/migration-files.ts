@@ -8,4 +8,7 @@ export const migrationFiles = [
   // 007/008 remain reserved for the preserved external preview development line.
   '009_platform_operators.sql',
   '010_application_reviews.sql',
+  '011_person_controls.sql',
+  '012_application_lifecycle.sql',
+  '013_activation_jobs.sql',
 ] as const;

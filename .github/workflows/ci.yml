@@ -49,6 +49,15 @@ jobs:
         run: node infra/scripts/ui-browser-smoke.mjs
       - name: Verify operator console with real API and PostgreSQL
         run: node infra/scripts/operator-console-smoke.mjs
+      - name: Verify person controls, application lifecycle and activation queue
+        run: node infra/scripts/operator-round2-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-operator-round2
+          path: artifacts/operator-round2/
+          if-no-files-found: warn
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -361,6 +370,15 @@ jobs:
           node apps/api/test/iam-live-smoke.mjs
           node apps/api/test/app-onboarding-live-smoke.mjs
           node infra/scripts/iam-email-live-smoke.mjs
+          # The preceding browser flows can consume a short master-token lifetime.
+          IAM_SMOKE_TOKEN=$(curl --fail --silent --show-error \
+            -d grant_type=password -d client_id=admin-cli \
+            -d username=ci-admin -d password=ci-admin-password \
+            http://127.0.0.1:8080/realms/master/protocol/openid-connect/token \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+          echo "::add-mask::$IAM_SMOKE_TOKEN"
+          export IAM_SMOKE_TOKEN
+          TEST_DATABASE_URL="$IAM_LIFECYCLE_DATABASE_URL" node apps/api/test/activation-worker-live-smoke.mjs
           unset IAM_SMOKE_TOKEN
       - name: Verify public IAM gateway path and proxy headers
         run: |

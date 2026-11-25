@@ -1,0 +1,59 @@
+{
+  "source": "eb661bdc7f8e9661dbbe58c2ef04bb278ebca875",
+  "dirtyWorktree": true,
+  "observedAt": "2026-11-25T20:18:30.841Z",
+  "scope": "synthetic OIDC and DNS fixtures; real isolated PostgreSQL, compiled API and production Next browser",
+  "privateWorkerRecovery": "Covered separately by activation service tests; no live worker is run here",
+  "liveIam": "NOT RUN",
+  "estate": "NOT RUN",
+  "installedDevices": "NOT RUN",
+  "staging": "NOT RUN",
+  "production": "NOT RUN",
+  "result": "PASS",
+  "checks": [
+    {
+      "name": "new controls require explicit current platform roles, never owner or token claims",
+      "result": "PASS"
+    },
+    {
+      "name": "suspend and resume invalidate old bearer, peer receipt and stale browser authority",
+      "result": "PASS"
+    },
+    {
+      "name": "owner lifecycle preserves IDs and refuses cross-owner, active and stale mutations",
+      "result": "PASS"
+    },
+    {
+      "name": "activation jobs require current independent approval and never activate at enqueue",
+      "result": "PASS"
+    },
+    {
+      "name": "revoked reviewer and edited requests cannot reuse an existing activation approval",
+      "result": "PASS"
+    },
+    {
+      "name": "new protected pages deny anonymous users and render privately at narrow and wide widths",
+      "result": "PASS"
+    },
+    {
+      "name": "native person controls enforce confirmation, CSRF and stale-token refusal after re-enable",
+      "result": "PASS"
+    },
+    {
+      "name": "native owner forms edit, cancel and resubmit without reusing earlier proof",
+      "result": "PASS"
+    },
+    {
+      "name": "native activation queues exact reviewed configuration and displays pending private work",
+      "result": "PASS"
+    },
+    {
+      "name": "current role revocation removes authority from existing operator browser sessions",
+      "result": "PASS"
+    },
+    {
+      "name": "round-2 browser routes have no hydration or runtime page errors",
+      "result": "PASS"
+    }
+  ]
+}

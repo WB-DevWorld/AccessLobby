@@ -1,10 +1,12 @@
 export const adminContract = 'accesslobby.admin.v0.1';
-export type OperatorRole = 'support_reader' | 'application_reviewer';
-export type AdminAccess = { contract: typeof adminContract; roles: OperatorRole[]; capabilities: { read: true; reviewApplications: boolean } };
+export type OperatorRole = 'support_reader' | 'application_reviewer' | 'identity_operator' | 'application_operator';
+export type AdminAccess = { contract: typeof adminContract; roles: OperatorRole[]; capabilities: {
+  read: true; reviewApplications: boolean; managePeople?: boolean; activateApplications?: boolean;
+} };
 export type AdminPerson = { id: string; status: 'active' | 'suspended'; createdAt: string; organizationCount: number; applicationCount: number };
 export type AdminOrganization = { id: string; name: string; status: 'active' | 'suspended'; createdAt: string; memberCount: number; ownerCount: number };
-export type AdminApplication = { id: string; clientId: string; name: string; ownerPersonId: string; status: 'requested' | 'active' | 'suspended'; trustClass: string; platform: string; originVerifiedAt: string | null; reviewDecision: 'approved' | 'rejected' | null };
-export type ApplicationReview = { decision: 'approved' | 'rejected'; reference: string; reviewerPersonId: string; reviewedAt: string; configurationHash: string };
+export type AdminApplication = { id: string; clientId: string; name: string; ownerPersonId: string; status: 'requested' | 'active' | 'suspended' | 'cancelled'; trustClass: string; platform: string; originVerifiedAt: string | null; reviewDecision: 'approved' | 'rejected' | null };
+export type ApplicationReview = { decision: 'approved' | 'rejected'; reference: string; reviewerPersonId: string; reviewedAt: string; configurationHash: string; authorizationCurrent?: boolean };
 export type AdminApplicationDetail = Omit<AdminApplication, 'reviewDecision'> & { redirectUri: string; logoutUri: string; backchannelLogoutUri: string | null; visibility: string; admission: string; originVerifiedHost: string | null; configurationHash: string; review: ApplicationReview | null };
 export type AdminAuditEvent = { id: string; actorPersonId: string | null; action: string; targetType: string; targetId: string; reference: string; occurredAt: string };
 export type AdminPage<T> = { items: T[]; nextCursor: string | null };
@@ -20,10 +22,15 @@ const status = (value: unknown): value is 'active' | 'suspended' => value === 'a
 
 export function parseAdminAccess(value: unknown): AdminAccess | null {
   if (!record(value) || value.contract !== adminContract || !Array.isArray(value.roles) || value.roles.length === 0 ||
-      !value.roles.every(role => role === 'support_reader' || role === 'application_reviewer') ||
+      !value.roles.every(role => role === 'support_reader' || role === 'application_reviewer' || role === 'identity_operator' || role === 'application_operator') ||
       new Set(value.roles).size !== value.roles.length || !record(value.capabilities) || value.capabilities.read !== true ||
-      value.capabilities.reviewApplications !== value.roles.includes('application_reviewer')) return null;
-  return { contract: adminContract, roles: value.roles, capabilities: { read: true, reviewApplications: value.capabilities.reviewApplications as boolean } };
+      value.capabilities.reviewApplications !== value.roles.includes('application_reviewer') ||
+      (value.capabilities.managePeople ?? false) !== value.roles.includes('identity_operator') ||
+      (value.capabilities.activateApplications ?? false) !== value.roles.includes('application_operator')) return null;
+  return { contract: adminContract, roles: value.roles, capabilities: { read: true,
+    reviewApplications: value.capabilities.reviewApplications as boolean,
+    ...(value.capabilities.managePeople === undefined ? {} : { managePeople: value.capabilities.managePeople === true }),
+    ...(value.capabilities.activateApplications === undefined ? {} : { activateApplications: value.capabilities.activateApplications === true }) } };
 }
 
 function page<T>(value: unknown, key: string, parse: (item: unknown) => T | null): AdminPage<T> | null {
@@ -46,7 +53,7 @@ export function parseAdminOrganizations(value: unknown) {
 }
 function application(item: unknown): AdminApplication | null {
   if (!record(item) || !adminUuid(item.id) || !text(item.clientId, 80) || !text(item.name, 120) || !adminUuid(item.ownerPersonId) ||
-      !['requested', 'active', 'suspended'].includes(String(item.status)) || !['unreviewed', 'first_party', 'external'].includes(String(item.trustClass)) ||
+      !['requested', 'active', 'suspended', 'cancelled'].includes(String(item.status)) || !['unreviewed', 'first_party', 'external'].includes(String(item.trustClass)) ||
       !['web', 'wordpress'].includes(String(item.platform)) || !nullableDate(item.originVerifiedAt) ||
       !(item.reviewDecision === null || item.reviewDecision === 'approved' || item.reviewDecision === 'rejected')) return null;
   return { id: item.id, clientId: item.clientId, name: item.name, ownerPersonId: item.ownerPersonId,
@@ -65,9 +72,11 @@ export function parseAdminApplication(value: unknown): AdminApplicationDetail | 
   if (source.review !== null) {
     const item = source.review;
     if (!record(item) || !['approved', 'rejected'].includes(String(item.decision)) || !text(item.reference, 120) ||
-        !adminUuid(item.reviewerPersonId) || !date(item.reviewedAt) || !adminHash(item.configurationHash)) return null;
+        !adminUuid(item.reviewerPersonId) || !date(item.reviewedAt) || !adminHash(item.configurationHash) ||
+        (item.authorizationCurrent !== undefined && typeof item.authorizationCurrent !== 'boolean')) return null;
     review = { decision: item.decision as ApplicationReview['decision'], reference: item.reference,
-      reviewerPersonId: item.reviewerPersonId, reviewedAt: item.reviewedAt, configurationHash: item.configurationHash };
+      reviewerPersonId: item.reviewerPersonId, reviewedAt: item.reviewedAt, configurationHash: item.configurationHash,
+      ...(item.authorizationCurrent === undefined ? {} : { authorizationCurrent: item.authorizationCurrent }) };
   }
   const { reviewDecision: _unused, ...detail } = base;
   return { ...detail, redirectUri: source.redirectUri, logoutUri: source.logoutUri, backchannelLogoutUri: source.backchannelLogoutUri,
@@ -104,11 +113,13 @@ export const adminNotices: Record<string, string> = {
   independent_reviewer_required: 'The application owner cannot review their own request. Ask another authorized reviewer.',
   origin_proof_required: 'The application owner must verify the callback domain before approval.',
   review_already_recorded: 'A decision has already been recorded for this configuration. Review the recorded decision.',
+  review_authority_changed: 'The review authority changed. Renew the domain proof and obtain a new independent review.',
   invalid_application_review: 'Check the review reference and submit again.',
   unavailable: 'The review could not be confirmed. Check its current status before retrying.',
 };
 
 export function applicationState(app: Pick<AdminApplication, 'status' | 'reviewDecision'>) {
+  if (app.status === 'cancelled') return 'Cancelled';
   if (app.status === 'active') return 'Active';
   if (app.status === 'suspended') return 'Suspended';
   return app.reviewDecision === 'approved' ? 'Approved · awaiting private activation' : app.reviewDecision === 'rejected' ? 'Review rejected' : 'Awaiting review';

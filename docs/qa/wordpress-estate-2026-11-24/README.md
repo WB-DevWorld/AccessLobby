@@ -1,6 +1,6 @@
 # WordPress estate qualification — 2026-11-24
 
-Status: **PARTIALLY QUALIFIED**, updated from published operator evidence `58c323a7bf2bc1223ec0af3f39ef5316b5db3bab` and lane boundary `1e747287200d5846f8d65e4ad293cd23e179ef7f`. All three controlled customers now have explicit dual-proof links. New FLAIROC-to-training quiet SSO, site-only isolation and FLAIROC-initiated shared logout with a still-valid independent control are accepted below. Verified Join/JIT remains blocked on protected Forward Email access and genuine delivery/verification/fresh claims. JIT and enforced mode stay off.
+Status: **PARTIALLY QUALIFIED**. Published operator evidence through `a83634f3e7c228014449c0269c9a01d4ddcc1d79` now proves genuine Forward Email delivery/verification and training Join provisioning subscriber47 once with reuse on the next login. Training users are40; JIT is restored off. Existing customer45/order50402/guest policy and the earlier accepted three-site dual-proof customer links remain preserved. The FLAIROC-origin shared logout retained a still-valid independent control. All sites remain alpha.9, hybrid, JIT off and enforced off; runtime source remains d875712. Email-collision refusal, truly new AccessLobby registration from WordPress and privileged/enforced recovery acceptance remain open. This integrator reviews committed operator evidence without repeating private host or browser actions.
 
 
 ## Latest FLAIROC link and valid-control follow-up
@@ -61,6 +61,22 @@ The first shared-logout attempt failed with Keycloak UnknownHostException for tr
 Cloudflare Events remain unavailable without an appropriate token. The Service, rule and actual source IP for Work probes a5fac7a44f9a3a0f-ORD (staging) and a5fac7bf784b23d3-ORD (FLAIROC) are unknown. The actual Edge GET /wp-login.php returned403/cf-mitigated=challenge with staging Ray a6011677ed90f30c-ACC and FLAIROC Ray a6011694bd059330-ACC. No IP exception or Bot Fight Mode change occurred. Driver Booster's elevated foreground window blocks Cursor's desktop control; the owner must minimize/close it, solve the challenge in the existing Windows qualification Edge profile, then begin a fresh local login/Connect flow. No clearance cookie is exported and no source IP is inferred from a Ray ID.
 
 Earlier installation, inventory and recovery observations follow unchanged.
+
+
+## Forward Email and verified Join continuation — 2026-11-25 UTC
+
+Source: [operator commit a83634f](https://github.com/WB-DevWorld/AccessLobby/commit/a83634f3e7c228014449c0269c9a01d4ddcc1d79) and [issue59 result](https://github.com/WB-DevWorld/AccessLobby/issues/59#issuecomment-7173304271). This is reviewed operator evidence, not a private execution by the integrator. Earlier test-time counts below retain their dates.
+
+| Check | Recorded result |
+|---|---|
+| SMTP connection | Port465 timeout;587 reachable; existing authorized alias, authentication/STARTTLS on, implicit SSL off, certificate verification on |
+| Actual delivery and verification | Failed465 send kept separate; successful587 message delivered at19:52UTC; real link completion; verified account and cleared action, no API override |
+| Realm policy | Verification remains non-mandatory realm-wide; token lifespan300seconds; DNS and image pins unchanged |
+| Recoverability | Pre-test database export112966992bytes; no new isolated restore claimed |
+| Provisioning | Fresh existing-identity Join created subscriber47 at audit119/1795637184, one validated_jit mapping,39→40users |
+| Reuse | Site-only logout122 then fresh callback125/1795637308 reused47;40users remained |
+| Restoration | JIT off126/1795637348; customer45/order50402/customer role/dual_proof/guest checkout unchanged |
+| Remaining | Email-collision refusal and truly new AccessLobby registration from WordPress NOT RUN; no privileged/enforced or production acceptance |
 
 The earlier “API promotion blocked” note is historical. [PR62](https://github.com/WB-DevWorld/AccessLobby/pull/62) merged as `d875712ecb41e06d8905046e0f4bc93bb8e9e7a5`. Public `/health/ready` reports that revision. Running images, unchanged IAM and gateway pins:
 
@@ -172,10 +188,10 @@ The latest source-reviewed operator record is [the FLAIROC and valid-control fol
 | Site-only logout isolation | **QUALIFIED** in the recorded CETECH flows and FLAIROC logout 9 (`1795634496`), which left training signed in. |
 | Targeted shared logout and signed backchannel | **QUALIFIED** for the recorded CETECH pair and FLAIROC-to-training flow. Training accepted signed delivery 116 at `1795634843` before another training page opened and removed the targeted session. |
 | Independent-browser isolation | **QUALIFIED** for the earlier accepted AccessLobby-initiated flow and this FLAIROC-initiated flow. The new control had 205 seconds remaining and showed order 50402 after logout. The expired control in the earlier staging-initiated test remains insufficient for that exact direction. |
-| Genuine verified Join and safe JIT | **BLOCKED** on protected Forward Email access, SMTP entitlement/configuration, actual delivery, genuine verification and fresh claims. JIT remains off; successful creation, reuse and collision cases are not inferred. |
+| Genuine verified Join and safe JIT | **PARTIALLY QUALIFIED** through a83634f: real delivery/verification, training subscriber47 created once and reused, users40, JIT off again. Email-collision refusal and truly new AccessLobby registration from WordPress remain NOT RUN. |
 | Enforced mode and emergency recovery | **BLOCKED** until a suitable administrator recovery route is rehearsed. Enforced mode stays off. |
 | Production and external-publisher activation | **NOT ACCEPTED** by these controlled first-party estate results. Multisite remains unsupported. |
 
 ## Not claimed
 
-Three first-party clients are active, with alpha.9/hybrid/JIT off. CETECH training, staging and FLAIROC each have a separately linked local customer with preserved roles/orders. The new FLAIROC cross-domain scope is accepted above; a simultaneous three-site matrix and the earlier expired staging-initiated control remain outside that acceptance. Real-site verified Join/JIT, privileged linking, trusted emergency recovery/enforced mode and estate subdirectory coverage remain open. Overall inventory still lacks completed-job container/history evidence; its network verdict is separate. External activation and multisite remain unsupported. Production, p06-physical and other FLAIROC installs were not changed. Issue59 stays open.
+Three first-party clients are active, with alpha.9/hybrid/JIT off. CETECH training, staging and FLAIROC each have a separately linked local customer with preserved roles/orders. The new FLAIROC cross-domain scope is accepted above; a simultaneous three-site matrix and the earlier expired staging-initiated control remain outside that acceptance. Training verified Join created/reused subscriber47; users40 and JIT restored off. Email-collision refusal, truly new AccessLobby registration from WordPress, privileged linking, trusted emergency recovery/enforced mode and estate subdirectory coverage remain open. Overall inventory still lacks completed-job container/history evidence; its network verdict is separate. External activation and multisite remain unsupported. Production, p06-physical and other FLAIROC installs were not changed. Issue59 stays open.

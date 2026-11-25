@@ -4,6 +4,7 @@ import { RetryButton } from '@/components/retry-button';
 import { AppShell } from '@/components/app-shell';
 import { AccountAccessState, AvailabilityPanel, SurfaceCard } from '@/components/ui';
 import { getCurrentIdentity, identityApi } from '@/lib/current-identity';
+import { lifecycleUuid } from '@/lib/application-lifecycle';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Developer tools', robots: { index: false, follow: false } };
@@ -19,7 +20,7 @@ async function list(path: string): Promise<App[] | null> {
     if (!response.ok) return null;
     const body = await response.json() as { contract?: string; applications?: App[] };
     return body.contract === 'accesslobby.applications.v0.1' && Array.isArray(body.applications)
-      ? body.applications.filter(app => typeof app.id === 'string' && typeof app.clientId === 'string' && typeof app.name === 'string') : null;
+      ? body.applications.filter(app => lifecycleUuid(app.id) && typeof app.clientId === 'string' && typeof app.name === 'string') : null;
   } catch { return null; }
 }
 
@@ -91,7 +92,8 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
           <div className="context-grid">{mine.map(app => <SurfaceCard title={app.name} key={app.id}>
             <p>Client ID: <code>{app.clientId}</code></p>
             <p>Platform: {app.platform === 'wordpress' ? 'WordPress' : 'Web application'}.</p>
-            <p>Status: <strong>{app.status === 'active' ? 'Active' : app.status === 'suspended' ? 'Suspended' : 'Requested'}</strong>. Entry: {app.admission === 'grant_required' ? 'Grant required' : 'Authenticated open'}.</p>
+            <p>Status: <strong>{app.status === 'active' ? 'Active' : app.status === 'suspended' ? 'Suspended' : app.status === 'cancelled' ? 'Cancelled' : 'Requested'}</strong>. Entry: {app.admission === 'grant_required' ? 'Grant required' : 'Authenticated open'}.</p>
+            <p><Link className="text-link" href={`/apps/manage/${app.id}`}>{app.status === 'requested' || app.status === 'cancelled' ? 'Manage request' : 'View request'}</Link></p>
             <p>Backchannel logout: {app.backchannelLogoutUri ? <code>{app.backchannelLogoutUri}</code> : 'Not registered'}</p>
             {app.status === 'requested' && app.originVerificationHost && app.originVerificationValue && <>
               <p>Publish this DNS TXT record to prove control of the callback hostname:</p>

@@ -5,13 +5,16 @@ import { Pool } from 'pg';
 import { createHash, randomUUID } from 'node:crypto';
 import { config } from './config.js';
 import { discovery, tokenVerifier, type AuthenticatedSubject, type VerifyToken } from './auth.js';
-import { PostgresIdentityStore, type IdentityStore } from './identity.js';
+import { PostgresIdentityStore, isCurrentPersonAuthentication, type IdentityStore } from './identity.js';
 import { logoutVerifier, SessionRevocations } from './logout.js';
 import { OrganizationError, OrganizationStore, validId } from './organizations.js';
 import { ApplicationError, ApplicationStore, ClientRegistryUnavailable } from './applications.js';
 import { PeerSessions, PeerSessionError } from './peer-sessions.js';
 import { OperatorError, OperatorStore } from './operators.js';
 import { ApplicationReviewStore } from './application-reviews.js';
+import { PersonControlStore } from './person-controls.js';
+import { ApplicationLifecycleStore } from './application-lifecycle.js';
+import { ActivationJobStore } from './activation-jobs.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
@@ -28,6 +31,9 @@ const peerSessions = new PeerSessions(pool, settings.issuer, client => applicati
 const organizations = new OrganizationStore(pool);
 const operators = new OperatorStore(pool);
 const applicationReviews = new ApplicationReviewStore(pool, operators);
+const personControls = new PersonControlStore(pool, operators);
+const applicationLifecycle = new ApplicationLifecycleStore(pool);
+const activationJobs = new ActivationJobStore(pool, operators);
 
 @Controller()
 class ApiController {
@@ -77,6 +83,9 @@ class ApiController {
     }
     if (!actor.sid) return res.status(401).json({ error: 'missing_session', requestId });
     try {
+      const person = await this.identities.resolve(actor);
+      if (person.status !== 'active') return res.status(403).json({ error: 'identity_suspended', requestId });
+      if (!isCurrentPersonAuthentication(person, actor)) return res.status(401).json({ error: 'session_ended', requestId });
       const event = 'self-end:' + createHash('sha256').update(JSON.stringify([actor.issuer, actor.client, actor.sid])).digest('hex');
       await revocations.revoke(actor.issuer, actor.sid, event);
       return res.status(200).json({ contract: 'accesslobby.browser-session.v0.1', ended: true, requestId });
@@ -123,6 +132,7 @@ class ApiController {
       }
       const person = await this.identities.resolve(actor);
       if (person.status !== 'active') return res.status(403).json({ error: 'identity_suspended', requestId });
+      if (!isCurrentPersonAuthentication(person, actor)) return res.status(401).json({ error: 'session_ended', requestId });
       const result = await work(person.id, requestId, actor);
       console.info(JSON.stringify({ event: 'identity.resolved', requestId, client: actor.client }));
       return res.json(result);
@@ -154,6 +164,17 @@ class ApiController {
     return this.withPerson(req, res, id => operators.people(id, q, after), true);
   }
 
+  @Get('v1/admin/people/:personId')
+  operatorPerson(@Req() req: any, @Res() res: any, @Param('personId') personId: string) {
+    return this.withPerson(req, res, id => personControls.detail(id, personId), true);
+  }
+
+  @Post('v1/admin/people/:personId/status')
+  @HttpCode(200)
+  operatorPersonStatus(@Req() req: any, @Res() res: any, @Param('personId') personId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => personControls.change(id, personId, body), true);
+  }
+
   @Get('v1/admin/organizations')
   operatorOrganizations(@Req() req: any, @Res() res: any, @Query('q') q?: string, @Query('after') after?: string) {
     return this.withPerson(req, res, id => operators.organizations(id, q, after), true);
@@ -178,6 +199,28 @@ class ApiController {
   @HttpCode(200)
   operatorReview(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
     return this.withPerson(req, res, id => applicationReviews.record(id, appId, body), true);
+  }
+
+  @Get('v1/admin/activation-jobs')
+  operatorActivationJobs(@Req() req: any, @Res() res: any, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => activationJobs.list(id, after), true);
+  }
+
+  @Get('v1/admin/activation-jobs/:jobId')
+  operatorActivationJob(@Req() req: any, @Res() res: any, @Param('jobId') jobId: string) {
+    return this.withPerson(req, res, id => activationJobs.detail(id, jobId), true);
+  }
+
+  @Post('v1/admin/applications/:applicationId/activation-jobs')
+  @HttpCode(202)
+  operatorQueueActivation(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => activationJobs.enqueue(id, appId, body), true);
+  }
+
+  @Post('v1/admin/activation-jobs/:jobId/retry')
+  @HttpCode(202)
+  operatorRetryActivation(@Req() req: any, @Res() res: any, @Param('jobId') jobId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => activationJobs.retry(id, jobId, body), true);
   }
 
   @Get('v1/my-organizations')
@@ -218,6 +261,28 @@ class ApiController {
     return this.withPerson(req, res, async (id, requestId, actor) => ({
       contract: 'accesslobby.app-entry.v0.1', ...await applications.entry(id, actor.client), requestId,
     }));
+  }
+
+  @Get('v1/applications/:applicationId')
+  ownerApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    return this.withPerson(req, res, id => applicationLifecycle.detail(id, appId), true);
+  }
+
+  @Patch('v1/applications/:applicationId')
+  ownerEditApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => applicationLifecycle.edit(id, appId, body), true);
+  }
+
+  @Post('v1/applications/:applicationId/cancel')
+  @HttpCode(200)
+  ownerCancelApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => applicationLifecycle.cancel(id, appId, body), true);
+  }
+
+  @Post('v1/applications/:applicationId/resubmit')
+  @HttpCode(200)
+  ownerResubmitApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => applicationLifecycle.resubmit(id, appId, body), true);
   }
 
   @Post('v1/applications/:applicationId/grants')

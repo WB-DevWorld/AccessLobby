@@ -4,8 +4,9 @@ import { exactApplicationUrl } from './applications.js';
 import { validId } from './organizations.js';
 import { originProofPresent, proofHost, verifiableOrigin } from './origin-proof.js';
 import { requireApprovedApplicationReview, type ReviewApplicationRow } from './application-reviews.js';
+import { ActivationJobError, completeActivationJob, lockActivationLease, type ActivationLease } from './activation-jobs.js';
 
-interface AppRow extends ReviewApplicationRow { owner_active: boolean }
+interface AppRow extends ReviewApplicationRow { owner_active: boolean; activation_job_id?: string | null }
 interface ClientRep { clientId: string; name?: string; enabled: boolean; protocol: string; publicClient: boolean;
   standardFlowEnabled: boolean; implicitFlowEnabled: boolean; directAccessGrantsEnabled: boolean;
   serviceAccountsEnabled: boolean; redirectUris: string[]; webOrigins: string[];
@@ -57,11 +58,11 @@ export function internalBase(value: string): string {
 }
 
 export async function reconcileClient(base: string, realm: string, token: string, wanted: ClientRep,
-  fetcher: typeof fetch = fetch) {
+  fetcher: typeof fetch = fetch, allowCreate = true) {
   const endpoint = `${base}/admin/realms/${encodeURIComponent(realm)}/clients`;
   const request = async (url: string, init: RequestInit = {}) => {
     const response = await fetcher(url, { ...init, headers: { authorization: `Bearer ${token}`,
-      ...(init.body ? { 'content-type': 'application/json' } : {}) }, signal: AbortSignal.timeout(8000) });
+      ...(init.body ? { 'content-type': 'application/json' } : {}) }, redirect: 'error', signal: AbortSignal.timeout(8000) });
     return response;
   };
   const find = async () => {
@@ -72,6 +73,7 @@ export async function reconcileClient(base: string, realm: string, token: string
   };
   let client = await find();
   if (!client) {
+    if (!allowCreate) throw new Error('Keycloak client missing during activation recovery');
     const created = await request(endpoint, { method: 'POST', body: JSON.stringify(wanted) });
     if (!created.ok && created.status !== 409) throw new Error(`Keycloak client creation failed (${created.status})`);
     client = await find();
@@ -85,9 +87,11 @@ export async function reconcileClient(base: string, realm: string, token: string
   }
 }
 
-interface ProvisionOptions {
+export interface ProvisionOptions {
   issuer: string; token?: string; base?: string; fetcher?: typeof fetch;
   lookupTxt?: (host: string) => Promise<string[][]>;
+  tokenProvider?: () => Promise<string>;
+  activationLease?: ActivationLease;
 }
 
 export async function provisionApp(pool: Pool, appId: string, mode: '--plan' | '--activate-first-party',
@@ -103,9 +107,12 @@ export async function provisionApp(pool: Pool, appId: string, mode: '--plan' | '
   try {
     await db.query('BEGIN');
     const result = await db.query<AppRow>(`SELECT a.*, (p.status = 'active') AS owner_active
-      FROM applications a JOIN persons p ON p.id = a.owner_person_id WHERE a.id = $1 FOR UPDATE OF a, p`, [appId]);
+      FROM applications a JOIN persons p ON p.id = a.owner_person_id WHERE a.id = $1 FOR UPDATE OF a`, [appId]);
     const app = result.rows[0];
-    if (!app || app.status !== 'requested' || app.trust_class !== 'unreviewed' || !app.owner_active) {
+    const recovering = !!(options.activationLease && app?.status === 'active' && app.trust_class === 'first_party' &&
+      app.activation_job_id === options.activationLease.jobId);
+    if (!app || !app.owner_active || (!recovering && (app.status !== 'requested' || app.trust_class !== 'unreviewed'))) {
+      if (options.activationLease) throw new ActivationJobError(409, 'activation_application_unavailable');
       throw new Error('Only requested applications with active owners may be activated');
     }
     const wanted = representation(app);
@@ -116,24 +123,31 @@ export async function provisionApp(pool: Pool, appId: string, mode: '--plan' | '
     if (!reviewReference || !/^[A-Za-z0-9._:/-]{4,120}$/.test(reviewReference)) {
       throw new Error('A recorded first-party review reference is required');
     }
+    const job = options.activationLease ? await lockActivationLease(db, app, reviewReference, options.activationLease) : null;
+    if (!options.activationLease) await requireApprovedApplicationReview(db, app, reviewReference);
     const proofHostname = proofHost(app.redirect_uri);
     if (!app.origin_verified_at || app.origin_verified_host !== proofHostname ||
         !verifiableOrigin(app.redirect_uri) ||
         !(await originProofPresent(proofHostname, app.origin_challenge, options.lookupTxt))) {
       throw new Error('Current DNS origin proof required before activation');
     }
-    await requireApprovedApplicationReview(db, app, reviewReference);
-    const token = options.token;
-    if (!token) throw new Error('IAM_PROVISIONING_TOKEN required on the private provisioning runner');
     const base = internalBase(options.base ?? 'http://iam:8080');
-    await reconcileClient(base, 'accesslobby-first-party', token, wanted, options.fetcher);
-    await db.query(`UPDATE applications SET status = 'active', trust_class = 'first_party', activated_at = now(), review_reference = $2
-      WHERE id = $1`, [appId, reviewReference]);
-    await db.query(`INSERT INTO application_events (application_id, action) VALUES ($1, 'application.activated')`, [appId]);
-    await db.query(`INSERT INTO operator_audit_events(action,target_type,target_id,reference)
-      VALUES('application.activated_private','application',$1,$2)`, [appId, reviewReference]);
+    const token = options.tokenProvider ? await options.tokenProvider() : options.token;
+    if (!token) throw new Error('IAM_PROVISIONING_TOKEN required on the private provisioning runner');
+    // An already-active bound job is recovery-only. It cannot create, repair or
+    // re-enable a missing/drifted IAM client merely from a registry status flag.
+    await reconcileClient(base, 'accesslobby-first-party', token, wanted, options.fetcher, !recovering);
+    if (options.activationLease) await lockActivationLease(db, app, reviewReference, options.activationLease);
+    if (!recovering) {
+      await db.query(`UPDATE applications SET status = 'active', trust_class = 'first_party', activated_at = now(), review_reference = $2,
+        activation_job_id=$3 WHERE id = $1`, [appId, reviewReference, options.activationLease?.jobId ?? null]);
+      await db.query(`INSERT INTO application_events (application_id, action) VALUES ($1, 'application.activated')`, [appId]);
+      await db.query(`INSERT INTO operator_audit_events(action,target_type,target_id,reference)
+        VALUES('application.activated_private','application',$1,$2)`, [appId, reviewReference]);
+    }
+    if (job && options.activationLease) await completeActivationJob(db, job, options.activationLease);
     await db.query('COMMIT');
-    return { applicationId: appId, status: 'active' as const, clientId: app.client_id };
+    return { applicationId: appId, status: 'active' as const, clientId: app.client_id, ...(recovering ? { recovered: true } : {}) };
   } catch (error) {
     await db.query('ROLLBACK');
     throw error;

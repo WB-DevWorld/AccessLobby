@@ -1,6 +1,6 @@
 # AccessLobby operator console
 
-Candidate runbook, 2026-11-25. Use this procedure with a qualified artifact that includes [ADR 015](../adr/015-operator-console.md). The instructions do not establish that this console has deployed or that any real person has been granted an operator role.
+Candidate runbook, 2026-11-25. Use this procedure with a qualified artifact that includes [ADR 015](../adr/015-operator-console.md). The round-two candidate additionally implements [ADR016](../adr/016-operator-controls-and-activation-jobs.md); use its [runbook](operator-round-2.md) for migrations011–013, status changes and queued private activation. The instructions do not establish that this console has deployed or that any real person has been granted an operator role.
 
 ## Where to manage each responsibility
 
@@ -49,7 +49,7 @@ These commands were prepared for authorized operators. No actual live grants, re
 | `/admin/applications/APPLICATION_UUID` | Inspect exact requested configuration, proof and review; authorized independent reviewer records a decision |
 | `/admin/audit` | Page through operator role changes, application reviews and updated private-provisioner activations |
 
-List pages return at most 25 records at a time. Use their next-page controls instead of treating one page as the full inventory. The directory is read-only in this round; there are no person suspend, merge, delete, credential-reset or organization-owner takeover controls.
+List pages return at most 25 records at a time. Use their next-page controls instead of treating one page as the full inventory. The round-one directory is read-only. Round two adds eligible person status controls and private activation progress; merge, delete, credential-reset and organization-owner takeover remain outside these increments.
 
 People data currently contains IDs and status rather than a complete profile. The operator audit is limited to this workflow's events. Existing organization, application, IAM and WordPress event sources are not automatically combined into it.
 
@@ -66,7 +66,7 @@ People data currently contains IDs and status rather than a complete profile. Th
    node dist/provision-app.js APPLICATION_UUID --activate-first-party REVIEW_REFERENCE
    ```
 
-6. On the private runner only, use the existing short-lived, client-scoped `IAM_PROVISIONING_TOKEN` and protected database/internal-IAM configuration. Never add this token to the public service environment or browser. Activation requires a current matching approval and reviewer authority, fresh live DNS proof, and exact IAM client readback. An error leaves the registry inactive.
+6. On the private runner only, use the existing short-lived realm client-management `IAM_PROVISIONING_TOKEN` (runner restricted to its selected app) and protected database/internal-IAM configuration. Never add this token to the public service environment or browser. Activation requires a current matching approval and reviewer authority, fresh live DNS proof, and exact IAM client readback. An error leaves the registry inactive.
 7. Refresh the console to observe registry status, then qualify the real consumer's login, entry and logout separately. An active registry row alone is not consumer acceptance.
 
 If a request changes while its detail page is open, the server refuses a stale configuration hash. Reload and review the current revision. An identical repeated decision is idempotent; changing a decision for the same revision is refused. After a rejected or outdated review, the owner can re-verify its valid DNS proof to establish a current revision for a new independent decision. This preserves the earlier record. Removing the reviewer's role or suspending that person prevents activation on the old approval.
