@@ -1,8 +1,25 @@
 # WordPress estate qualification — 2026-11-24
 
-Status: **PARTIALLY QUALIFIED**, updated 2026-11-25. AccessLobby SSO 0.1.0-alpha.9 is hybrid with JIT off on all three sites. CETECH training now also qualifies site-only logout/quiet re-entry and signed shared logout in both directions under a temporary IAM routing attachment. The durable network change and recreation acceptance remain pending. Staging/FLAIROC linking, quiet SSO between two WordPress sites and Join/JIT remain open. Enforced mode stays off.
+Status: **PARTIALLY QUALIFIED**, updated after the 2026-11-25 durable IAM recreation. Alpha.9 stays hybrid/JIT off on all three sites. Training qualifies local data preservation, explicit customer linking, persistent login, site-only logout/quiet re-entry and signed shared logout in both directions after the durable route was deployed and IAM recreated. Staging/FLAIROC linking, quiet SSO between two WordPress sites and Join/JIT remain open. Enforced mode stays off.
 
-## Training logout update — operator evidence, 2026-11-25
+## Durable IAM recreation — current operator acceptance, 2026-11-25
+
+The operator reports committed local evidence061857b and5e778d9 on feat/wordpress-estate-qualification, with main423b9ac8 fetched without resetting that branch or the other working tree. Canonical GitHub could not resolve those two commits when checked here. They remain reported local references pending push/full-SHA inspection. This Work environment has not accessed the private hosts or qualification browser. [Categorical deployment evidence and precise provenance](../iam-egress-2026-11-25/operator-post-recreation.json).
+
+The operator applied Compose423b9ac8a2db5fba332252b08737794692236a24 with the existing image pins/GIT_SHA d875712 and database volumes preserved. Only IAM was recreated. The same gateway passed nginx -t and reloaded. Backend/iam-edge remain internal; iam-egress is a non-internal bridge with one peer, used by IAM's single IPv4 default route. No host port is published. The working temporary default attachment remained on the old container until replacement was running; it was not disconnected first.
+
+| Post-recreation flow | Audit / origin evidence | Result |
+|---|---|---|
+| AccessLobby shared logout into active WordPress | backchannel_accepted75, Unix1795622222, origin POST200 at15:57:02UTC before the next WordPress page load | QUALIFIED on durable route |
+| Site-only logout and quiet re-entry | logout audit79; re-entry80–82 | QUALIFIED |
+| WordPress shared logout | shared_logout_recorded83, request84, local85, separate backchannel_accepted86; origin POST200 at15:59:38UTC | QUALIFIED on durable route |
+| Independent browser and local data | Edge qualification profile stayed signed in. No session_reconciled_ended followed. Customer45/active dual_proof link/customer role/order50402/users39 preserved. | QUALIFIED browser isolation/data preservation; separate physical device untested |
+
+Public ready reports d875712; web/discovery/JWKS200 and IAM root/admin/master/metrics/health404 by operator report. Runtime inventory's two findings are absent iam-config/migrate containers, reported previously completed. Their absence is not proof of historical completion. Network policy matches; overall inventory remains incomplete. The inspector's additive networkPolicyPassed field preserves its strict overall pass/exit semantics. Do not rerun completed bootstrap jobs just to repopulate the container list.
+
+Staging wp-login in the same Edge profile still shows a Cloudflare challenge, latest Ray a601de7339f8d057-ACC. A person must complete it in the existing %LOCALAPPDATA%\al-qual-edge profile, then start a fresh local WordPress login/Connect flow. No clearance export, source-IP guess, IP exception or Bot Fight Mode change. The manual check is separate from the now-qualified IAM route and training logout. Join/JIT, privileged linking, other-site linking and two-WordPress SSO remain open. Earlier observations below retain their original test conditions.
+
+## Earlier training logout — temporary-route checkpoint, 2026-11-25
 
 The operator supplied these observations in the work conversation; its latest estate working-tree changes were not yet committed. The last inspected qualification branch head is ed84fa9266d83486f227af3c2c4adb6e89a044b1. Do not attribute the new tests to that commit or claim they were re-executed by this Work environment. The [durable networking acceptance record](../iam-egress-2026-11-25/README.md) separates reproducible CI from this live evidence.
 
@@ -125,9 +142,9 @@ Enforced mode stays off. Recovery accepts a session only when `ACCESSLOBBY_EMERG
 | Unlinked-identity refusal | **QUALIFIED** on CETECH training: an unlinked AccessLobby identity received `account_link_required`. Users remained 39 and links remained 0. |
 | Explicit dual-proof linking | **QUALIFIED** on CETECH training only. Qualification person `e37e055a-e095-41db-b6f6-9a7c87d356bb` linked to WordPress user 45, role `customer`, provenance `dual_proof`. One link. Order 50402 stays on user 45. Users stayed 39. The alpha.9 upgrade did not recreate the account or the link. Staging and FLAIROC remain at 0 links. The privileged account is **UNTESTED**. |
 | Repeat AccessLobby login and quiet re-entry | **QUALIFIED** on CETECH training alpha.9, including persistence across the peer recheck and later site-only logout/quiet re-entry (audits42–45). Users39, customer45/link/role/order50402 preserved. Quiet SSO between WordPress sites and Join/JIT remain **UNTESTED**; staging/FLAIROC are challenged. |
-| Both shared-logout directions and independent browser isolation | **QUALIFIED** on CETECH training under the temporary IAM attachment described above. Signed origin POST200/audits56 and66; no receipt-reconciliation substitute. Durable recreation remains **UNTESTED** on staging. Another physical device was not tested. |
+| Both shared-logout directions and independent browser isolation | **QUALIFIED** on CETECH training after durable IAM recreation with Compose423b9ac8. Signed origin POST200/audits75 and86, site-only79/quiet re-entry80–82; no receipt-reconciliation substitute. Customer45/link/customer role/order50402/users39 preserved. Another physical device was not tested. |
 | Enforced mode and emergency recovery | **BLOCKED** until a single-administrator route is rehearsed |
 
 ## Not claimed
 
-Three first-party clients are active, with alpha.9/hybrid/JIT off. Training has a dual-proof customer link, persistent SSO session, site-only logout/quiet re-entry and both shared-logout directions under a temporary route. Durable routing after recreation, staging/FLAIROC linking and AccessLobby logout, privileged linking, two-WordPress quiet SSO and Join/JIT remain **UNTESTED**. Enforced mode/recovery stay off. Estate subdirectory coverage is **UNTESTED**. External activation and multisite remain unsupported. Production, p06-physical and other FLAIROC installs were not changed. Issue59 stays open.
+Three first-party clients are active, with alpha.9/hybrid/JIT off. Training has a dual-proof customer link, persistent SSO session, site-only logout/quiet re-entry and both shared-logout directions after durable IAM recreation. Staging/FLAIROC linking and AccessLobby logout, privileged linking, two-WordPress quiet SSO and Join/JIT remain **UNTESTED**. Overall deployment inventory still lacks the completed-job containers/history. Enforced mode/recovery stay off. Estate subdirectory coverage is **UNTESTED**. External activation and multisite remain unsupported. Production, p06-physical and other FLAIROC installs were not changed. Issue59 stays open.

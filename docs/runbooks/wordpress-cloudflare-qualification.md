@@ -4,6 +4,8 @@ Relates to #59. Operational guidance for reviewed first-party test sites. Connec
 
 ## Current estate gate
 
+Latest operator update: durable Compose423b9ac8 is applied, only IAM recreated, gateway reloaded, and genuine signed training logout/quiet re-entry repeated successfully. The earlier temporary-route condition is superseded by the [post-recreation acceptance](../qa/iam-egress-2026-11-25/README.md). The same Windows qualification Edge profile still encounters staging wp-login challenge Ray a601de7339f8d057-ACC. Complete that check manually in the existing profile, then restart local login/Connect; do not repeat the successful IAM rollout or broaden Cloudflare policy to advance a browser test. Other-site linking, two-WordPress SSO, Join/JIT and recovery remain open.
+
 Update 2026-11-25: the operator qualified CETECH training site-only logout/quiet re-entry and both shared-logout directions with signed delivery before a WordPress page load, while an independent browser stayed signed in. Delivery needed a temporary IAM default-network attachment; durable routing and requalification after recreation use the [IAM network runbook](iam-outbound-network-staging.md). See the [current estate record](../qa/wordpress-estate-2026-11-24/README.md). The c6c221b observations below remain the earlier checkpoint. Staging/FLAIROC linking and two-WordPress SSO remain open.
 
 Operator c6c221b reports alpha.9 installed on all three sites, hybrid/JIT off, using the exact qualified ZIP. CETECH training keeps customer45, one dual-proof mapping, order50402 and39 users. Its SSO session survives storefront navigation and a successful peer recheck. Staging keeps customer3212/order54346,2921 users and0 links; FLAIROC keeps customer122/order4043,49 users and0 links. Their browser flows encounter Cloudflare human verification.
@@ -73,6 +75,8 @@ At 19:18 UTC on 2026-11-24, the ChatGPT Work executor probed all three approved 
 At 19:21 UTC the same executor's credential-free GETs to all three wp-login.php paths returned HTTP 403 and cf-mitigated=challenge. [Header-only report and safe Ray IDs](../qa/wordpress-edge-2026-11-24/login-path-header-probes.json). Compare actual Service/rule and request context in Events before editing policy. The working training browser remains a separate observed context.
 
 ## Continue the available vertical slice
+
+Training logout in both directions and quiet same-site re-entry below have now passed again after durable IAM recreation. Retain that acceptance. The next controlled estate steps are a fresh dual-proof link on another independent installation and measured two-site quiet SSO after the browser gate is cleared. Separate physical-device acceptance and the remaining negative/outage/Join cases need their own observations; completed training checks need not be rerun merely because the second site is challenged.
 
 On training, test site-only logout of the AccessLobby-authenticated session, quiet same-site re-entry, local user/role/order retention and malformed backchannel rejection now. Where available, use the qualification person's AccessLobby web session or another reviewed peer for shared-browser logout while the other WordPress sites are blocked. Record the participating apps; this does not substitute for two independent WordPress installations.
 

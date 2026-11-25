@@ -61,6 +61,7 @@ class RuntimeInventoryTests(unittest.TestCase):
     def test_complete_digest_pinned_private_topology_passes_without_exporting_environment(self):
         report = self.assess(complete_inventory(self.manifest))
         self.assertTrue(report["passed"])
+        self.assertTrue(report["networkPolicyPassed"])
         self.assertEqual(len(report["services"]), 9)
         self.assertNotIn("never-export-this", json.dumps(report))
 
@@ -74,6 +75,7 @@ class RuntimeInventoryTests(unittest.TestCase):
         by_service["iam-db"]["ports"]["5432/tcp"] = [{"HostPort": "5432"}]
         report = self.assess(inventory)
         self.assertFalse(report["passed"])
+        self.assertFalse(report["networkPolicyPassed"])
         self.assertEqual({item["code"] for item in report["failures"]},
                          {"image_ref_mismatch", "job_not_completed", "private_network_mismatch",
                           "host_port_published"})
@@ -83,6 +85,7 @@ class RuntimeInventoryTests(unittest.TestCase):
         inventory["consumer"].clear()
         inventory["main"].append(inventory["main"][0])
         report = self.assess(inventory)
+        self.assertFalse(report["networkPolicyPassed"])
         self.assertEqual({item["code"] for item in report["failures"]},
                          {"missing_service", "duplicate_service"})
 
@@ -90,6 +93,7 @@ class RuntimeInventoryTests(unittest.TestCase):
         inventory = complete_inventory(self.manifest)
         inventory["main"][0]["health"] = None
         report = self.assess(inventory)
+        self.assertTrue(report["networkPolicyPassed"])
         self.assertEqual([item["code"] for item in report["failures"]],
                          ["database_not_healthy"])
 
@@ -130,6 +134,7 @@ class RuntimeInventoryTests(unittest.TestCase):
                 iam["networks"] = {name: {} for name in networks}
                 report = self.assess(inventory)
                 self.assertFalse(report["passed"])
+                self.assertFalse(report["networkPolicyPassed"])
                 self.assertIn("private_network_mismatch", {item["code"] for item in report["failures"]})
 
     def test_another_service_may_not_share_the_iam_egress_bridge(self):
@@ -139,6 +144,7 @@ class RuntimeInventoryTests(unittest.TestCase):
                 target = next(item for items in inventory.values() for item in items if item["service"] == service)
                 target["networks"][MAIN + "_iam-egress"] = {}
                 report = self.assess(inventory)
+                self.assertFalse(report["networkPolicyPassed"])
                 self.assertIn("iam_egress_not_exclusive", {item["code"] for item in report["failures"]})
 
     def test_actual_network_isolation_driver_and_external_peer_count_are_checked(self):
@@ -153,6 +159,7 @@ class RuntimeInventoryTests(unittest.TestCase):
                 networks = complete_network_inventory()
                 next(item for item in networks if item["name"] == MAIN + "_" + name)[field] = value
                 report = inspector.assess(self.manifest, self.projects, complete_inventory(self.manifest), networks)
+                self.assertFalse(report["networkPolicyPassed"])
                 self.assertIn(code, {item["code"] for item in report["failures"]})
 
     def test_missing_and_duplicate_network_inspection_fails(self):
@@ -160,6 +167,38 @@ class RuntimeInventoryTests(unittest.TestCase):
         for candidate in (networks[:2], networks + [networks[0]]):
             report = inspector.assess(self.manifest, self.projects, complete_inventory(self.manifest), candidate)
             self.assertFalse(report["passed"])
+            self.assertFalse(report["networkPolicyPassed"])
+
+    def test_absent_completed_job_containers_do_not_hide_network_verdict_or_pass_deployment(self):
+        inventory = complete_inventory(self.manifest)
+        inventory["main"] = [item for item in inventory["main"] if item["service"] not in inspector.JOBS]
+        report = self.assess(inventory)
+        self.assertTrue(report["networkPolicyPassed"])
+        self.assertFalse(report["passed"])
+        self.assertEqual({(item["code"], item["service"]) for item in report["failures"]},
+                         {("missing_service", "iam-config"), ("missing_service", "migrate")})
+        # Missing jobs must never obscure an actual port exposure on a running service.
+        next(item for item in inventory["main"] if item["service"] == "iam")["ports"]["8080/tcp"] = [{"HostPort": "8080"}]
+        self.assertFalse(self.assess(inventory)["networkPolicyPassed"])
+
+    def test_failed_or_missing_jobs_keep_cli_nonzero_even_when_network_policy_passes(self):
+        for state in ("absent", "failed"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as folder:
+                inventory = complete_inventory(self.manifest)
+                if state == "absent":
+                    inventory["main"] = [item for item in inventory["main"] if item["service"] not in inspector.JOBS]
+                else:
+                    next(item for item in inventory["main"] if item["service"] == "migrate")["exitCode"] = 1
+                output = Path(folder) / "runtime.json"
+                argv = ["inspect_staging_runtime.py", "--main-project", MAIN,
+                        "--consumer-project", CONSUMER, "--manifest", str(MANIFEST), "--output", str(output)]
+                with patch("sys.argv", argv), patch.object(inspector, "inventory",
+                                                          side_effect=[inventory["main"], inventory["consumer"]]), \
+                        patch.object(inspector, "network_inventory", return_value=complete_network_inventory()):
+                    self.assertEqual(inspector.main(), 1)
+                report = json.loads(output.read_text())
+                self.assertTrue(report["networkPolicyPassed"])
+                self.assertFalse(report["passed"])
 
     def test_network_inspection_never_requests_network_peer_details(self):
         networks = complete_network_inventory()
