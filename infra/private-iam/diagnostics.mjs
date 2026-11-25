@@ -92,6 +92,8 @@ export function commandFailureEvidence(error) {
       runtimeCreateFailed: /OCI runtime create failed|failed to create (?:task|shim)|unable to start container process/i.test(value),
       executableMissing: /executable file not found|exec format error/i.test(value),
       imageResolutionFailed: /pull access denied|failed to (?:pull|resolve).*image|No such image|manifest.*not found|invalid reference format/i.test(value),
+      loggingDriverInitializationFailed: /failed to initialize logging driver/i.test(value),
+      loggingCompressionRetentionInvalid: /compression cannot be enabled when max file count is 1/i.test(value),
     } };
 }
 

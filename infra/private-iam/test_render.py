@@ -64,6 +64,21 @@ class PackageTests(unittest.TestCase):
         self.assertIn("error_log stderr crit;", config)
         self.assertNotIn("/dev/stderr", config)
 
+    def test_docker_local_log_compression_has_valid_bounded_retention(self):
+        # Docker rejects local+compression when max-file=1 before NGINX starts.
+        # Both key-access modes must satisfy the actual driver's constraint.
+        for uid, gid in [(1001, 1002), (0, 0)]:
+            with self.subTest(uid=uid):
+                s = render.compose_document("sha256:" + "a" * 64, "al_iam-edge", Path("/protected/package"), "/cert", "/key", uid, gid, 9443)["services"]["iam-admin-private"]
+                logging = s["logging"]
+                self.assertEqual(logging["driver"], "local")
+                opts = logging["options"]
+                compression = opts.get("compress", "true") == "true"
+                retention = int(opts["max-file"])
+                self.assertFalse(compression and retention < 2)
+                self.assertEqual(opts["max-size"], "1m")
+                self.assertLessEqual(retention, 2)
+
     def test_actual_certificate_trust_hostname_key_match_and_permissions(self):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td)

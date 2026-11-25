@@ -154,3 +154,11 @@ test('disposable CLI diagnostic identifies TTY/runtime failures and strips priva
   for (const forbidden of [hostPath, 'iam.example.test', 'code=unsafe', privateValue, 'postgres://', 'user:pass', 'eyJhbGciOiJSUzI1NiJ9', 'a'.repeat(64), 'private123']) assert.equal(text.includes(forbidden), false);
   assert.ok(diagnostic.length <= 12 && diagnostic.every(line => line.length <= 240));
 });
+
+test('Docker local log-driver rejection is distinguished from NGINX configuration', () => {
+  const summary = commandFailureEvidence({ code: 1, stderr: 'Error response from daemon: failed to create task for container: failed to initialize logging driver: compression cannot be enabled when max file count is 1' });
+  assert.equal(summary.cli.loggingDriverInitializationFailed, true);
+  assert.equal(summary.cli.loggingCompressionRetentionInvalid, true);
+  assert.equal(summary.nginx.configurationTestFailed, false);
+  assert.equal(summary.nginx.configurationTestSuccessful, false);
+});

@@ -431,18 +431,6 @@ jobs:
         run: |
           docker stop accesslobby-ci-iam
           python3 infra/scripts/iam_network_smoke.py --iam-image accesslobby-iam:ci --output artifacts/iam-network/report.json
-      - name: Verify private IAM console package with trusted TLS and real admin login
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libnss3-tools
-          node infra/scripts/private-iam-console-live-smoke.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: accesslobby-private-iam-console
-          path: artifacts/private-iam-console/
-          if-no-files-found: warn
-          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -450,3 +438,33 @@ jobs:
           path: artifacts/iam-network/report.json
           if-no-files-found: warn
           retention-days: 14
+
+  private-iam-console:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install native fixture dependencies
+        run: |
+          npm install -g pnpm@11.19.0
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+          sudo apt-get install -y libnss3-tools
+      - name: Build the exact IAM and gateway fixture images
+        run: |
+          docker build -f infra/keycloak/Dockerfile -t accesslobby-iam:ci .
+          docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
+      - name: Verify private IAM console with trusted TLS and real admin login
+        run: node infra/scripts/private-iam-console-live-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-private-iam-console
+          path: artifacts/private-iam-console/
+          if-no-files-found: warn
+          retention-days: 7

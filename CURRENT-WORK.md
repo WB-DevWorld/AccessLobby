@@ -11,6 +11,9 @@ The owner subsequently confirms only jane@cetechbpa.com is available and open in
 ## Owner-accelerated operator round 3 — four assigned lanes, 2026-11-25 UTC
 
 
+Native artifact15064863764/run45706607121 on ebcbe45d44144461d0970886d6c560d8b6a4b13b now provides the exact Docker failure before NGINX: local logging refused default compression with max-file1. The package corrects that actual startup defect to max-size1m/max-file2/explicit compression, bounded2MB; both root and nonroot variants have a valid driver-constraint regression. Safe diagnostics distinguish this Docker error from NGINX configuration.7Python+9Node checks and native syntax/whitespace pass. Private-console native acceptance now runs as its own independent CI job, building the same source IAM/gateway images and using the same genuine TLS/browser/assertion/cleanup fixture, while retained IAM/network and application checks run in parallel. It is not skipped or weakened; exact successor CI remains pending.
+
+
 Head a1830e125b2e356d37a76e708022b5e9bc33c901 still failed nonroot_config_test after a healthy native IAM/public issuer/keys/TLS/denial baseline (artifact15064359988/run45705285116). Safe command exit1 had every known NGINX error bit false; it does not prove the previously corrected logging hazard caused this failure. The fixture config-test now explicitly disables terminal/stdin and image pulls after validating the local immutable image. A narrowly bounded, normalized disposable credential-free configuration diagnostic retains otherwise-unclassified CLI text after generated secrets/paths/names, URLs, emails, assignments, quoted values and opaque/token material are removed. No runtime environment/raw authenticated browser data is captured. Local6Python+8Node/syntax checks pass; actual native acceptance remains pending.
 
 

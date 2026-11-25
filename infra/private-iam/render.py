@@ -166,7 +166,7 @@ def compose_document(image, network, output, cert, key, uid, gid, listen_port):
                 {"type": "bind", "source": key, "target": "/run/private-iam/tls.key", "read_only": True},
             ],
             "networks": ["existing-iam-edge"],
-            "logging": {"driver": "local", "options": {"max-size": "1m", "max-file": "1"}},
+            "logging": {"driver": "local", "options": {"max-size": "1m", "max-file": "2", "compress": "true"}},
         }
     if uid == 0:
         service["cap_add"] = ["SETUID", "SETGID"]

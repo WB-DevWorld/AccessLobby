@@ -12,8 +12,8 @@ Based on qualified PR75 head750f51a890d65d3b17306b7d47e2f8f2012880fc; feat/opera
 | Retained round-two / round-one / general UI browser |11/10/14groupsPASS |
 | Python existing infrastructure |77PASS |
 | Private-client/email JS retained |16PASS from the qualified baseline; unchanged source |
-| New private package Python/OpenSSL |6PASS |
-| New exact-authority CONNECT/loopback actual TLS |8NodePASS |
+| New private package Python/OpenSSL |7PASS |
+| New exact-authority CONNECT/loopback actual TLS |9NodePASS |
 | Native private-console script |SyntaxPASS; actual Docker/IAM/browser execution pending CI |
 
 The application tests total157; joined browser groups total42. Private package checks exercise actual OpenSSL trust/hostname/key permissions and actual loopback TLS, including untrusted CA, wrong hostname and wrong CONNECT authority refusal. They do not replace real Keycloak administrative login.
@@ -31,3 +31,5 @@ Follow-up8ca69ec reached verified public TLS/502 but disposable IAM exited1. Art
 The corrected import86efcf4 starts real IAM successfully; safe artifact15064551969 proves exact public issuer/JWKS/trusted TLS and404restrictions. Its next nonroot configuration test failed before private login. The inherited-stderr correction and safe command classifications retain the existing security assertions;7private Node checks pass, with native acceptance still pending the successor.
 
 Head a1830e1 retained the public native baseline but configuration-command exit1 had no known NGINX cause flags. Explicit noninteractive/local-image-only invocation and narrowly normalized credential-free command evidence address that diagnostic gap without claiming an unproven cause. Eight Node checks pass; native console acceptance remains open.
+
+Exact Docker diagnostic on ebcbe45/artifact15064863764 identifies an invalid local log-driver compression/max-file1 combination, before NGINX execution. The package now retains2×1MB files with explicitcompression and tests the actual constraint in both key modes.7Python+9Node checks pass. Native qualification remains the same genuine fixture, moved into an independent parallel CI job for earlier actionable results; no login assertion is skipped.
