@@ -11,6 +11,9 @@ The owner subsequently confirms only jane@cetechbpa.com is available and open in
 ## Owner-accelerated operator round 3 — four assigned lanes, 2026-11-25 UTC
 
 
+Corrected-import head86efcf458418a4ace86f0443fadf9c9b7db2f7f1 now proves actual disposable IAM healthy and publicBefore exact issuer/JWKS200/trustedTLS/admin-master-health-metrics404 (artifact15064551969/run45703844648). Next failure was nonroot_config_test, commandexitnonzero, with complete owned cleanup. Command stderr had been discarded by its wrapper before one-off container removal, so that exact cause is not retrospectively asserted. The optional proxy now uses supported inherited stderr at startup/runtime (`nginx -e stderr`, `error_log stderr`) to avoid filesystem log reopening under nonroot/read-only execution. Safe fixed command classifications are captured before removal; TLS/bind/caps/rootfs policies remain enforced.6Python+7Node and syntax/whitespace pass; new native/whole-head CI remains pending.
+
+
 Second native candidate8ca69ecfef21a952c10f930af9a87e02973100ee reached a trusted PUBLIC TLS gateway but returned502 while its disposable IAM exited1 after augmentation. Safe artifact15063509077/run45702452026 confirms healthy database/gateway, no OOM and complete owned cleanup. Source review found a deterministic bootstrap defect: the mounted fixture-realm.json disagreed with JSONrealm accesslobby-first-party. Exact Keycloak26.7.4 DirImportProvider primary source throws on this mismatch; the official importExport naming rule agrees. The fixture now derives accesslobby-first-party-realm.json from JSON and uses it for both localfile and mount; no production setting/cache/profile bypass. Allowlisted exception classes/known startup causes/server codes provide precise failure evidence without raw log text.6Python+6Node private checks and syntax/whitespace pass; next native CI remains required. User's one-Jane-inbox handoff remains current.
 
 

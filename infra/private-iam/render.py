@@ -111,7 +111,7 @@ def nginx_config(canonical_origin, root_key=False):
 worker_processes 1;
 {worker_mode}
 pid /tmp/nginx.pid;
-error_log /dev/stderr crit;
+error_log stderr crit;
 events {{ worker_connections 128; }}
 http {{
     include /etc/nginx/mime.types;
@@ -154,7 +154,7 @@ def compose_document(image, network, output, cert, key, uid, gid, listen_port):
     temp_mounts += [f"/tmp/{name}:rw,noexec,nosuid,size=4m,mode=0700,uid={worker_uid},gid={worker_gid}" for name in ["client_body", "proxy", "fastcgi", "uwsgi", "scgi"]]
     service = {
             "image": image,
-            "entrypoint": ["nginx", "-c", "/etc/nginx/nginx.conf", "-g", "daemon off;"],
+            "entrypoint": ["nginx", "-e", "stderr", "-c", "/etc/nginx/nginx.conf", "-g", "daemon off;"],
             "user": f"{uid}:{gid}", "read_only": True,
             "cap_drop": ["ALL"], "security_opt": ["no-new-privileges:true"],
             "restart": "unless-stopped", "pids_limit": 32,

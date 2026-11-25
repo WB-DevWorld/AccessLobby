@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createConnectProxy, parseOrigin } from './connect-proxy.mjs';
 import { loopbackHttpsGet } from './loopback-https.mjs';
-import { errorCategory, logCategories, startupFailureEvidence } from './diagnostics.mjs';
+import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence } from './diagnostics.mjs';
 
 test('unsafe origins, browser port substitution and unsafe target ports are refused', async () => {
   for (const value of ['http://iam.example.test', 'https://name:password@iam.example.test', 'https://iam.example.test/admin', 'https://iam.example.test?code=x', 'https://127.0.0.1', 'https://iam.example.test:80', 'https://iam.example.test:443']) assert.throws(() => parseOrigin(value));
@@ -119,4 +119,22 @@ test('exact Keycloak26.7.4 import mismatch retains a precise safe cause', () => 
   assert.equal(logCategories(log).realmImportFailed, true);
   assert.deepEqual(summary, { exceptionClasses: ['java.lang.IllegalStateException'], knownCauses: ['realm_filename_mismatch'], serverErrorCodes: ['KC-SERVICES0050'] });
   for (const forbidden of [secret, '/private/path', 'fixture-realm.json', '?code=']) assert.equal(JSON.stringify(summary).includes(forbidden), false);
+});
+
+test('removed NGINX one-off command retains exact safe file/permission cause', () => {
+  const secret = 'PRIVATE_KEY_PATH_AND_PASSWORD_CANARY';
+  const summary = commandFailureEvidence({ code: 1, stdout: `${secret}\n`,
+    stderr: `nginx: [alert] could not open error log file: open() "/var/log/nginx/error.log" failed (13: Permission denied)\nnginx: [emerg] open() "/dev/stderr" failed (13: Permission denied)\nnginx: configuration file /etc/nginx/nginx.conf test failed\n${secret}` });
+  assert.equal(summary.exitCode, 1);
+  assert.equal(summary.logCategories.permissionDenied, true);
+  assert.equal(summary.nginx.stderrReopenFailed, true);
+  assert.equal(summary.nginx.defaultLogOpenFailed, true);
+  assert.equal(summary.nginx.configurationTestFailed, true);
+  for (const forbidden of [secret, '/dev/stderr', '/var/log/nginx/error.log', '/etc/nginx/nginx.conf']) assert.equal(JSON.stringify(summary).includes(forbidden), false);
+  const tmp = commandFailureEvidence({ code: 1, stderr: `mkdir() "/tmp/client_body" failed (13: Permission denied) ${secret}` });
+  assert.equal(tmp.nginx.tempPathOperationFailed, true);
+  assert.equal(tmp.nginx.stderrReopenFailed, false);
+  const tls = commandFailureEvidence({ code: 1, stderr: `cannot load certificate key "/protected/${secret}": Permission denied` });
+  assert.equal(tls.nginx.tlsKeyLoadFailed, true);
+  assert.equal(JSON.stringify(tls).includes(secret), false);
 });

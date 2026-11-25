@@ -55,3 +55,32 @@ export function startupFailureEvidence(value) {
     serverErrorCodes: [...new Set(value.match(/\b(?:KC-SERVICES[0-9]{4}|ISPN[0-9]{6}|HHH[0-9]{6})\b/g) || [])].slice(0, 16),
   };
 }
+
+// The `compose run --rm ... -t` container can disappear before inspection.
+// Classify its captured command stderr immediately; retain no raw text/path.
+export function nginxFailureEvidence(value) {
+  return {
+    stderrReopenFailed: /open\(\).*\/dev\/stderr.*failed|could not open.*\/dev\/stderr/i.test(value),
+    defaultLogOpenFailed: /(?:could not open error log file|open\(\).*\/(?:var\/log\/nginx|logs)\/error\.log.*failed)/i.test(value),
+    configFileOpenFailed: /open\(\).*\/etc\/nginx\/nginx\.conf.*failed/i.test(value),
+    mimeTypesOpenFailed: /open\(\).*mime\.types.*failed/i.test(value),
+    tempPathOperationFailed: /(?:mkdir|chown|open)\(\).*\/(?:tmp\/(?:client_body|proxy|fastcgi|uwsgi|scgi)|var\/cache\/nginx).*failed/i.test(value),
+    pidFileOpenFailed: /open\(\).*nginx\.pid.*failed/i.test(value),
+    tlsKeyLoadFailed: /cannot load certificate key|SSL_CTX_use_PrivateKey|key values mismatch/i.test(value),
+    tlsCertificateLoadFailed: /cannot load certificate[ :]|SSL_CTX_use_certificate|PEM_read_bio_X509/i.test(value),
+    upstreamResolutionFailed: /host not found in upstream|no resolver defined|upstream.*could not be resolved/i.test(value),
+    userOrGroupSwitchFailed: /(?:setuid|setgid|setgroups|initgroups)\(\).*failed/i.test(value),
+    syntaxRejected: /unknown directive|invalid (?:number|value|parameter|condition)|unexpected ["'};]|directive.*(?:not allowed|not terminated)|duplicate.*directive/i.test(value),
+    configurationTestFailed: /configuration file.*test failed/i.test(value),
+    configurationTestSuccessful: /configuration file.*test is successful/i.test(value),
+    mountFailed: /error mounting|failed to mount|invalid mount config/i.test(value),
+    readOnlyFilesystem: /Read-only file system/i.test(value),
+    imageUnavailable: /pull access denied|No such image|unable to find image|invalid reference format/i.test(value),
+  };
+}
+
+export function commandFailureEvidence(error) {
+  const value = String(error?.stdout || '').slice(0, 262144) + '\n' + String(error?.stderr || '').slice(0, 262144);
+  return { exitCode: Number.isInteger(error?.code) && error.code >= 0 && error.code <= 255 ? error.code : null,
+    logCategories: logCategories(value), startupFailure: startupFailureEvidence(value), nginx: nginxFailureEvidence(value) };
+}

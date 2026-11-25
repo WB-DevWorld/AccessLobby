@@ -11,7 +11,7 @@ import net from 'node:net';
 import { chromium } from 'playwright';
 import { createConnectProxy } from '../private-iam/connect-proxy.mjs';
 import { loopbackHttpsGet } from '../private-iam/loopback-https.mjs';
-import { errorCategory, logCategories, startupFailureEvidence } from '../private-iam/diagnostics.mjs';
+import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence } from '../private-iam/diagnostics.mjs';
 
 const execute = promisify(execFile);
 const repository = resolve(new URL('../..', import.meta.url).pathname);
@@ -46,6 +46,7 @@ async function command(program, args, options = {}) {
   } catch (error) {
     const failure = new Error('command_failed');
     failure.category = error.killed ? 'command_timeout' : typeof error.code === 'number' ? 'command_exit_nonzero' : 'command_unavailable';
+    failure.safeCommandEvidence = commandFailureEvidence(error);
     throw failure; // Never echo arguments, stderr or auth URLs.
   }
 }
@@ -346,7 +347,8 @@ try {
   await publicBoundary('publicAfter');
   report.passed = true;
 } catch (error) {
-  report.failure = { phase, category: errorCategory(error) };
+  report.failure = { phase, category: errorCategory(error),
+    ...(error.safeCommandEvidence ? { command: error.safeCommandEvidence } : {}) };
   report.servicesAtFailure = await collectFailureDiagnostics();
   process.exitCode = 1;
 } finally {

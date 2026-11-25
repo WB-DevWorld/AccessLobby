@@ -13,7 +13,7 @@ Based on qualified PR75 head750f51a890d65d3b17306b7d47e2f8f2012880fc; feat/opera
 | Python existing infrastructure |77PASS |
 | Private-client/email JS retained |16PASS from the qualified baseline; unchanged source |
 | New private package Python/OpenSSL |6PASS |
-| New exact-authority CONNECT/loopback actual TLS |6NodePASS |
+| New exact-authority CONNECT/loopback actual TLS |7NodePASS |
 | Native private-console script |SyntaxPASS; actual Docker/IAM/browser execution pending CI |
 
 The application tests total157; joined browser groups total42. Private package checks exercise actual OpenSSL trust/hostname/key permissions and actual loopback TLS, including untrusted CA, wrong hostname and wrong CONNECT authority refusal. They do not replace real Keycloak administrative login.
@@ -27,3 +27,5 @@ Not established locally: native IAM console authentication, current staging rout
 First published ef889338 passed13/14checks, including general/WordPress/theme/security. Its new private-console fixture failed before login (fixture_topology), with owned cleanup confirmed. Exact cause was not established. Follow-up retains the assertions and actual TLS validation while replacing the extra curl-container probe path with a separate public loopback TLS endpoint, bounded startup readiness and safe service/error diagnostics. Targeted6Python+5Node and native syntax checks pass. The next native CI remains the required administrative-login verdict; no live host route is inferred.
 
 Follow-up8ca69ec reached verified public TLS/502 but disposable IAM exited1. Artifact15063509077 distinguishes that service startup from TLS failure. Exact Keycloak26.7.4 source confirmed the imported filename/JSONrealm mismatch; the fixture is corrected without a production/profile bypass. Six private Node checks now pass, including sanitized mismatch evidence. Native console acceptance remains pending the corrected source run.
+
+The corrected import86efcf4 starts real IAM successfully; safe artifact15064551969 proves exact public issuer/JWKS/trusted TLS and404restrictions. Its next nonroot configuration test failed before private login. The inherited-stderr correction and safe command classifications retain the existing security assertions;7private Node checks pass, with native acceptance still pending the successor.

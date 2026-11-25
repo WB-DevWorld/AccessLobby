@@ -38,6 +38,7 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(s["cap_drop"], ["ALL"])
         self.assertEqual(s["user"], "1001:1002")
         self.assertTrue(all(v["read_only"] for v in s["volumes"]))
+        self.assertEqual(s["entrypoint"][:3], ["nginx", "-e", "stderr"])
         for value in ["nginx:latest", "nginx:1.31.6", "foo;anything"]:
             with self.assertRaises(render.Refusal):
                 render.compose_document(value, "al_iam-edge", Path("/x"), "/cert", "/key", 0, 0, 9443)
@@ -60,6 +61,8 @@ class PackageTests(unittest.TestCase):
         self.assertNotIn("/realms/accesslobby-first-party/", config)
         self.assertNotIn("9000", config)
         self.assertIn("access_log off", config)
+        self.assertIn("error_log stderr crit;", config)
+        self.assertNotIn("/dev/stderr", config)
 
     def test_actual_certificate_trust_hostname_key_match_and_permissions(self):
         with tempfile.TemporaryDirectory() as td:
