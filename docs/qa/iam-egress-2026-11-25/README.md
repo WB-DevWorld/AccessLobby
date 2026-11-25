@@ -1,6 +1,6 @@
 # IAM durable outbound network — 2026-11-25
 
-Status: **REGRESSION REPRODUCED; FIX AWAITING CI; STAGING NOT CHANGED HERE**. Relates to #59 and PR68. This record separates actual CI, source changes and operator-reported runtime evidence.
+Status: **REGRESSION REPRODUCED; IMPLEMENTATION QUALIFIED IN CI; STAGING ROLLOUT PENDING**. Relates to #59 and PR68. This record separates actual CI, source changes and operator-reported runtime evidence.
 
 ## Reproduced regression
 
@@ -15,11 +15,26 @@ Status: **REGRESSION REPRODUCED; FIX AWAITING CI; STAGING NOT CHANGED HERE**. Re
 
 The normal-network DNS/TLS control reached HTTP200. Real Keycloak/PostgreSQL booted on source internal-only IAM networks. The legacy phase had no default route and could not reach public HTTPS. Recreating IAM from the same declared source also had no route or HTTPS reachability, so the required desired-topology assertion failed. Cleanup passed. The general verify job passed; this is an intentional routing regression, not a generic startup/test-infrastructure failure.
 
+## Qualified implementation
+
+| Evidence | Exact reference |
+|---|---|
+| Implementation candidate | 557e40a43184e49efe253299172871c261b1cd96 |
+| Actual PR merge checkout | 1ae5aa2191c37937144f1cdc56d7bb3299097189 |
+| Main CI | [45646022732](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45646022732), verify139317125911 / IAM139317126388, both PASS |
+| Theme CI | [45646022420](https://github.com/WB-DevWorld/AccessLobby/actions/runs/45646022420), job139317125062 PASS |
+| Categorical artifact | iam-network-smoke /15037623773 |
+| Retained report | [ci/green/report.json](ci/green/report.json), SHA256 f3fccf08f0a597607216a99d00f19f5c300329d07da00f8bac76b42df4eaa2ec |
+
+Both declared and recreated phases report exactly one actual kernel default route matching the dedicated egress gateway, exact network membership, DNS/TLS HTTP200 and denial of private HTTP8080 and management9000 from the unshared bridge. Both phases are new container IDs, legacy remains isolated and cleanup passes. All three relevant jobs pass, retaining actual IAM client/admission/logout, restricted-gateway and application/UI/PWA checks. No WordPress source/package changed and its broad matrix was not rerun or relabeled by this infrastructure-only increment. Documentation/evidence successors require their own CI.
+
+At15:32:35UTC the [independent credential-free public observation](public-before-rollout.json) still finds deployed API ready200/d875712, web/discovery/JWKS200 with two keys, and root/admin/master/metrics/health404. These nine public checks are not private image inventory, signed-in browser acceptance or a deployment of this change.
+
 ## Bounded source fix
 
 Source adds an ordinary Compose-owned iam-egress bridge, attached only to IAM. Backend/iam-edge stay internal, IAM stays off the shared proxy/default networks, and no host port or public IAM domain is added. Source Compose CI enforces the whole service/network matrix. Runtime inspection checks actual isolation/driver and exclusive egress peer count, image pins, private attachments and published-port absence. Local Python infrastructure suite passes63 tests, including missing egress, temporary default/proxy attachments, shared egress and altered network isolation.
 
-The real IAM fixture must pass the declared topology and forced recreation with one default route through the dedicated bridge, DNS/TLS reachability, exact network membership and denial of private HTTP/management access from an unshared network. Curl shares IAM's namespace; this is network evidence, not signed Java-client delivery. The normal-network control, real IAM readiness and negative legacy topology stay in the test. Existing actual IAM/gateway/API/PWA tests remain in CI. No Docker daemon is available locally; native CI is the runtime authority.
+The real IAM fixture passes declared topology and forced recreation with one default route through the dedicated bridge, DNS/TLS reachability, exact network membership and denial of private HTTP/management access from an unshared network. Curl shares IAM's namespace; this is network evidence, not signed Java-client delivery. The normal-network control, real IAM readiness and negative legacy topology stay in the test. Existing actual IAM/gateway/API/PWA tests remain in CI. No Docker daemon is available locally; native CI is the runtime authority.
 
 ## Operator runtime evidence and remaining gate
 

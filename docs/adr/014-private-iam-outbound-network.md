@@ -1,6 +1,6 @@
 # ADR014 — Private IAM with durable outbound delivery
 
-Status: implementation candidate, 2026-11-25. Relates to #59. This changes network configuration, not identity, client admission, logout scope or WordPress policy.
+Status: implementation qualified in CI, 2026-11-25; staging rollout pending. Relates to #59. This changes network configuration, not identity, client admission, logout scope or WordPress policy.
 
 ## Observed failure
 
@@ -19,6 +19,8 @@ The dedicated bridge permits outbound networking; it is not a hostname allowlist
 The CI-only fixture renders the real production Compose with synthetic configuration, boots real Keycloak/PostgreSQL on the legacy internal-only topology, and proves the missing route. It then uses the unmodified declared network topology, requires DNS/TLS reachability from the IAM namespace, verifies private HTTP/management listeners cannot be reached from an unshared bridge, and repeats after recreation. A normal-network HTTPS control distinguishes an unavailable public test target from the regression. Cleanup is limited to a collision-checked random CI project and its disposable volumes. No live project, database, credential or domain is used.
 
 The namespace probe is not a Java HTTP-client or signed logout delivery test. Existing actual IAM/gateway tests remain, and staging must repeat genuine signed peer delivery after the controlled network-only rollout. The operator's prior signed POST200/backchannel events qualify training under the temporary attachment, not the durable source change. Another browser remaining signed in proves browser-session isolation, not a different physical device.
+
+[Exact red/green evidence](../qa/iam-egress-2026-11-25/README.md) records qualified implementation557e40a43184e49efe253299172871c261b1cd96, all three successful relevant CI jobs, the real namespace checks and cleanup. Evidence-only successors require their own checks; live rollout is not inferred.
 
 ## Deployment and rollback
 
