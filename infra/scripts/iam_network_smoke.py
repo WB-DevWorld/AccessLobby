@@ -91,7 +91,10 @@ def namespace_check(container, project):
     gateways = route_gateways(routes)
     result = {
         "defaultRoutePresent": bool(gateways),
+        "defaultRouteCount": len(gateways),
         "defaultRouteMatchesDeclaredEgress": bool(egress) and egress.get("Gateway") in gateways,
+        "expectedNetworksOnly": set(networks) == {project + "_" + name for name in
+                                                ("backend", "iam-edge", "iam-egress")},
         "publicDnsTls": curl_probe("container:" + container, PUBLIC_PEER),
     }
     if egress:
@@ -169,7 +172,8 @@ def smoke(image):
                 result["containerRecreated"] = container != previous
                 report["checks"].append({"phase": phase, **result})
                 if not all((
-                    result["containerRecreated"], result["defaultRoutePresent"],
+                    result["containerRecreated"], result["defaultRouteCount"] == 1,
+                    result["expectedNetworksOnly"], result["defaultRoutePresent"],
                     result["defaultRouteMatchesDeclaredEgress"], result["publicDnsTls"]["httpReached"],
                     result.get("privateHttpDeniedFromUnsharedNetwork"),
                     result.get("managementDeniedFromUnsharedNetwork"),

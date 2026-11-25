@@ -1,5 +1,7 @@
 # Branded IAM staging cutover — 2026-09-28
 
+Historical image/deployment record. Current source network policy is [ADR014](../adr/014-private-iam-outbound-network.md); use the [network-only staging procedure](iam-outbound-network-staging.md) for that change. Do not restore September image pins or remove current IAM egress to run the updated runtime inspector.
+
 This is the operator handoff for issues #25, #27 and #29. It records a qualified candidate, the owner-reported staging deployment and a public smoke check, **not** a production approval. The protected Dokploy environment and the running container digests are visible only through the owner's private operator access. Do not paste environment exports, credentials, tokens, cookies or person IDs into GitHub.
 
 ## Observed public baseline

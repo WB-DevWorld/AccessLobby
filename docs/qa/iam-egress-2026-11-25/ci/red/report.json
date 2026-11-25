@@ -1,0 +1,35 @@
+{
+  "evidenceType": "production-compose-iam-network-namespace",
+  "sourceRevision": "969b9eb634269bd275d7faff6d390cf646cb6fc1",
+  "candidateRevision": "38456b3d4eec797bde437b18c951422c12b1acd1",
+  "passed": false,
+  "checks": [
+    {
+      "phase": "legacy",
+      "defaultRoutePresent": false,
+      "defaultRouteMatchesDeclaredEgress": false,
+      "publicDnsTls": {
+        "httpReached": false,
+        "httpStatus": null
+      }
+    },
+    {
+      "phase": "declared",
+      "defaultRoutePresent": false,
+      "defaultRouteMatchesDeclaredEgress": false,
+      "publicDnsTls": {
+        "httpReached": false,
+        "httpStatus": null
+      },
+      "containerRecreated": true
+    }
+  ],
+  "scope": "Disposable real IAM/DB; curl shares the IAM namespace. Not signed peer-logout acceptance.",
+  "phase": "declared",
+  "control": {
+    "httpReached": true,
+    "httpStatus": 200
+  },
+  "errorClass": "RuntimeError",
+  "cleanupPassed": true
+}
