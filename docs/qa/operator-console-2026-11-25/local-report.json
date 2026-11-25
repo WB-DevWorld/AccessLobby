@@ -1,0 +1,52 @@
+{
+  "source": "de71ec978d9c5dcc2eaa4e3076eb7a7da94ed223",
+  "dirtyWorktree": true,
+  "observedAt": "2026-11-25T19:14:21.743Z",
+  "scope": "synthetic OIDC issuer; real isolated PostgreSQL, compiled API and production Next browser",
+  "liveIam": "NOT RUN",
+  "staging": "NOT RUN",
+  "production": "NOT RUN",
+  "result": "PASS",
+  "checks": [
+    {
+      "name": "real API rejects absent, expired and tampered authentication",
+      "result": "PASS"
+    },
+    {
+      "name": "organization/app ownership and token roles confer no platform authority",
+      "result": "PASS"
+    },
+    {
+      "name": "durable operator roles allow bounded inspection without provider/session disclosure",
+      "result": "PASS"
+    },
+    {
+      "name": "independent review pins configuration and cannot activate a client",
+      "result": "PASS"
+    },
+    {
+      "name": "ended browser session cannot reuse an otherwise valid operator token",
+      "result": "PASS"
+    },
+    {
+      "name": "production console never discloses directory data without a session",
+      "result": "PASS"
+    },
+    {
+      "name": "production console denies an ordinary organization owner",
+      "result": "PASS"
+    },
+    {
+      "name": "operator console renders actual directory and reviewed app on narrow and wide screens",
+      "result": "PASS"
+    },
+    {
+      "name": "native browser review is CSRF protected and recorded without activation",
+      "result": "PASS"
+    },
+    {
+      "name": "reader cannot submit reviews and operator revocation takes effect with the same bearer",
+      "result": "PASS"
+    }
+  ]
+}
