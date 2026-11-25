@@ -9,10 +9,11 @@ import { withScopedClientToken } from './private-client-token.mjs';
 const token = process.env.IAM_SMOKE_TOKEN;
 if (process.env.CI !== 'true' || process.env.GITHUB_ACTIONS !== 'true' || !token) throw new Error('Disposable CI IAM required');
 const base = 'http://127.0.0.1:8080';
-const issuer = 'http://localhost:8080/realms/accesslobby-first-party';
+// This start-dev fixture derives its issuer from the token request's actual host.
+const issuer = `${base}/realms/accesslobby-first-party`;
 const realm = `${base}/admin/realms/accesslobby-first-party`;
 const username = `al-qual-email-${randomUUID()}`;
-let id;
+let id, passed = false, phase = 'fixture';
 const admin = async (path, init = {}) => {
   const response = await fetch(realm + path, { ...init, headers: { authorization: `Bearer ${token}`,
     ...(init.body ? { 'content-type': 'application/json' } : {}) }, redirect: 'error', signal: AbortSignal.timeout(8000) });
@@ -25,6 +26,7 @@ try {
     email: `${username}@example.test`, enabled: true, emailVerified: false, requiredActions: ['VERIFY_EMAIL'] }) });
   id = created.headers.get('location')?.split('/').at(-1);
   assert.ok(id && /^[a-f0-9-]{36}$/i.test(id));
+  phase = 'metadata';
   let reads = 0;
   const report = await diagnoseIamEmail({ base, username, token, fetcher: async (url, init) => {
     assert.equal(init.method, 'GET'); reads++; return fetch(url, init);
@@ -35,6 +37,7 @@ try {
   assert.ok(report.blockers.includes('test_user_email_unverified'));
   assert.equal(report.deliveryTestPerformed, false);
   assert.ok(!JSON.stringify(report).includes(token));
+  phase = 'cli';
   const childEnv = { ...process.env }; delete childEnv.IAM_SMOKE_TOKEN;
   const cli = spawnSync(process.execPath, [fileURLToPath(new URL('./iam-email-diagnostics.mjs', import.meta.url)),
     '--base', base, '--username', username], { input: token + '\n', encoding: 'utf8', env: childEnv,
@@ -48,13 +51,22 @@ try {
   const after = await (await admin('')).json();
   assert.ok(JSON.stringify(before.smtpServer) === JSON.stringify(after.smtpServer), 'Diagnostic changed SMTP');
   assert.equal(before.verifyEmail, after.verifyEmail);
+  phase = 'client-only-scope';
   await withScopedClientToken({ base, issuer, adminToken: token }, async scoped => {
     const denied = await diagnoseIamEmail({ base, username, token: scoped });
     assert.equal(denied.assessed, false);
     assert.ok(denied.errors.some(error => error.status === 403));
     assert.ok(!JSON.stringify(denied).includes(scoped));
   });
-  console.info('IAM_EMAIL_METADATA_PASS: real readback, unverified refusal, no mutation/mail, client-only scope denied');
+  passed = true;
+} catch {
+  // JWT libraries can attach claims to errors; never print raw errors or their payloads.
+  console.error(`IAM_EMAIL_METADATA_FAIL: ${phase}`);
+  process.exitCode = 1;
 } finally {
-  if (id) await admin(`/users/${id}`, { method: 'DELETE' });
+  try { if (id) await admin(`/users/${id}`, { method: 'DELETE' }); }
+  catch { console.error('IAM_EMAIL_METADATA_FAIL: fixture-cleanup'); process.exitCode = 1; }
+}
+if (passed && process.exitCode !== 1) {
+  console.info('IAM_EMAIL_METADATA_PASS: real readback, unverified refusal, no mutation/mail, client-only scope denied');
 }
