@@ -2,6 +2,10 @@
 
 Status: **IMPLEMENTATION AND STAGING NETWORK/LOGOUT RECREATION QUALIFIED** by the evidence types below. Overall deployment inventory remains incomplete; the WordPress estate remains **PARTIALLY QUALIFIED**. Relates to #59 and PR68. No production acceptance is inferred.
 
+## Later two-site acceptance
+
+The published operator commit cfd71f0 now extends the accepted durable route to quiet SSO and both signed shared-logout directions across CETECH training and staging. [Two-site source/event/control scope](../wordpress-two-site-2026-11-25/README.md). Earlier061857b/5e778d9 references are now retrievable. Their old unavailable status and staging challenge below are historical. This adds no new network rollout or HTTP-status claim for the two-site pass. FLAIROC linking, real-site Join/JIT, recovery/enforced mode and external activation remain open.
+
 ## Current staging acceptance
 
 The operator reports that PR68 main423b9ac8a2db5fba332252b08737794692236a24 is applied as network configuration, with the existing image digests and image-source GIT_SHA d875712 unchanged. Only IAM was recreated; database volumes were preserved. The same gateway container passed nginx -t and was reloaded. Backend/iam-edge remain internal; the dedicated non-internal bridge has one peer, and IAM's single IPv4 default route uses it. No host port is published. The old temporary attachment was retained until the replacement worked. [Categorical operator evidence](operator-post-recreation.json).
