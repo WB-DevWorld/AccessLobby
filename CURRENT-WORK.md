@@ -48,6 +48,10 @@ Main `de71ec978d9c5dcc2eaa4e3076eb7a7da94ed223` is fetched. The private diagnost
 
 The FLAIROC toolbar account is user 77, login `Jane Love`, role `administrator`. Customer 122 remains `al-qual-customer` / `customer`, order 4043 on-hold, 49 users, guest checkout off, coming soon on, store pages only off, private link on, hybrid, JIT off, and no active link. Opening site-only logout reached a Cloudflare challenge, Ray ID `a602c7842b5eb001`. Customer login and Connect were not attempted. Enforced mode stays off. Issue 59 stays open.
 
+## Parallel lane boundary — 2026-11-25 UTC
+
+PR #73 (`feat/operator-console-round-1`, head `39bd43c3d69d3d3aafa59fa743d199ea6e0d3a2e`) owns migrations 009/010, the operator and review modules, `/v1/admin/*` and `/admin/*`. This qualification branch does not edit those paths. Shared ledger and contract changes stay with the integrator. Forward Email SMTP, genuine verification, training Join/JIT and the FLAIROC estate evidence remain on this branch under #59. No SMTP password was available in a signed-in Forward Email session or a private file, so no realm email change was made.
+
 ## FLAIROC link and Forward Email gate — 2026-11-25 UTC
 
 Main remains `de71ec978d9c5dcc2eaa4e3076eb7a7da94ed223`. Qualification evidence `abe267a94a8af395e6f3d77f62630713f78e96c2` is on `origin/feat/wordpress-estate-qualification`. Plugin `0.1.0-alpha.9` and runtime `d875712` are unchanged. Image pins were not promoted.
