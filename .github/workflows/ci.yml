@@ -33,6 +33,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: python3 -m unittest discover -s infra/scripts -p 'test_*.py'
       - run: node --test infra/scripts/private-client-token.test.mjs
+      - run: node --test infra/scripts/iam-email-diagnostics.test.mjs
       - run: pnpm audit --prod --audit-level high
       - run: pnpm --filter @accesslobby/api migrate
       - run: pnpm typecheck
@@ -350,6 +351,7 @@ jobs:
           export IAM_SMOKE_TOKEN
           node apps/api/test/iam-live-smoke.mjs
           node apps/api/test/app-onboarding-live-smoke.mjs
+          node infra/scripts/iam-email-live-smoke.mjs
           unset IAM_SMOKE_TOKEN
       - name: Verify public IAM gateway path and proxy headers
         run: |
