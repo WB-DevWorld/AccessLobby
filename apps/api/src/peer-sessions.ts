@@ -29,6 +29,14 @@ export class PeerSessions {
     const db = await this.pool.connect();
     try {
       await db.query('BEGIN');
+      // Preflight helpers are useful for legacy clients, but a registered
+      // client's current state must be serialized with platform suspension.
+      // Application first, then person, matches the administration lock order.
+      const application = await db.query<{ status: string; trust_class: string }>(
+        'SELECT status,trust_class FROM applications WHERE client_id=$1 FOR SHARE', [actor.client]);
+      if (application.rows[0] && (application.rows[0].status !== 'active' || application.rows[0].trust_class !== 'first_party')) {
+        throw new PeerSessionError(401, 'invalid_peer_session');
+      }
       const person = await db.query<{ status: string; session_not_before: string }>(
         'SELECT status,session_not_before FROM persons WHERE id=$1 FOR SHARE', [personId]);
       if (person.rows[0]?.status !== 'active' || !isCurrentPersonAuthentication({

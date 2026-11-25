@@ -32,6 +32,7 @@ export default async function AdminApplication({ params, searchParams }: {
   const canReview = requested && independent && context.access.capabilities.reviewApplications && !currentReview;
   return <AdminFrame active="applications" title={app.name} description="Inspect the exact application configuration before recording a first-party decision.">
     {notice && <p className={`context-alert${noticeKey === 'approved' || noticeKey === 'rejected' ? ' context-success' : ''}`} role={noticeKey === 'approved' || noticeKey === 'rejected' ? 'status' : 'alert'}>{notice}</p>}
+    <p><Link className="text-link" href={`/admin/applications/${id}/suspension`}>Application suspension controls</Link></p>
     <section className="context-grid" aria-label="Application configuration">
       <SurfaceCard title="Registered request"><dl className="admin-detail">
         <DataRow label="Application ID" mono>{app.id}</DataRow><DataRow label="Client ID" mono>{app.clientId}</DataRow>
