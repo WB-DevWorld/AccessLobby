@@ -1,12 +1,11 @@
 /** Private, one-app first-party reconciler. Never expose this entry point as an HTTP route. */
 import { Pool } from 'pg';
-import { exactApplicationUrl, type ApplicationPlatform } from './applications.js';
+import { exactApplicationUrl } from './applications.js';
 import { validId } from './organizations.js';
 import { originProofPresent, proofHost, verifiableOrigin } from './origin-proof.js';
+import { requireApprovedApplicationReview, type ReviewApplicationRow } from './application-reviews.js';
 
-interface AppRow { id: string; client_id: string; name: string; redirect_uri: string; logout_uri: string; backchannel_logout_uri: string | null;
-  status: string; trust_class: string; owner_active: boolean; origin_challenge: string; platform?: ApplicationPlatform;
-  origin_verified_at: Date | null; origin_verified_host: string | null }
+interface AppRow extends ReviewApplicationRow { owner_active: boolean }
 interface ClientRep { clientId: string; name?: string; enabled: boolean; protocol: string; publicClient: boolean;
   standardFlowEnabled: boolean; implicitFlowEnabled: boolean; directAccessGrantsEnabled: boolean;
   serviceAccountsEnabled: boolean; redirectUris: string[]; webOrigins: string[];
@@ -123,6 +122,7 @@ export async function provisionApp(pool: Pool, appId: string, mode: '--plan' | '
         !(await originProofPresent(proofHostname, app.origin_challenge, options.lookupTxt))) {
       throw new Error('Current DNS origin proof required before activation');
     }
+    await requireApprovedApplicationReview(db, app, reviewReference);
     const token = options.token;
     if (!token) throw new Error('IAM_PROVISIONING_TOKEN required on the private provisioning runner');
     const base = internalBase(options.base ?? 'http://iam:8080');
@@ -130,6 +130,8 @@ export async function provisionApp(pool: Pool, appId: string, mode: '--plan' | '
     await db.query(`UPDATE applications SET status = 'active', trust_class = 'first_party', activated_at = now(), review_reference = $2
       WHERE id = $1`, [appId, reviewReference]);
     await db.query(`INSERT INTO application_events (application_id, action) VALUES ($1, 'application.activated')`, [appId]);
+    await db.query(`INSERT INTO operator_audit_events(action,target_type,target_id,reference)
+      VALUES('application.activated_private','application',$1,$2)`, [appId, reviewReference]);
     await db.query('COMMIT');
     return { applicationId: appId, status: 'active' as const, clientId: app.client_id };
   } catch (error) {

@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Body, Controller, Delete, Get, Inject, Module, Param, Patch, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Module, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Pool } from 'pg';
 import { createHash, randomUUID } from 'node:crypto';
@@ -10,6 +10,8 @@ import { logoutVerifier, SessionRevocations } from './logout.js';
 import { OrganizationError, OrganizationStore, validId } from './organizations.js';
 import { ApplicationError, ApplicationStore, ClientRegistryUnavailable } from './applications.js';
 import { PeerSessions, PeerSessionError } from './peer-sessions.js';
+import { OperatorError, OperatorStore } from './operators.js';
+import { ApplicationReviewStore } from './application-reviews.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
@@ -24,6 +26,8 @@ const peerSessions = new PeerSessions(pool, settings.issuer, client => applicati
   catch (error) { if (error instanceof ApplicationError && error.status === 403) return false; throw error; }
 });
 const organizations = new OrganizationStore(pool);
+const operators = new OperatorStore(pool);
+const applicationReviews = new ApplicationReviewStore(pool, operators);
 
 @Controller()
 class ApiController {
@@ -126,6 +130,7 @@ class ApiController {
       if (error instanceof OrganizationError) return res.status(error.status).json({ error: error.code, requestId });
       if (error instanceof ApplicationError) return res.status(error.status).json({ error: error.code, requestId });
       if (error instanceof PeerSessionError) return res.status(error.status).json({ error: error.code, requestId });
+      if (error instanceof OperatorError) return res.status(error.status).json({ error: error.code, requestId });
       console.error(JSON.stringify({ event: 'identity.unavailable', requestId }));
       return res.status(503).json({ error: 'identity_unavailable', requestId });
     }
@@ -134,6 +139,45 @@ class ApiController {
   @Get('v1/contexts')
   contexts(@Req() req: any, @Res() res: any) {
     return this.withPerson(req, res, id => organizations.list(id), true);
+  }
+
+  // Platform authority is separate from organizations, application ownership and
+  // IAM realm roles. Reuse full bearer/person/session validation, then recheck
+  // the live database role on every operator request.
+  @Get('v1/admin/access')
+  operatorAccess(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, id => operators.access(id), true);
+  }
+
+  @Get('v1/admin/people')
+  operatorPeople(@Req() req: any, @Res() res: any, @Query('q') q?: string, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => operators.people(id, q, after), true);
+  }
+
+  @Get('v1/admin/organizations')
+  operatorOrganizations(@Req() req: any, @Res() res: any, @Query('q') q?: string, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => operators.organizations(id, q, after), true);
+  }
+
+  @Get('v1/admin/audit')
+  operatorAudit(@Req() req: any, @Res() res: any, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => operators.audit(id, after), true);
+  }
+
+  @Get('v1/admin/applications')
+  operatorApplications(@Req() req: any, @Res() res: any, @Query('q') q?: string, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => applicationReviews.list(id, q, after), true);
+  }
+
+  @Get('v1/admin/applications/:applicationId')
+  operatorApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    return this.withPerson(req, res, id => applicationReviews.detail(id, appId), true);
+  }
+
+  @Post('v1/admin/applications/:applicationId/review')
+  @HttpCode(200)
+  operatorReview(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => applicationReviews.record(id, appId, body), true);
   }
 
   @Get('v1/my-organizations')

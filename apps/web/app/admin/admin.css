@@ -1,0 +1,21 @@
+.admin-sections { display: flex; flex-wrap: wrap; gap: .55rem; margin: 0 0 1.4rem; }
+.admin-section-active { border-color: var(--primary); color: var(--primary); }
+.admin-search { margin-bottom: 1.4rem; max-width: 58rem; }
+.admin-search-controls { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.admin-search-controls input { flex: 1 1 15rem; min-width: 0; }
+.admin-table-wrap { overflow-x: auto; max-width: 100%; margin: 1.2rem 0; border: 1px solid var(--border); border-radius: .7rem; background: var(--surface); }
+.admin-table { width: 100%; border-collapse: collapse; font-size: .85rem; text-align: left; }
+.admin-table th, .admin-table td { padding: .85rem; border-bottom: 1px solid var(--border); vertical-align: top; min-width: 6rem; }
+.admin-table th { color: var(--text-soft); font-size: .77rem; }
+.admin-table tr:last-child td { border-bottom: 0; }
+.admin-table code { font-size: .78rem; overflow-wrap: anywhere; }
+.admin-table .admin-id { min-width: 12rem; max-width: 18rem; }
+.admin-detail { margin-top: 1rem; }
+.admin-detail dd { font-weight: 500; }
+.admin-detail code { font-size: .82rem; }
+.admin-review-reference { max-width: 36rem; }
+.admin-stage-list li { margin: .7rem 0; }
+@media (max-width: 580px) {
+  .admin-search-controls .button { flex: 1 1 auto; }
+  .admin-sections .button { flex: 1 1 auto; }
+}

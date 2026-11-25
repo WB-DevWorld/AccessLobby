@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { AccountMenu } from '@/components/account-menu';
 import { BrandMark, SkipLink } from '@/components/ui';
+import { OperatorConsoleLink } from '@/components/operator-console-link';
 
-type ActiveSection = 'overview' | 'identity' | 'contexts' | 'apps' | 'recovery';
+type ActiveSection = 'overview' | 'identity' | 'contexts' | 'apps' | 'recovery' | 'admin';
 const enabledNavigation = [
   { key: 'overview', label: 'Home', href: '/account', icon: 'home' },
   { key: 'apps', label: 'Apps', href: '/apps', icon: 'apps' },
@@ -43,7 +44,9 @@ export function AppShell({ active, title, description, children, actions, contex
       <nav className="primary-nav" aria-label="Account navigation"><p className="nav-label">Your account</p>
         <AccountLinks active={active} itemClassName="nav-item" />
       </nav>
-      <div className="sidebar-foot"><Link href="/help">Help & support</Link><Link href="/apps/manage">Developer tools <span aria-hidden="true">↗</span></Link></div>
+      <div className="sidebar-foot"><Link href="/help">Help & support</Link><Link href="/apps/manage">Developer tools <span aria-hidden="true">↗</span></Link>
+        {!loading && <Suspense fallback={null}><OperatorConsoleLink active={active === 'admin'} /></Suspense>}
+      </div>
     </aside>
     <div className="app-workspace">
       <header className="app-header">

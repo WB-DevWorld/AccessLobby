@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { openIsolatedDatabase } from './isolated-database.js';
+import { recordFixtureApproval } from './application-review-fixture.js';
 import { ApplicationError, ApplicationStore, exactApplicationUrl } from '../src/applications.js';
 import { proofValue } from '../src/origin-proof.js';
 import { provisionApp, representation } from '../src/provision-app.js';
@@ -61,6 +62,7 @@ test('real WordPress request, domain proof and private provisioning retain exact
       assert.equal(app.platform, 'wordpress');
       challenge = app.originVerificationValue.slice('accesslobby-verify='.length);
       await apps.verifyOrigin(person, app.id);
+      await recordFixtureApproval(pool, app.id, 'wordpress-review-61');
       const options = { issuer: 'https://iam.example.test/realms/accesslobby-first-party', lookupTxt,
         token: 'test-private-token', base: 'http://iam:8080', fetcher };
       const plan = await provisionApp(pool, app.id, '--plan', undefined, options);

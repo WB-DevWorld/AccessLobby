@@ -12,6 +12,6 @@ try {
     await client.query(sql);
   }
   await client.query('COMMIT');
-  console.info('Migrations 001 through 006 applied');
+  console.info(`Applied first-party migrations: ${migrationFiles.join(', ')}`);
 } catch (error) { await client.query('ROLLBACK'); throw error; }
 finally { client.release(); await pool.end(); }

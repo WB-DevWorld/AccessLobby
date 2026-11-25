@@ -441,6 +441,8 @@ def prepare_api(repo, work, network, database_url, issuer, sites, ca, admin_pass
 import {writeFileSync} from 'node:fs';
 import {ApplicationStore} from './dist/applications.js';
 import {provisionApp} from './dist/provision-app.js';
+import {ApplicationReviewStore} from './dist/application-reviews.js';
+import {OperatorStore} from './dist/operators.js';
 const p=new Pool({connectionString:process.env.DATABASE_URL});
 let phase='owner';
 const checkpoint=value=>{phase=value;console.log('API_FIXTURE_PHASE '+value);};
@@ -448,6 +450,10 @@ try {
  checkpoint('owner');
  const owner='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
  await p.query("INSERT INTO persons(id,status) VALUES($1,'active')",[owner]);
+ const reviewer='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+ await p.query("INSERT INTO persons(id,status) VALUES($1,'active')",[reviewer]);
+ await p.query("INSERT INTO platform_operator_roles(person_id,role,grant_reference) VALUES($1,'application_reviewer','disposable-reviewer')",[reviewer]);
+ const reviews=new ApplicationReviewStore(p,new OperatorStore(p));
  const proofs=new Map();
  const lookupTxt=async host=>proofs.get(host) ?? [];
  const apps=new ApplicationStore(p,[],lookupTxt);
@@ -466,6 +472,9 @@ try {
   proofs.set(app.originVerificationHost,[[app.originVerificationValue]]);
   checkpoint('origin-proof');
   await apps.verifyOrigin(owner,app.id);
+  checkpoint('independent-review');
+  const reviewed=await reviews.detail(reviewer,app.id);
+  await reviews.record(reviewer,app.id,{decision:'approved',reference:'disposable-first-party-review',configurationHash:reviewed.application.configurationHash});
   checkpoint('iam-provision');
   const result=await provisionApp(p,app.id,'--activate-first-party','disposable-first-party-review',{
    issuer,base:'http://iam:8080',token:operator.access_token,lookupTxt});
