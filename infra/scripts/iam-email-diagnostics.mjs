@@ -23,7 +23,7 @@ const failure = (code, extra = {}) => ({ contract: 'accesslobby.iam-email-metada
 
 export function assessEmailMetadata({ realm, action, users }, username) {
   if (!object(realm) || realm.realm !== REALM || !object(action) || action.alias !== 'VERIFY_EMAIL' ||
-      !Array.isArray(users) || (realm.smtpServer !== undefined && !object(realm.smtpServer))) {
+      !Array.isArray(users) || (realm.smtpServer != null && !object(realm.smtpServer))) {
     return failure('invalid_metadata');
   }
   const smtp = realm.smtpServer ?? {};

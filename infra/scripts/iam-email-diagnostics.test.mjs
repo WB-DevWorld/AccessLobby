@@ -37,7 +37,7 @@ test('metadata pass still does not claim mail delivery or a verified OIDC token'
 });
 
 test('missing SMTP, disabled action and unavailable account remain distinct', () => {
-  const data = fixture(); data.realm.smtpServer = {}; data.action.enabled = false; data.users = [];
+  const data = fixture(); data.realm.smtpServer = null; data.action.enabled = false; data.users = [];
   assert.deepEqual(assessEmailMetadata(data, username).blockers,
     ['smtp_configuration_incomplete', 'verify_email_action_disabled', 'test_user_not_found']);
   for (const users of [[{ ...fixture().users[0], username: 'another-account' }], fixture().users.concat(fixture().users)]) {
