@@ -34,4 +34,15 @@ Only headers needed for classification were retained; no challenge solving, cook
 
 The issuer's source network, user agent and browser clearance are different test contexts. Successful malformed-token rejection is not evidence of signature validation or preservation of an existing session. Confirm those with the actual issuer and controlled browser sessions. The login-path probes support request-specific investigation, not a blanket policy relaxation.
 
-Use the [Cloudflare qualification runbook](../../runbooks/wordpress-cloudflare-qualification.md) and continue the available training logout/re-entry slice.
+Use the [Cloudflare qualification runbook](../../runbooks/wordpress-cloudflare-qualification.md). Training logout and signed backchannel delivery continued on 2026-11-25 and are recorded in the estate ledger.
+
+## Qualification browser — 2026-11-25
+
+Microsoft Edge 158, profile `%LOCALAPPDATA%\al-qual-edge`, is the supported qualification browser. It is separate from the IDE tab and from the owner's default Edge and Chrome profiles. GET `/wp-login.php` from this profile returned HTTP 403 and `cf-mitigated: challenge`:
+
+| Host | Ray ID |
+|---|---|
+| staging.cetechbpa.com | `a6011677ed90f30c-ACC` |
+| training.flairoc.com | `a6011694bd059330-ACC` |
+
+The FLAIROC interstitial shows “Performing security verification” and Ray ID `a6011694bd059330`. It does not show a source address. These Ray IDs are not the 19:21 Work-executor probes above. No Cloudflare token was available, so Events was not queried and no Service, rule ID or source address was recorded. No exception was created.
