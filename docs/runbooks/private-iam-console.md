@@ -1,6 +1,8 @@
-# Private Keycloak browser-console readiness
+# Private Keycloak browser-console package
 
-Prepared 2026-11-25. This runbook and its checker do not establish a deployed private console, authenticated IAM administration or permission to change the running realm. Coordinate any eventual IAM/proxy work after Cursor's active Forward Email configuration and WordPress qualification handoff. No live service, SMTP setting, credential or image pin was changed to prepare this material.
+Prepared 2026-11-25. Round three supplies an executable optional private proxy, a workstation tunnel helper and disposable native acceptance. **The package is implemented; the actual staging browser route is not deployed or qualified by this document.** Local unit tests pass; native Docker/browser qualification has its own CI result. Coordinate protected installation after Cursor's Forward Email/WordPress handoff. This work changes no live service, realm SMTP, credential, issuer or production image pin.
+
+Keycloak is where an authorized IAM operator finds **Manage realms → Create realm**, and, after selecting the existing first-party realm, **Clients → Create client**, client callbacks, scopes, credentials and sessions. The AccessLobby product console on the web origin handles its own people, organizations and reviewed application requests; its roles do not grant Keycloak authority. First-party applications normally become clients in the existing first-party realm. Availability of Create realm is not AccessLobby support for arbitrary multi-realm customers. Follow the reviewed AccessLobby app-provisioning workflow so Keycloak and the application registry remain consistent.
 
 ## Current repository facts
 
@@ -37,36 +39,93 @@ Use the already-established protected host/operator channel. Discover the actual
 
 Do not print host IPs, credentials, full inspection data, cookies, authorization codes, private keys or complete authenticated browser URLs into evidence.
 
-## Minimal candidate with unchanged IAM hostname
+## Implemented optional companion with unchanged IAM hostname
 
-This is a candidate for protected fixture/operator qualification, not an already deployed route. It avoids changing the running IAM hostname or realm while Cursor's mail work is active.
+`infra/private-iam/render.py` generates a separate Compose package; `infra/private-iam/connect-proxy.mjs` provides a single-authority workstation connection. Neither deploys or changes IAM automatically. This bounded package uses an **existing master-realm administrator** at `/admin/master/console/`. Realm-local first-party administrator authentication is not included: the private proxy allows master authentication only. Use a dedicated administrator browser profile; ordinary first-party user authentication stays in the normal public browser profile.
 
 | Layer | Required candidate behavior |
 |---|---|
-| Dedicated private proxy | A proposed `iam-admin-private` service, separate and pinned, on `iam-edge`, using its own reviewed TLS configuration; publish only `127.0.0.1:9443:8443` on the host, with no Dokploy public domain label |
-| Upstream | Proxy to the existing `iam:8080`; overwrite Host and X-Forwarded-Host with the existing canonical IAM hostname, scheme HTTPS and canonical external port 443; remove untrusted Forwarded/prefix headers |
+| Dedicated private proxy | Generated `iam-admin-private`, on the exact inspected existing internal Compose `iam-edge`; publish only `127.0.0.1:9443:8443`, with no public domain label |
+| Upstream | Existing `iam:8080`; fixed canonical Host, forwarded host, HTTPS and canonical external port; untrusted Forwarded/prefix headers removed; mismatched Host/SNI denied |
 | Private allowed paths | Administrative console/API, master-realm authentication/discovery and required resources only; use normalized upstream URI forwarding as the current gateway does, and deny management and unrelated routes. The existing public `iam-gateway` stays unchanged |
-| TLS identity | Existing canonical IAM certificate or separately approved matching certificate, mounted read-only from the protected certificate route; certificate verification and renewal remain intact |
-| Workstation tunnel | Loopback-only SSH forwarding to that host-private proxy; canonical hostname and external port must remain consistent for the browser's complete flow |
-| Browser | A dedicated administrator profile and a reviewed private name-resolution/proxy mapping, so every canonical IAM request in that profile traverses the tunnel rather than public DNS |
+| TLS identity | Existing canonical certificate/key, mounted read-only at protected paths; actual trust, hostname, validity and key match checked; no key copy or permission change |
+| Workstation tunnel | SSH local loopback port to the host's private proxy; the local CONNECT helper forwards raw TLS only for the exact canonical IAM hostname and port |
+| Browser | Dedicated profile with the helper as its HTTP proxy; canonical URL, TLS SNI, authentication redirects, assets and callbacks stay unchanged; unrelated authorities are refused |
 
-For a canonical origin on port 443, a possible forwarding shape is:
+The renderer refuses non-HTTPS/unsafe origins, credentials or queries in inputs, unpinned images, non-internal/non-Compose IAM networks, unsafe key permissions, untrusted/wrong-name/expired or mismatched certificates, privileged published ports, existing output directories and output inside the repository. It inspects the selected network, rather than accepting an operator-written network assertion. Use the already recorded canonical issuer and actual network discovered above. Verify that they describe the running `iam`; the renderer does not grant authority to choose another issuer.
+
+Two certificate ownership modes avoid changing existing private-key access:
+
+| Existing key owner | Generated process/capability mode |
+|---|---|
+| Nonroot UID, mode0600 | Same UID/GID, single NGINX process, all capabilities dropped |
+| Root, mode0600 | Root NGINX master reads TLS; nginx workers UID/GID101; all capabilities dropped except SETUID/SETGID needed to drop worker identity |
+
+Both use a read-only filesystem, no-new-privileges, bounded worker-owned temporary filesystems, no access logging and the isolated network. Root mode checks the pinned image's actual nginx account is101. Explicit temporary mount ownership avoids adding CHOWN. Actual image configuration/startup and both modes are native-fixture checks, not conclusions from YAML alone. Other key ownership/certificate facilities require protected operator review; never copy an existing private key into this repository to satisfy a test.
+
+After the protected handoff, render into a **new absolute protected directory outside this repository**. The following are shapes with nonsecret placeholders, not commands already executed on staging:
 
 ```text
-ssh -N -L 127.0.0.1:443:127.0.0.1:9443 APPROVED_OPERATOR_HOST
+python3 infra/private-iam/render.py \
+  --canonical-origin https://APPROVED_CANONICAL_IAM_HOST \
+  --network ACTUAL_COMPOSE_IAM_EDGE_NETWORK \
+  --proxy-image REVIEWED_NGINX_GATEWAY_IMAGE_AT_SHA256 \
+  --certificate /PROTECTED_EXISTING_TLS/fullchain.pem \
+  --private-key /PROTECTED_EXISTING_TLS/privkey.pem \
+  --port 9443 \
+  --output-directory /PROTECTED_NEW_DIRECTORY/accesslobby-private-console
 ```
 
-This is a shape to review after the actual SSH identity/host and listener are known. It is not an executed command or an instruction to replace a current listener. Binding local 443 may need workstation privileges and may already be occupied. If it is unavailable, do not substitute a random browser port while assuming generated canonical redirects will follow it. The operator must choose and qualify an alternative.
+Use `--ca-file /PROTECTED_APPROVED_CA_BUNDLE` only for an explicitly approved private CA. Publicly trusted certificates use normal system trust. Run through the authorized host account able to read those protected files; do not pass passwords. Generated `compose.json` contains certificate **paths**, not key material, and is0600 in a0700 directory. A root-run renderer must be operated through that same protected account. Review its nonsecret config and preflight result privately, then check the actual pinned image configuration before starting the new service:
+
+```text
+docker compose -p accesslobby-private-console \
+  -f /PROTECTED_NEW_DIRECTORY/accesslobby-private-console/compose.json \
+  run --rm --no-deps iam-admin-private -t
+docker compose -p accesslobby-private-console \
+  -f /PROTECTED_NEW_DIRECTORY/accesslobby-private-console/compose.json \
+  up -d --no-build
+```
+
+Use this distinct Compose project/file; do not merge it into or recreate the main IAM stack. Confirm the actual host publication is127.0.0.1 only, the sole service network is the inspected internal `iam-edge`, TLS mounts are read-only and no public proxy label was introduced. Keep certificate renewal/reload ownership explicit.
+
+On the approved workstation:
+
+```text
+ssh -N -o ExitOnForwardFailure=yes \
+  -L 127.0.0.1:19443:127.0.0.1:9443 APPROVED_OPERATOR_HOST
+node infra/private-iam/connect-proxy.mjs \
+  --canonical-origin https://APPROVED_CANONICAL_IAM_HOST \
+  --tunnel-port 19443 --listen-port 18888
+```
+
+Choose verified free workstation ports. The helper binds127.0.0.1, refuses ordinary HTTP proxy requests and CONNECT to any other hostname/port, performs no remote DNS resolution and never terminates/inspects TLS. Configure **only the dedicated admin browser profile** to use HTTP proxy127.0.0.1:18888. Open `https://APPROVED_CANONICAL_IAM_HOST/admin/master/console/` there. The browser still uses canonical443; the tunnel's19443 is transport only. A non443 existing canonical origin must retain its exact port throughout. No local privileged443 bind, global hosts-file change or TLS bypass is required. Import an approved private CA into that isolated profile's actual trust store when needed; do not accept browser certificate errors.
 
 Keep private canonical hostname mapping limited to the dedicated admin workstation/profile. Other browsers and connected applications retain normal public DNS, the original issuer and the restricted public gateway. The private proxy's loopback port protects network reachability; possession of the existing authorized IAM credentials still protects administrative actions. Inspect both protections independently.
 
 A different private admin hostname is another design option. It requires an explicit `KC_HOSTNAME_ADMIN`/master-authentication/client-redirect and trusted-proxy review, full callback testing, and potentially IAM recreation. A master frontend-URL override can affect private CLI authentication and admin API audiences. Do not apply that route opportunistically during SMTP work or declare `hostname-admin` alone sufficient. First-party issuer and existing peer clients must remain unchanged.
 
-The repository's current runtime inventory policy expects no host-published IAM port. A candidate **new private proxy service** needs explicit inventory-policy review; it must never be mistaken for publishing `iam` itself or suppressing an unexpected public binding. No Compose or inventory exception is introduced by this runbook.
+The repository's current inventory policy expects no host-published **IAM** port. A new companion's explicitly loopback-only port needs its own inventory record; it must never be mistaken for publishing `iam` or suppressing an unexpected public binding. The production Compose/public gateway and their existing policies remain unchanged.
+
+## Disposable native acceptance
+
+From the repository with Docker, OpenSSL, Playwright Chromium and `certutil` available (`libnss3-tools` on Ubuntu), run:
+
+```text
+python3 -m unittest discover -s infra/private-iam -p 'test_*.py'
+node --test infra/private-iam/test_connect_proxy.mjs
+node infra/scripts/private-iam-console-live-smoke.mjs
+```
+
+The native script expects locally built `accesslobby-iam:ci` and `accesslobby-iam-gateway:ci`, overrideable with `IAM_IMAGE` and `GATEWAY_IMAGE`. Passwordless sudo is used only for freshly generated synthetic root-owned fixture files/package operation and exact temporary cleanup. It creates uniquely named owned containers/networks, its own PostgreSQL17.11, a production-mode actual Keycloak, a synthetic first-party realm and short-lived CA/certificate. It never uses the existing port8080 IAM, staging realm or SMTP. The public fixture wraps the actual gateway allowlist in TLS without modifying its source.
+
+Acceptance checks actual NGINX configuration/startup in both key modes, worker UID in root mode, port/network/mount/capability readback, trusted loopback TLS, Host denial, real browser master login through advertised canonical authentication, served console assets, visible realm/client creation controls without creating either, and console logout. Separate public-network TLS probes retain exact first-party discovery/JWKS and404 for admin/master/health/metrics before and after. Browser trust comes from a synthetic CA imported into an isolated NSS home; certificate verification remains enabled. Owned container IDs/network labels and distinct Compose projects fence cleanup; private keys, credentials and browser state are deleted.
+
+`artifacts/private-iam-console/report.json` contains safe categorical checks, failure phase, source and browser version. It contains no screenshots, keys, credentials, cookies or authenticated URLs. A pass qualifies this disposable fixture only. A missing Docker/browser prerequisite or failure is recorded as failed, never reclassified as a native pass. Local execution here passed6Python and4Node cases, including genuine loopback HTTPS trust/hostname/Host/SNI checks; Docker native execution remains CI-pending until its actual report passes.
 
 ## Read-only checker
 
-The prepared checker accepts an exact approved private HTTPS origin, the local tunnel IP and the pinned public first-party issuer. The private origin may contain a DNS name: TCP is forcibly connected to the supplied loopback IP, while the URL's Host header, SNI and certificate hostname verification are preserved. A public/private remote IP is rejected as the private connection target. Public issuer and denial checks use a separate normal HTTPS connection.
+The earlier credential-free checker accepts an exact approved private HTTPS origin, local loopback IP and pinned public issuer. It directly connects to the URL's canonical port, preserving Host/SNI/certificate checks. Consequently its invocation below applies only when an independently qualified mapping supplies that canonical port locally; it does **not** consume the new CONNECT helper or19443 tunnel directly. Do not point it at an invented private URL or assume it proves the browser package. The native fixture above tests the package itself. Public issuer and denial checks always use separate normal HTTPS connections.
 
 ```text
 python3 infra/scripts/private-iam-console-check.py \
@@ -96,6 +155,14 @@ After the protected candidate and checker pass, an authorized human must verify 
 
 Repeat first-party discovery/JWKS, actual consumer sign-in/logout and the public denials. Verify that SMTP configuration and delivery are unchanged by the private access work, and that the existing private metadata/provisioning helpers still work. Record exact source, image digests, hostname/proxy settings categorically, listener/network evidence, UTC time, browser version, acceptance result and remaining limits.
 
-Rollback removes only the newly qualified private proxy/tunnel/profile mapping and its dedicated configuration. Preserve IAM, databases, volumes, image pins, public gateway and realm SMTP. If a separate-hostname option was explicitly approved later, its exact recorded configuration must be restored before recreation and requalification. Do not delete realms, reimport the existing realm, reset credentials or redeploy unrelated services to close a browser-access test.
+Rollback closes the dedicated browser profile, stops the CONNECT helper and SSH tunnel, then removes only the separate companion:
+
+```text
+docker compose -p accesslobby-private-console \
+  -f /PROTECTED_NEW_DIRECTORY/accesslobby-private-console/compose.json \
+  down
+```
+
+Remove only its known generated directory through the protected account after evidence review. Preserve existing TLS files, external `iam-edge`, IAM, databases, volumes, images, public gateway and realm SMTP. Recheck original public issuer/JWKS and404 boundaries after cleanup. If a separate-hostname option was explicitly approved later, restore its exact recorded configuration before recreation/requalification. Do not delete realms, reimport the existing realm, reset credentials or redeploy unrelated services to close a browser-access test.
 
 Until this protected authenticated gate completes, the valid status remains **private browser console NOT QUALIFIED**. Existing private CLI administration remains the current operator route.

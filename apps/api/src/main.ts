@@ -15,6 +15,9 @@ import { ApplicationReviewStore } from './application-reviews.js';
 import { PersonControlStore } from './person-controls.js';
 import { ApplicationLifecycleStore } from './application-lifecycle.js';
 import { ActivationJobStore } from './activation-jobs.js';
+import { ApplicationSuspensionStore } from './application-suspension.js';
+import { SessionInspectionStore } from './session-inspection.js';
+import { OrganizationInspectionStore } from './organization-inspection.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
@@ -34,6 +37,9 @@ const applicationReviews = new ApplicationReviewStore(pool, operators);
 const personControls = new PersonControlStore(pool, operators);
 const applicationLifecycle = new ApplicationLifecycleStore(pool);
 const activationJobs = new ActivationJobStore(pool, operators);
+const applicationSuspension = new ApplicationSuspensionStore(pool, operators);
+const sessionInspection = new SessionInspectionStore(pool, operators);
+const organizationInspection = new OrganizationInspectionStore(pool, operators);
 
 @Controller()
 class ApiController {
@@ -175,9 +181,41 @@ class ApiController {
     return this.withPerson(req, res, id => personControls.change(id, personId, body), true);
   }
 
+  @Get('v1/admin/people/:personId/sessions')
+  operatorPersonSessions(@Req() req: any, @Res() res: any, @Param('personId') personId: string, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => sessionInspection.list(id, personId, after), true);
+  }
+
+  @Post('v1/admin/people/:personId/sessions/:handle/end')
+  @HttpCode(200)
+  operatorEndPersonSession(@Req() req: any, @Res() res: any, @Param('personId') personId: string,
+    @Param('handle') handle: string, @Body() body: any) {
+    return this.withPerson(req, res, id => sessionInspection.end(id, personId, handle, body), true);
+  }
+
   @Get('v1/admin/organizations')
   operatorOrganizations(@Req() req: any, @Res() res: any, @Query('q') q?: string, @Query('after') after?: string) {
     return this.withPerson(req, res, id => operators.organizations(id, q, after), true);
+  }
+
+  @Get('v1/admin/organizations/:organizationId')
+  operatorOrganizationDetail(@Req() req: any, @Res() res: any, @Param('organizationId') organizationId: string) {
+    return this.withPerson(req, res, id => organizationInspection.detail(id, organizationId), true);
+  }
+
+  @Get('v1/admin/organizations/:organizationId/members')
+  operatorOrganizationMembers(@Req() req: any, @Res() res: any, @Param('organizationId') organizationId: string, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => organizationInspection.members(id, organizationId, after), true);
+  }
+
+  @Get('v1/admin/organizations/:organizationId/invitations')
+  operatorOrganizationInvitations(@Req() req: any, @Res() res: any, @Param('organizationId') organizationId: string, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => organizationInspection.invitations(id, organizationId, after), true);
+  }
+
+  @Get('v1/admin/organizations/:organizationId/events')
+  operatorOrganizationEvents(@Req() req: any, @Res() res: any, @Param('organizationId') organizationId: string, @Query('after') after?: string) {
+    return this.withPerson(req, res, id => organizationInspection.events(id, organizationId, after), true);
   }
 
   @Get('v1/admin/audit')
@@ -193,6 +231,17 @@ class ApiController {
   @Get('v1/admin/applications/:applicationId')
   operatorApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
     return this.withPerson(req, res, id => applicationReviews.detail(id, appId), true);
+  }
+
+  @Get('v1/admin/applications/:applicationId/suspension')
+  operatorApplicationSuspension(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    return this.withPerson(req, res, id => applicationSuspension.detail(id, appId), true);
+  }
+
+  @Post('v1/admin/applications/:applicationId/suspension')
+  @HttpCode(200)
+  operatorSuspendApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => applicationSuspension.suspend(id, appId, body), true);
   }
 
   @Post('v1/admin/applications/:applicationId/review')

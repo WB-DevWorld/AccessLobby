@@ -76,6 +76,26 @@ Status changes use optimistic versions and audit atomically. Owner lifecycle mut
 
 Jobs pin configuration/review plus requester/reviewer/owner generations. Their public DTO never includes a lease token, IAM credential or session identifier. A protected worker rechecks current authority and fresh DNS, requires exact IAM readback and commits app activation/job success/audit atomically. A restored owner or role needs a fresh explicit authorized enqueue. Browser forms enqueue/status/retry only; the worker is not installed in the live deployment by this contract. There is no external activation or realm-creation permission. Safe stale/invalid conflicts use409, role denial403, unknown records404 and unavailable dependencies503. See [ADR016](adr/016-operator-controls-and-activation-jobs.md) and [runbook](runbooks/operator-round-2.md).
 
+
+## Operator round-three extension (implementation candidate, 2026-11-25)
+
+All routes retain the same first-party bearer/person/session and current database-role checks. New operator reads use no-store and paginated25row sections; new browser mutations require exact same-origin forms and explicit confirmation. No IAM administrative credential enters public web/API.
+
+| Endpoint | Meaning and authority |
+|---|---|
+| `GET /v1/admin/applications/:id/suspension` | `accesslobby.application-suspension.v0.1`; console read; stored status/administration version and actor-aware canSuspend |
+| `POST /v1/admin/applications/:id/suspension` | Current application_operator; expectedStatus=active, expectedVersion string, exact confirmationClientId and reference;200 with changed flag |
+| `GET /v1/admin/people/:id/sessions` | `accesslobby.admin.v0.1`; console read; current unexpired receipt-backed app groups, opaque handle/snapshot, optional after cursor |
+| `POST /v1/admin/people/:id/sessions/:handle/end` | Current identity_operator; expectedState/reference;200 ended/changed/receiptCount; no self/protected-operator targets |
+| `GET /v1/admin/organizations/:id` | Console read; stored details and participation counts |
+| `GET /v1/admin/organizations/:id/members`, `/invitations`, `/events` | Console read; organization-bound max25records/nextCursor, safe recorded fields only |
+
+Application suspension changes active first-party registry state and invalidates its receipts atomically with audit. The app/version and current actor authority are locked/rechecked; an exact retry is unchanged, stale state is409. Core service clients are protected. Receipt issuance serializes app-first with suspension, so a preflight cannot issue a surviving receipt after suspension. Grants, local accounts and IAM configuration remain separate; this profile adds no browser reinstatement or universal local-cookie logout.
+
+Session inspection never returns raw SID/provider subject/receipt hash/capability/token or inferred device/IP data. Ending removes only the inspected issuer/session/client receipt group; a metadata snapshot rejects changed records, and bounded idempotency tombstones prevent a retry from touching fresh reauthentication. Peers observe denial under their existing status/expiry/outage policy. IAM SSO, bearer validity and admission remain separate, so a person may authenticate again. Expired/unobserved/bearer-only sessions are not listed as current receipt groups.
+
+Organization detail is investigation, not ownership verification or recovery. Stored invitation states and expired-pending are distinguished. Unknown event text is generalized; no invitation secret or arbitrary event payload is exposed. Invalid cursors return400, unknown records404, authority denial403, stale mutations409 and unavailable dependencies503, under the existing authentication error contract. [ADR017](adr/017-operator-investigation-and-suspension.md) and [round-three runbook](runbooks/operator-round-3.md) define exact limits.
+
 ## Optional first-party session receipts (MVP-PROVISIONAL, alpha.4)
 
 This additive extension leaves ordinary `/v1/me` unchanged. A reviewed and admitted peer may send `x-accesslobby-session-receipt: 1` with its validated bearer. The optional `peerSession` contains contract `accesslobby.peer-session.v0.1`, an opaque 43-character capability, expiry, check interval30seconds and outage grace90seconds. The API binds its hash to issuer/client/person/sid and caps expiry at the bearer expiry and one hour. No refresh is supplied. An absent receipt on an older API means bounded legacy behavior; a malformed present receipt is an error.

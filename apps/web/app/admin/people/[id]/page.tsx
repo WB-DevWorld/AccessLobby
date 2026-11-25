@@ -28,6 +28,7 @@ export default async function AdminPerson({ params, searchParams }: {
   const canChange = context.access.capabilities.managePeople === true && context.personId !== person.id && !person.protectedOperator;
   return <AdminFrame active="people" title="Person record" description="Inspect participation and manage AccessLobby person status.">
     <Link className="text-link" href="/admin/people">Back to people</Link>
+    <p><Link className="text-link" href={`/admin/people/${id}/sessions`}>Inspect participating app sessions</Link></p>
     {notice && <p className="context-alert" role={success ? 'status' : 'alert'}>{notice}</p>}
     <section className="context-grid" aria-label="Person details">
       <SurfaceCard title="Durable identity"><dl className="admin-detail">
