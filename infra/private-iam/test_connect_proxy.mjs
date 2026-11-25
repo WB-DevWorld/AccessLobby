@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createConnectProxy, parseOrigin } from './connect-proxy.mjs';
 import { loopbackHttpsGet } from './loopback-https.mjs';
-import { errorCategory, logCategories } from './diagnostics.mjs';
+import { errorCategory, logCategories, startupFailureEvidence } from './diagnostics.mjs';
 
 test('unsafe origins, browser port substitution and unsafe target ports are refused', async () => {
   for (const value of ['http://iam.example.test', 'https://name:password@iam.example.test', 'https://iam.example.test/admin', 'https://iam.example.test?code=x', 'https://127.0.0.1', 'https://iam.example.test:80', 'https://iam.example.test:443']) assert.throws(() => parseOrigin(value));
@@ -109,4 +109,14 @@ test('failure evidence retains categories and never exception/log contents', () 
   assert.equal(JSON.stringify(categories).includes(secret), false);
   assert.equal(errorCategory({ code: 'ECONNREFUSED', message: secret }), 'econnrefused');
   assert.equal(errorCategory({ code: secret, category: secret, message: secret }), 'assertion_or_prerequisite_failed');
+});
+
+test('exact Keycloak26.7.4 import mismatch retains a precise safe cause', () => {
+  const secret = 'PRIVATE_PASSWORD_CANARY_DO_NOT_PUBLISH';
+  const log = `ERROR: Failed to start server in (production) mode\nERROR: File name / realm name mismatch. fixture-realm.json, contains realm ${secret}. File name should be ${secret}-realm.json\njava.lang.IllegalStateException: ${secret} /private/path?code=${secret}\nKC-SERVICES0050`;
+  const summary = startupFailureEvidence(log);
+  assert.equal(logCategories(log).realmFileNameMismatch, true);
+  assert.equal(logCategories(log).realmImportFailed, true);
+  assert.deepEqual(summary, { exceptionClasses: ['java.lang.IllegalStateException'], knownCauses: ['realm_filename_mismatch'], serverErrorCodes: ['KC-SERVICES0050'] });
+  for (const forbidden of [secret, '/private/path', 'fixture-realm.json', '?code=']) assert.equal(JSON.stringify(summary).includes(forbidden), false);
 });

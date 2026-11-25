@@ -11,7 +11,7 @@ import net from 'node:net';
 import { chromium } from 'playwright';
 import { createConnectProxy } from '../private-iam/connect-proxy.mjs';
 import { loopbackHttpsGet } from '../private-iam/loopback-https.mjs';
-import { errorCategory, logCategories } from '../private-iam/diagnostics.mjs';
+import { errorCategory, logCategories, startupFailureEvidence } from '../private-iam/diagnostics.mjs';
 
 const execute = promisify(execFile);
 const repository = resolve(new URL('../..', import.meta.url).pathname);
@@ -98,7 +98,7 @@ async function collectFailureDiagnostics() {
         const logs = await execute('docker', ['logs', '--tail', '80', id], { cwd: repository, env: childEnv, timeout: 10000, maxBuffer: 262144 });
         text = logs.stdout + logs.stderr;
       } catch {} // No raw logs or exception strings ever leave this function.
-      result[service] = { ...state, logCategories: logCategories(text) };
+      result[service] = { ...state, logCategories: logCategories(text), startupFailure: startupFailureEvidence(text) };
     } catch { result[service] = { inspectUnavailable: true }; }
   }
   return result;
@@ -209,9 +209,15 @@ try {
   const nonrootUid = process.getuid?.() || 65532;
   const nonrootGid = process.getgid?.() || 65532;
   if (process.getuid?.() === 0) await chown(join(work, 'tls.key'), nonrootUid, nonrootGid);
-  await writeFile(join(work, 'realm.json'), JSON.stringify({ realm: 'accesslobby-first-party', enabled: true,
+  const fixtureRealm = { realm: 'accesslobby-first-party', enabled: true,
     sslRequired: 'external', registrationAllowed: false, verifyEmail: false, resetPasswordAllowed: false,
-    clients: [], smtpServer: {} }), { mode: 0o644 });
+    clients: [], smtpServer: {} };
+  // Keycloak26.7.4 DirImportProvider derives the realm from this exact basename
+  // and throws on a mismatch with JSON.realm; this is a startup requirement.
+  const realmFilename = `${fixtureRealm.realm}-realm.json`;
+  assert.equal(realmFilename, 'accesslobby-first-party-realm.json');
+  await writeFile(join(work, realmFilename), JSON.stringify(fixtureRealm), { mode: 0o644 });
+  report.checks.importFilenameMatchesRealm = true;
   phase = 'fixture_networks';
   await createNetwork(networks.backend, { internal: true });
   await createNetwork(networks.edge, { internal: true, edge: true });
@@ -231,7 +237,7 @@ try {
     '-e', 'KC_DB_URL=jdbc:postgresql://private-db:5432/private_iam', '-e', 'KC_DB_USERNAME=private_iam', '-e', 'KC_DB_PASSWORD',
     '-e', `KC_HOSTNAME=${canonicalOrigin}`, '-e', 'KC_HTTP_ENABLED=true', '-e', 'KC_PROXY_HEADERS=xforwarded',
     '-e', 'KC_BOOTSTRAP_ADMIN_USERNAME=private-fixture-admin', '-e', 'KC_BOOTSTRAP_ADMIN_PASSWORD',
-    '--mount', `type=bind,src=${join(work, 'realm.json')},dst=/opt/keycloak/data/import/fixture-realm.json,readonly`,
+    '--mount', `type=bind,src=${join(work, realmFilename)},dst=/opt/keycloak/data/import/${realmFilename},readonly`,
     iamImage, 'start', '--import-realm'], id => docker(['network', 'connect', '--alias', 'iam', networks.edge, id]));
   // Fixture public TLS terminator retains the source gateway's exact allowlist.
   const publicSource = await readFile(join(repository, 'infra/iam-gateway/default.conf'), 'utf8');
