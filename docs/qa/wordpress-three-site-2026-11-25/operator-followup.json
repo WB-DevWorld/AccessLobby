@@ -1,0 +1,129 @@
+{
+  "date": "2026-11-25",
+  "evidenceType": "Published operator observations reviewed in Git; private host/browser flows not repeated by integrator",
+  "sourceCommits": {
+    "iamDiagnosis": "abe267a94a8af395e6f3d77f62630713f78e96c2",
+    "flairocAndMailAccess": "58c323a7bf2bc1223ec0af3f39ef5316b5db3bab",
+    "laneBoundary": "1e747287200d5846f8d65e4ad293cd23e179ef7f"
+  },
+  "mainAtReport": "de71ec978d9c5dcc2eaa4e3076eb7a7da94ed223",
+  "runtimeSource": "d875712",
+  "pluginVersion": "0.1.0-alpha.9",
+  "mode": "hybrid",
+  "jitEnabled": false,
+  "enforcedModeEnabled": false,
+  "flairoc": {
+    "customerId": 122,
+    "administratorSignedOutId": 77,
+    "administratorSiteLogout": {
+      "auditId": 4,
+      "at": 1795634208
+    },
+    "link": {
+      "provenance": "dual_proof",
+      "state": "active",
+      "accountLinkedAudit": 6,
+      "callbackAudit": 8,
+      "at": 1795634332
+    },
+    "role": "customer",
+    "userCount": 49,
+    "orderId": 4043,
+    "orderStatus": "on-hold",
+    "guestCheckout": false,
+    "comingSoon": true
+  },
+  "quietEntry": {
+    "from": "training.flairoc.com",
+    "to": "training.cetechbpa.com",
+    "localCustomerId": 45,
+    "authStartedAudit": 105,
+    "sessionStartedAudit": 106,
+    "callbackAudit": 107,
+    "startedAt": 1795634411,
+    "completedAt": 1795634414,
+    "passwordFormObserved": false
+  },
+  "siteOnlyIsolation": {
+    "flairocAudit": 9,
+    "at": 1795634496,
+    "trainingSessionStillAuthenticated": true
+  },
+  "sharedLogout": {
+    "initiator": "training.flairoc.com",
+    "requestedAt": 1795634819,
+    "flairocBackchannelAccepted": {
+      "auditId": 16,
+      "at": 1795634840
+    },
+    "trainingBackchannelAccepted": {
+      "auditId": 116,
+      "at": 1795634843
+    },
+    "targetRemovedBeforeNextTrainingPage": true,
+    "targetExpiry": 1795634994,
+    "targetSecondsRemainingAtDelivery": 151,
+    "independentControl": {
+      "callbackAudit": 115,
+      "authenticatedAt": 1795634775,
+      "expiresAt": 1795635075,
+      "checkedAt": 1795634870,
+      "secondsRemaining": 205,
+      "freshOrdersRequestAuthenticated": true,
+      "orderId": 50402,
+      "passwordFormObserved": false,
+      "sessionReconciledEndedObserved": false
+    }
+  },
+  "trainingPreservation": {
+    "customerId": 45,
+    "role": "customer",
+    "userCount": 39,
+    "orderId": 50402,
+    "orderStatus": "on-hold",
+    "guestCheckout": true,
+    "jitEnabled": false
+  },
+  "stagingScope": "Existing accepted link and flows preserved; last recorded audit23. No new simultaneous three-site logout or fresh staging-control proof claimed.",
+  "email": {
+    "provider": "Existing Forward Email account",
+    "senderAlias": "official@cetechbpa.com",
+    "otherSavedMailbox": "jane@cetechbpa.com",
+    "mxAtOperatorCheck": [
+      "mx1.forwardemail.net",
+      "mx2.forwardemail.net"
+    ],
+    "spfIncludesForwardEmail": true,
+    "checkedDkimNamesAbsent": [
+      "s1._domainkey",
+      "s2._domainkey",
+      "default._domainkey",
+      "forwardemail._domainkey"
+    ],
+    "providerDkimSelectorConfirmed": false,
+    "dnsChanged": false,
+    "smtpSettingsWritten": false,
+    "messageSent": false,
+    "genuineVerificationCompleted": false,
+    "emailVerifiedManuallySet": false,
+    "freshVerifiedJoinStarted": false,
+    "ownerSelectedAccessRoute": "Sign in to Forward Email in Cursor existing Edge qualification profile",
+    "signedInSessionConfirmed": false,
+    "existingCredentialsRotated": false
+  },
+  "governance": {
+    "issue59": "OPEN",
+    "issue72": "OPEN",
+    "consolePr": 73,
+    "consoleReservedMigrations": [
+      "009",
+      "010"
+    ],
+    "consoleReservedRoutes": [
+      "/v1/admin/*",
+      "/admin/*"
+    ],
+    "sharedLedgerAndContractOwner": "integrator",
+    "operatorBrowserRetestPerformed": false
+  }
+}
