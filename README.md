@@ -8,6 +8,8 @@ Any compatible application can consume the same [OIDC and identity contract](doc
 
 ## Local start
 
+The operator-console candidate adds protected `/admin` directories and independent application review. Platform roles are explicit database grants bootstrapped through a private CLI. Review approval remains separate from the existing private IAM activation checks; this source does not establish a live console deployment. See [operator setup](docs/runbooks/operator-console.md), [ADR 015](docs/adr/015-operator-console.md) and [parallel delivery rounds](docs/OPERATOR-DELIVERY-ROUNDS.md).
+
 Requirements: Node 24, pnpm 11.19, Docker Compose, Python 3.
 
 1. Copy `.env.example` to `.env`, fill four distinct strong passwords and a random `SESSION_SECRET`. Do not commit `.env`.

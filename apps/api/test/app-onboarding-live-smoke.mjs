@@ -8,6 +8,8 @@ import { Pool } from 'pg';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { ApplicationStore } from '../dist/applications.js';
 import { provisionApp, reconcileClient } from '../dist/provision-app.js';
+import { ApplicationReviewStore } from '../dist/application-reviews.js';
+import { OperatorStore } from '../dist/operators.js';
 import { suspendRegistry, disableIamClient } from '../dist/suspend-app.js';
 import { loadAppEntry, AppEntryError } from '../../../examples/reference-consumer/app-entry.mjs';
 import { mayViewPrivate } from '../../../examples/reference-consumer/policy.mjs';
@@ -171,6 +173,9 @@ try {
   assert.equal((await api('/v1/me', webTokens[0], 200)).person.id, owner);
   console.info('APP_ONBOARDING_PASS real-IAM-code-PKCE nonce JWKS stable-two-person-identity');
 
+  await pool.query(`INSERT INTO platform_operator_roles(person_id,role,grant_reference)
+    VALUES($1,'application_reviewer','ci-independent-reviewer')`, [visitor]);
+  const reviews = new ApplicationReviewStore(pool, new OperatorStore(pool));
   const fixtures = [];
   for (const admission of ['authenticated_open', 'grant_required']) {
     const clientId = `ci-${admission}-${randomUUID()}`;
@@ -189,6 +194,9 @@ try {
     await assert.rejects(apps.verifyOrigin(owner, requested.id), error => error.code === 'origin_proof_missing');
     proofs.set(requested.originVerificationHost, [[requested.originVerificationValue]]);
     await apps.verifyOrigin(owner, requested.id);
+    const reviewDetail = await reviews.detail(visitor, requested.id);
+    await reviews.record(visitor, requested.id, { decision: 'approved', reference: 'ci-review-fixture',
+      configurationHash: reviewDetail.application.configurationHash });
     proofs.delete(requested.originVerificationHost);
     await assert.rejects(provisionApp(pool, requested.id, '--activate-first-party', 'ci-review-fixture', options), /Current DNS origin proof/);
     proofs.set(requested.originVerificationHost, [[requested.originVerificationValue]]);

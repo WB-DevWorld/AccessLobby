@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { openIsolatedDatabase } from './isolated-database.js';
+import { recordFixtureApproval } from './application-review-fixture.js';
 import { ApplicationStore } from '../src/applications.js';
 import { proofValue } from '../src/origin-proof.js';
 import { matchesClient, provisionApp, reconcileClient, representation } from '../src/provision-app.js';
@@ -113,6 +114,7 @@ test('private activation joins DNS proof, IAM readback and registry admission',
       assert.equal(plan.client.clientId, clientId);
       assert.equal(await apps.allowedClient(clientId), false);
       await apps.verifyOrigin(owner, app.id);
+      await recordFixtureApproval(pool, app.id, 'review-1234');
       published = false;
       await assert.rejects(provisionApp(pool, app.id, '--activate-first-party', 'review-1234', options),
         /Current DNS origin proof required/);
