@@ -1,5 +1,11 @@
 # Execution ledger — MVP-0
 
+## IAM outbound route regression — 2026-11-25 UTC
+
+The operator reports training site-only logout/quiet re-entry, both shared-logout directions, signed origin POST200/backchannel_accepted before page access, and an independent Edge browser remaining signed in. Customer45, its dual-proof link/role/order50402 and39 users remain unchanged. Those successes required a temporary running-IAM attachment to accesslobby-accesslobbystaging-beass9_default after UnknownHostException/no default route; it disappears on recreation. This is runtime acceptance under a documented topology workaround, not durable network acceptance. Other WordPress linking/SSO/Join and recovery remain open.
+
+Source Compose currently gives IAM only internal backend/iam-edge networks. The old IAM CI starts on the normal default network and misses this condition. A new CI-only production-Compose-derived fixture boots real IAM/PostgreSQL, first reproduces the isolated legacy namespace, then requires declared outbound DNS/TLS and private ingress denial across IAM recreation. It uses synthetic configuration and never touches live projects. This first checkpoint is regression-only; source routing is not fixed or deployed yet. Relates to #59.
+
 ## Alpha.9 estate persistence and Cloudflare gate — 2026-11-24 UTC
 
 Operator c6c221ba7747c7248bb87034510bbf403b050622 reports exact alpha.9 ZIP6521df67 installed on all three sites, hybrid/JIT off. CETECH training preserves customer45, one dual-proof link, order50402 and39 users; the new session survives storefront requests and a peer recheck117 seconds after callback. Staging and FLAIROC remain unlinked and their browser flows stop on Cloudflare human verification. Quiet two-site SSO, AccessLobby-session logout, signed backchannel delivery, Join/JIT and recovery remain unqualified. Image pins and production are unchanged in that operator record.

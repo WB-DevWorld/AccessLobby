@@ -381,3 +381,16 @@ jobs:
               *) echo "Unexpected IAM path $path: $status"; exit 1 ;;
             esac
           done
+      - name: Verify production IAM outbound route and private boundary across recreation
+        env:
+          IAM_NETWORK_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          docker stop accesslobby-ci-iam
+          python3 infra/scripts/iam_network_smoke.py --iam-image accesslobby-iam:ci --output artifacts/iam-network/report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iam-network-smoke
+          path: artifacts/iam-network/report.json
+          if-no-files-found: warn
+          retention-days: 14
