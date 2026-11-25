@@ -11,7 +11,7 @@ import net from 'node:net';
 import { chromium } from 'playwright';
 import { createConnectProxy } from '../private-iam/connect-proxy.mjs';
 import { loopbackHttpsGet } from '../private-iam/loopback-https.mjs';
-import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence } from '../private-iam/diagnostics.mjs';
+import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence, disposableConfigDiagnostic } from '../private-iam/diagnostics.mjs';
 
 const execute = promisify(execFile);
 const repository = resolve(new URL('../..', import.meta.url).pathname);
@@ -39,20 +39,23 @@ const childEnv = { ...process.env, POSTGRES_PASSWORD: dbPassword, KC_DB_PASSWORD
   KC_BOOTSTRAP_ADMIN_PASSWORD: adminPassword };
 
 async function command(program, args, options = {}) {
+  const { captureDisposableConfigFailure = false, ...executionOptions } = options;
   try {
     const { stdout } = await execute(program, args, { cwd: repository, env: childEnv,
-      timeout: 120000, maxBuffer: 1024 * 1024, ...options });
+      timeout: 120000, maxBuffer: 1024 * 1024, ...executionOptions });
     return stdout.trim();
   } catch (error) {
     const failure = new Error('command_failed');
     failure.category = error.killed ? 'command_timeout' : typeof error.code === 'number' ? 'command_exit_nonzero' : 'command_unavailable';
     failure.safeCommandEvidence = commandFailureEvidence(error);
+    if (captureDisposableConfigFailure) failure.safeCommandEvidence.disposableConfigDiagnostic = disposableConfigDiagnostic(error,
+      [dbPassword, adminPassword, 'private-fixture-admin', work, project, token].filter(Boolean));
     throw failure; // Never echo arguments, stderr or auth URLs.
   }
 }
 async function docker(args, options) { return command('docker', args, options); }
-async function privileged(program, args) {
-  return process.getuid?.() === 0 ? command(program, args) : command('sudo', ['-n', program, ...args]);
+async function privileged(program, args, options) {
+  return process.getuid?.() === 0 ? command(program, args, options) : command('sudo', ['-n', program, ...args], options);
 }
 async function availablePort() {
   const server = net.createServer();
@@ -147,8 +150,9 @@ async function renderAndStart(keyFile, label, port, rootMode = false) {
   composeFiles.push({ compose, composeProject, rootMode });
   const composeCommand = ['compose', '-p', composeProject, '-f', compose];
   phase = `${label}_config_test`;
-  if (rootMode) await privileged('docker', [...composeCommand, 'run', '--rm', '--no-deps', 'iam-admin-private', '-t']);
-  else await docker([...composeCommand, 'run', '--rm', '--no-deps', 'iam-admin-private', '-t']);
+  const configTest = [...composeCommand, 'run', '--rm', '--no-deps', '-T', '--interactive=false', '--pull', 'never', 'iam-admin-private', '-t'];
+  if (rootMode) await privileged('docker', configTest, { captureDisposableConfigFailure: true });
+  else await docker(configTest, { captureDisposableConfigFailure: true });
   phase = `${label}_start`;
   if (rootMode) await privileged('docker', [...composeCommand, 'up', '-d', '--no-build']);
   else await docker([...composeCommand, 'up', '-d', '--no-build']);
@@ -192,6 +196,8 @@ try {
   }
   await docker(['image', 'inspect', iamImage]);
   await docker(['image', 'inspect', gatewayImage]);
+  const composeVersion = await docker(['compose', 'version', '--short']);
+  report.composeVersion = /^v?[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$/.test(composeVersion) ? composeVersion : 'unclassified';
   assert.equal(await docker(['run', '--rm', '--network', 'none', '--entrypoint', 'id', gatewayImage, '-u', 'nginx']), '101');
   assert.equal(await docker(['run', '--rm', '--network', 'none', '--entrypoint', 'id', gatewayImage, '-g', 'nginx']), '101');
   report.source = await command('git', ['rev-parse', 'HEAD']);
@@ -382,7 +388,8 @@ try {
   if (!cleaned) { report.passed = false; process.exitCode = 1; }
   report.completedAt = new Date().toISOString();
   await mkdir(resolve('artifacts/private-iam-console'), { recursive: true });
-  await writeFile(reportPath, JSON.stringify(report, null, 2) + '\n');
+  await writeFile(reportPath, JSON.stringify(report, null, 2) + '\n', { mode: 0o600 });
+  await chmod(reportPath, 0o600);
   process.stdout.write(JSON.stringify({ contract: report.contract, passed: report.passed,
     ...(report.failure ? { failurePhase: report.failure.phase } : {}), ownedResourcesCleaned: cleaned }) + '\n');
 }

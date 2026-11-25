@@ -11,6 +11,9 @@ The owner subsequently confirms only jane@cetechbpa.com is available and open in
 ## Owner-accelerated operator round 3 — four assigned lanes, 2026-11-25 UTC
 
 
+Head a1830e125b2e356d37a76e708022b5e9bc33c901 still failed nonroot_config_test after a healthy native IAM/public issuer/keys/TLS/denial baseline (artifact15064359988/run45705285116). Safe command exit1 had every known NGINX error bit false; it does not prove the previously corrected logging hazard caused this failure. The fixture config-test now explicitly disables terminal/stdin and image pulls after validating the local immutable image. A narrowly bounded, normalized disposable credential-free configuration diagnostic retains otherwise-unclassified CLI text after generated secrets/paths/names, URLs, emails, assignments, quoted values and opaque/token material are removed. No runtime environment/raw authenticated browser data is captured. Local6Python+8Node/syntax checks pass; actual native acceptance remains pending.
+
+
 Corrected-import head86efcf458418a4ace86f0443fadf9c9b7db2f7f1 now proves actual disposable IAM healthy and publicBefore exact issuer/JWKS200/trustedTLS/admin-master-health-metrics404 (artifact15064551969/run45703844648). Next failure was nonroot_config_test, commandexitnonzero, with complete owned cleanup. Command stderr had been discarded by its wrapper before one-off container removal, so that exact cause is not retrospectively asserted. The optional proxy now uses supported inherited stderr at startup/runtime (`nginx -e stderr`, `error_log stderr`) to avoid filesystem log reopening under nonroot/read-only execution. Safe fixed command classifications are captured before removal; TLS/bind/caps/rootfs policies remain enforced.6Python+7Node and syntax/whitespace pass; new native/whole-head CI remains pending.
 
 

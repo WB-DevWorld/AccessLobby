@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createConnectProxy, parseOrigin } from './connect-proxy.mjs';
 import { loopbackHttpsGet } from './loopback-https.mjs';
-import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence } from './diagnostics.mjs';
+import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence, disposableConfigDiagnostic } from './diagnostics.mjs';
 
 test('unsafe origins, browser port substitution and unsafe target ports are refused', async () => {
   for (const value of ['http://iam.example.test', 'https://name:password@iam.example.test', 'https://iam.example.test/admin', 'https://iam.example.test?code=x', 'https://127.0.0.1', 'https://iam.example.test:80', 'https://iam.example.test:443']) assert.throws(() => parseOrigin(value));
@@ -137,4 +137,20 @@ test('removed NGINX one-off command retains exact safe file/permission cause', (
   const tls = commandFailureEvidence({ code: 1, stderr: `cannot load certificate key "/protected/${secret}": Permission denied` });
   assert.equal(tls.nginx.tlsKeyLoadFailed, true);
   assert.equal(JSON.stringify(tls).includes(secret), false);
+});
+
+test('disposable CLI diagnostic identifies TTY/runtime failures and strips private values', () => {
+  const privateValue = 'smtp_generated_password_canary_512';
+  const hostPath = '/tmp/al-private-private123/package-nonroot/compose.json';
+  const error = { code: 1, stderr: `the input device is not a TTY\nError response from daemon: OCI runtime create failed: executable file not found in $PATH\nopen ${hostPath}: permission denied\nhttps://iam.example.test/admin/?code=unsafe\nDATABASE_URL=postgres://user:pass@db.example.test/private\n${privateValue}\nAccessToken=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlIn0.abcdef0123456789abcdef\n--service sha256:${'a'.repeat(64)}` };
+  const summary = commandFailureEvidence(error);
+  assert.equal(summary.cli.ttyUnavailable, true);
+  assert.equal(summary.cli.runtimeCreateFailed, true);
+  assert.equal(summary.cli.executableMissing, true);
+  const diagnostic = disposableConfigDiagnostic(error, [privateValue, '/tmp/al-private-private123', 'private123']);
+  assert.equal(diagnostic[0], 'the input device is not a TTY');
+  assert.ok(diagnostic.some(line => line.includes('executable file not found')));
+  const text = JSON.stringify(diagnostic);
+  for (const forbidden of [hostPath, 'iam.example.test', 'code=unsafe', privateValue, 'postgres://', 'user:pass', 'eyJhbGciOiJSUzI1NiJ9', 'a'.repeat(64), 'private123']) assert.equal(text.includes(forbidden), false);
+  assert.ok(diagnostic.length <= 12 && diagnostic.every(line => line.length <= 240));
 });

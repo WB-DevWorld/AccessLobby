@@ -82,5 +82,37 @@ export function nginxFailureEvidence(value) {
 export function commandFailureEvidence(error) {
   const value = String(error?.stdout || '').slice(0, 262144) + '\n' + String(error?.stderr || '').slice(0, 262144);
   return { exitCode: Number.isInteger(error?.code) && error.code >= 0 && error.code <= 255 ? error.code : null,
-    logCategories: logCategories(value), startupFailure: startupFailureEvidence(value), nginx: nginxFailureEvidence(value) };
+    logCategories: logCategories(value), startupFailure: startupFailureEvidence(value), nginx: nginxFailureEvidence(value),
+    cli: {
+      ttyUnavailable: /input device is not a TTY|cannot enable tty mode|not a terminal/i.test(value),
+      unknownFlag: /unknown flag|unknown shorthand flag|flag provided but not defined/i.test(value),
+      composeConfigurationInvalid: /validating .*compose|additional propert|must be a (?:mapping|list|number|string)|invalid compose project/i.test(value),
+      composeFileReadFailed: /(?:open|read).*compose\.json.*(?:permission denied|no such file)|compose\.json.*(?:permission denied|no such file)/i.test(value),
+      daemonUnavailable: /Cannot connect to the Docker daemon|error during connect|docker daemon is not running/i.test(value),
+      runtimeCreateFailed: /OCI runtime create failed|failed to create (?:task|shim)|unable to start container process/i.test(value),
+      executableMissing: /executable file not found|exec format error/i.test(value),
+      imageResolutionFailed: /pull access denied|failed to (?:pull|resolve).*image|No such image|manifest.*not found|invalid reference format/i.test(value),
+    } };
+}
+
+// Only for this disposable, credential-free `nginx -t` invocation. No caller
+// may use this to retain authenticated browser/server output or generic logs.
+export function disposableConfigDiagnostic(error, knownPrivateValues = []) {
+  let value = String(error?.stderr || '').slice(0, 16384) + '\n' + String(error?.stdout || '').slice(0, 16384);
+  value = value.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '').replace(/[^\x09\x0a\x0d\x20-\x7e]/g, '');
+  for (const privateValue of knownPrivateValues) {
+    if (typeof privateValue === 'string' && privateValue.length) value = value.split(privateValue).join('[private]');
+  }
+  return value.split(/\r?\n/).filter(line => line.trim()).slice(0, 12).map(line => {
+    if (/\b(?:authorization|password|passwd|secret|token|cookie|credentials?|smtp)\b|private[ _-]?key|-----BEGIN/i.test(line)) return '[sensitive line omitted]';
+    return line
+      .replace(/[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+/gi, '[url]')
+      .replace(/\b[A-Z][A-Z0-9_]{2,}=(?:"[^"]*"|'[^']*'|[^\s]+)/g, '[environment]')
+      .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]')
+      .replace(/(?:[A-Za-z]:)?\/(?:[^\s"'<>]+)/g, '[path]')
+      .replace(/["'][^"']*["']/g, '[value]')
+      .replace(/\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/g, '[ip]')
+      .replace(/[A-Za-z0-9+_=.\/-]{24,}/g, '[opaque]')
+      .slice(0, 240);
+  });
 }
