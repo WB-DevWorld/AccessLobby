@@ -13,7 +13,7 @@ Based on qualified PR75 head750f51a890d65d3b17306b7d47e2f8f2012880fc; feat/opera
 | Python existing infrastructure |77PASS |
 | Private-client/email JS retained |16PASS from the qualified baseline; unchanged source |
 | New private package Python/OpenSSL |6PASS |
-| New exact-authority CONNECT/loopback actual TLS |4NodePASS |
+| New exact-authority CONNECT/loopback actual TLS |5NodePASS |
 | Native private-console script |SyntaxPASS; actual Docker/IAM/browser execution pending CI |
 
 The application tests total157; joined browser groups total42. Private package checks exercise actual OpenSSL trust/hostname/key permissions and actual loopback TLS, including untrusted CA, wrong hostname and wrong CONNECT authority refusal. They do not replace real Keycloak administrative login.
@@ -23,3 +23,5 @@ Joined tests prove current role denial, actual28member organization paging/invit
 Native client-side navigation initially needed an explicit URL wait. Visual review then widened the stored-ID cells on mobile and made the suspended-page capture wait for completed server rendering. The revised build/new7group browser run passes, with organization360/1440, association and suspended-state screenshots retained as local/CI artifacts. No customer data is in these fixtures. Runtime used Node24.22.3, pnpm11.25.0, temporary PostgreSQL17.11/Chromium158; CI supplies its pinned runtime/Docker fixture.
 
 Not established locally: native IAM console authentication, current staging route, actual host certificate/tunnel, new live operator permissions, app/session effects on real consumers, image promotion or production acceptance. The optional private package is source preparation, and Cursor's independently accepted mail/WordPress tests remain a separate lane.
+
+First published ef889338 passed13/14checks, including general/WordPress/theme/security. Its new private-console fixture failed before login (fixture_topology), with owned cleanup confirmed. Exact cause was not established. Follow-up retains the assertions and actual TLS validation while replacing the extra curl-container probe path with a separate public loopback TLS endpoint, bounded startup readiness and safe service/error diagnostics. Targeted6Python+5Node and native syntax checks pass. The next native CI remains the required administrative-login verdict; no live host route is inferred.

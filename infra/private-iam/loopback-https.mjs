@@ -3,7 +3,7 @@ import https from 'node:https';
 import tls from 'node:tls';
 import { parseOrigin } from './connect-proxy.mjs';
 
-export async function loopbackHttpsGet({ canonicalOrigin, tunnelPort, ca, path, hostOverride }) {
+export async function loopbackHttpsGet({ canonicalOrigin, tunnelPort, ca, path, hostOverride, collectBody = false }) {
   const { origin } = parseOrigin(canonicalOrigin);
   const canonical = new URL(origin);
   if (!Number.isInteger(tunnelPort) || tunnelPort < 1024 || tunnelPort > 65535 ||
@@ -17,8 +17,14 @@ export async function loopbackHttpsGet({ canonicalOrigin, tunnelPort, ca, path, 
       path, method: 'GET', agent, headers: { Host: hostOverride || canonical.host } }, response => {
       const authorized = response.socket.authorized === true;
       let bytes = 0;
-      response.on('data', data => { bytes += data.length; if (bytes > 262144) request.destroy(new Error('bounded_response')); });
-      response.on('end', () => { agent.destroy(); resolve({ status: response.statusCode, authorized }); });
+      const chunks = [];
+      response.on('data', data => {
+        bytes += data.length;
+        if (bytes > 262144) request.destroy(new Error('bounded_response'));
+        else if (collectBody) chunks.push(data);
+      });
+      response.on('end', () => { agent.destroy(); resolve({ status: response.statusCode, authorized,
+        ...(collectBody ? { body: Buffer.concat(chunks).toString('utf8') } : {}) }); });
       response.on('error', () => { agent.destroy(); reject(new Error('probe_response_failed')); });
     });
     request.setTimeout(8000, () => request.destroy(new Error('probe_timeout')));

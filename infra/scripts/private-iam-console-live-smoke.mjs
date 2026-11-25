@@ -11,6 +11,7 @@ import net from 'node:net';
 import { chromium } from 'playwright';
 import { createConnectProxy } from '../private-iam/connect-proxy.mjs';
 import { loopbackHttpsGet } from '../private-iam/loopback-https.mjs';
+import { errorCategory, logCategories } from '../private-iam/diagnostics.mjs';
 
 const execute = promisify(execFile);
 const repository = resolve(new URL('../..', import.meta.url).pathname);
@@ -27,10 +28,11 @@ const report = { contract: 'accesslobby.private-iam-native.v1', disposable: true
 const iamImage = process.env.IAM_IMAGE || 'accesslobby-iam:ci';
 const gatewayImage = process.env.GATEWAY_IMAGE || 'accesslobby-iam-gateway:ci';
 let phase = 'prerequisites';
-let work, browser, helper;
+let work, browser, helper, publicPort;
 const createdContainers = [];
 const createdNetworks = [];
 const composeFiles = [];
+const ownedServices = new Map();
 const dbPassword = randomBytes(24).toString('hex');
 const adminPassword = randomBytes(24).toString('hex');
 const childEnv = { ...process.env, POSTGRES_PASSWORD: dbPassword, KC_DB_PASSWORD: dbPassword,
@@ -41,7 +43,11 @@ async function command(program, args, options = {}) {
     const { stdout } = await execute(program, args, { cwd: repository, env: childEnv,
       timeout: 120000, maxBuffer: 1024 * 1024, ...options });
     return stdout.trim();
-  } catch { throw new Error('command_failed'); } // Never echo arguments, stderr or auth URLs.
+  } catch (error) {
+    const failure = new Error('command_failed');
+    failure.category = error.killed ? 'command_timeout' : typeof error.code === 'number' ? 'command_exit_nonzero' : 'command_unavailable';
+    throw failure; // Never echo arguments, stderr or auth URLs.
+  }
 }
 async function docker(args, options) { return command('docker', args, options); }
 async function privileged(program, args) {
@@ -54,11 +60,13 @@ async function availablePort() {
   await new Promise(resolveClose => server.close(resolveClose));
   return port;
 }
-async function addContainer(name, args) {
+async function addContainer(name, args, beforeStart) {
   const id = await docker(['create', '--name', name, '--label', `accesslobby.private-fixture=${token}`, ...args]);
   assert.match(id, /^[a-f0-9]{64}$/);
   createdContainers.push(id);
+  ownedServices.set(name === names.db ? 'database' : name === names.iam ? 'iam' : 'public_gateway', id);
   assert.equal(await docker(['inspect', '--format', '{{index .Config.Labels "accesslobby.private-fixture"}}', id]), token);
+  if (beforeStart) await beforeStart(id);
   await docker(['start', id]);
 }
 async function createNetwork(name, { internal = false, edge = false } = {}) {
@@ -70,28 +78,53 @@ async function createNetwork(name, { internal = false, edge = false } = {}) {
   createdNetworks.push(id);
 }
 async function publicGet(path) {
-  const output = await docker(['run', '--rm', '--network', networks.public,
-    '--mount', `type=bind,src=${join(work, 'ca.crt')},dst=/fixture-ca.crt,readonly`,
-    'curlimages/curl:8.16.0', '--silent', '--show-error', '--max-time', '8', '--max-filesize', '262144',
-    '--cacert', '/fixture-ca.crt', '--write-out', '\n%{http_code}', canonicalOrigin + path]);
-  const marker = output.lastIndexOf('\n');
-  return { status: Number(output.slice(marker + 1)), body: output.slice(0, marker) };
+  const result = await loopbackHttpsGet({ canonicalOrigin, tunnelPort: publicPort,
+    ca: await readFile(join(work, 'ca.crt')), path, collectBody: true });
+  assert.equal(result.authorized, true);
+  return result;
+}
+async function containerState(id) {
+  const value = JSON.parse(await docker(['inspect', '--format', '{{json .State}}', id], { timeout: 10000 }));
+  return { running: value.Running === true, status: ['created', 'running', 'paused', 'restarting', 'removing', 'exited', 'dead'].includes(value.Status) ? value.Status : 'unknown',
+    exitCode: Number.isInteger(value.ExitCode) ? value.ExitCode : null, oomKilled: value.OOMKilled === true };
+}
+async function collectFailureDiagnostics() {
+  const result = {};
+  for (const [service, id] of ownedServices) {
+    try {
+      const state = await containerState(id);
+      let text = '';
+      try {
+        const logs = await execute('docker', ['logs', '--tail', '80', id], { cwd: repository, env: childEnv, timeout: 10000, maxBuffer: 262144 });
+        text = logs.stdout + logs.stderr;
+      } catch {} // No raw logs or exception strings ever leave this function.
+      result[service] = { ...state, logCategories: logCategories(text) };
+    } catch { result[service] = { inspectUnavailable: true }; }
+  }
+  return result;
 }
 async function publicBoundary(label) {
+  report.publicBoundaries ||= {};
+  const observations = report.publicBoundaries[label] = {};
   const discovery = await publicGet('/realms/accesslobby-first-party/.well-known/openid-configuration');
+  observations.discoveryStatus = discovery.status;
   assert.equal(discovery.status, 200);
   const metadata = JSON.parse(discovery.body);
   assert.equal(metadata.issuer, issuer);
+  observations.exactIssuer = true;
   for (const key of ['authorization_endpoint', 'token_endpoint', 'jwks_uri', 'end_session_endpoint']) {
     const url = new URL(metadata[key]);
     assert.equal(url.origin, canonicalOrigin);
     assert.ok(url.pathname.startsWith('/realms/accesslobby-first-party/'));
   }
   const keys = await publicGet(new URL(metadata.jwks_uri).pathname);
+  observations.jwksStatus = keys.status;
   assert.equal(keys.status, 200);
   assert.ok(JSON.parse(keys.body).keys.length > 0);
-  for (const path of ['/admin/', '/admin/master/console/', '/realms/master/.well-known/openid-configuration', '/health', '/metrics']) {
-    assert.equal((await publicGet(path)).status, 404);
+  for (const [name, path] of Object.entries({ adminRoot: '/admin/', adminConsole: '/admin/master/console/', masterDiscovery: '/realms/master/.well-known/openid-configuration', health: '/health', metrics: '/metrics' })) {
+    const result = await publicGet(path);
+    observations[name] = result.status;
+    assert.equal(result.status, 404);
   }
   report.checks[label] = true;
 }
@@ -120,6 +153,7 @@ async function renderAndStart(keyFile, label, port, rootMode = false) {
   else await docker([...composeCommand, 'up', '-d', '--no-build']);
   const id = rootMode ? await privileged('docker', [...composeCommand, 'ps', '-q', 'iam-admin-private']) : await docker([...composeCommand, 'ps', '-q', 'iam-admin-private']);
   assert.match(id, /^[a-f0-9]{12,64}$/);
+  ownedServices.set(`private_${label}`, id);
   phase = `${label}_isolation`;
   const inspected = JSON.parse(await docker(['inspect', id]))[0];
   const binding = inspected.HostConfig.PortBindings['8443/tcp'];
@@ -178,40 +212,61 @@ try {
   await writeFile(join(work, 'realm.json'), JSON.stringify({ realm: 'accesslobby-first-party', enabled: true,
     sslRequired: 'external', registrationAllowed: false, verifyEmail: false, resetPasswordAllowed: false,
     clients: [], smtpServer: {} }), { mode: 0o644 });
-  phase = 'fixture_topology';
+  phase = 'fixture_networks';
   await createNetwork(networks.backend, { internal: true });
   await createNetwork(networks.edge, { internal: true, edge: true });
   await createNetwork(networks.public);
-  await addContainer(names.db, ['--network', networks.backend, '--network-alias', 'private-db',
+  phase = 'database_create_start';
+  await addContainer(names.db, ['--memory', '512m', '--network', networks.backend, '--network-alias', 'private-db',
     '-e', 'POSTGRES_DB=private_iam', '-e', 'POSTGRES_USER=private_iam', '-e', 'POSTGRES_PASSWORD', 'postgres:17.11']);
+  phase = 'database_readiness';
   for (let i = 0; i < 60; i++) {
     try { await docker(['exec', names.db, 'pg_isready', '-U', 'private_iam', '-d', 'private_iam']); break; } catch {}
     if (i === 59) throw new Error('postgres_not_ready');
     await new Promise(resolveWait => setTimeout(resolveWait, 500));
   }
-  await addContainer(names.iam, ['--network', networks.backend, '-e', 'KC_DB=postgres',
+  report.checks.fixtureDatabaseReady = true;
+  phase = 'iam_create_start';
+  await addContainer(names.iam, ['--memory', '1536m', '--network', networks.backend, '-e', 'KC_DB=postgres',
     '-e', 'KC_DB_URL=jdbc:postgresql://private-db:5432/private_iam', '-e', 'KC_DB_USERNAME=private_iam', '-e', 'KC_DB_PASSWORD',
     '-e', `KC_HOSTNAME=${canonicalOrigin}`, '-e', 'KC_HTTP_ENABLED=true', '-e', 'KC_PROXY_HEADERS=xforwarded',
     '-e', 'KC_BOOTSTRAP_ADMIN_USERNAME=private-fixture-admin', '-e', 'KC_BOOTSTRAP_ADMIN_PASSWORD',
     '--mount', `type=bind,src=${join(work, 'realm.json')},dst=/opt/keycloak/data/import/fixture-realm.json,readonly`,
-    iamImage, 'start', '--import-realm']);
-  await docker(['network', 'connect', '--alias', 'iam', networks.edge, names.iam]);
+    iamImage, 'start', '--import-realm'], id => docker(['network', 'connect', '--alias', 'iam', networks.edge, id]));
   // Fixture public TLS terminator retains the source gateway's exact allowlist.
   const publicSource = await readFile(join(repository, 'infra/iam-gateway/default.conf'), 'utf8');
   assert.equal((publicSource.match(/listen 8080;/g) || []).length, 1);
   const publicConfig = publicSource.replace('listen 8080;', 'listen 8443 ssl;\n    ssl_certificate /fixture/tls.crt;\n    ssl_certificate_key /fixture/tls.key;\n    ssl_protocols TLSv1.2 TLSv1.3;')
     .replaceAll('X-Forwarded-Port 443;', 'X-Forwarded-Port 8443;');
   await writeFile(join(work, 'public.conf'), publicConfig, { mode: 0o644 });
-  await addContainer(names.public, ['--network', networks.edge,
+  phase = 'public_gateway_create_start';
+  publicPort = await availablePort();
+  await addContainer(names.public, ['--network', networks.edge, '--publish', `127.0.0.1:${publicPort}:8443`,
     '--mount', `type=bind,src=${join(work, 'public.conf')},dst=/etc/nginx/conf.d/default.conf,readonly`,
     '--mount', `type=bind,src=${join(work, 'tls.crt')},dst=/fixture/tls.crt,readonly`,
-    '--mount', `type=bind,src=${join(work, 'tls.key')},dst=/fixture/tls.key,readonly`, gatewayImage]);
-  await docker(['network', 'connect', '--alias', canonicalHost, networks.public, names.public]);
-  for (let i = 0; i < 90; i++) {
-    try { if ((await publicGet('/realms/accesslobby-first-party/.well-known/openid-configuration')).status === 200) break; } catch {}
-    if (i === 89) throw new Error('iam_not_ready');
+    '--mount', `type=bind,src=${join(work, 'tls.key')},dst=/fixture/tls.key,readonly`, gatewayImage],
+    id => docker(['network', 'connect', '--alias', canonicalHost, networks.public, id]));
+  const publicBinding = JSON.parse(await docker(['inspect', '--format', '{{json .HostConfig.PortBindings}}', names.public]));
+  assert.deepEqual(publicBinding['8443/tcp'], [{ HostIp: '127.0.0.1', HostPort: String(publicPort) }]);
+  report.checks.distinctPublicGatewayLoopbackBinding = true;
+  phase = 'public_issuer_readiness';
+  const readinessDeadline = Date.now() + 90000;
+  for (let i = 0; ; i++) {
+    try {
+      const result = await publicGet('/realms/accesslobby-first-party/.well-known/openid-configuration');
+      report.lastPublicProbe = { attempt: i + 1, status: result.status, trustedTls: result.authorized };
+      if (result.status === 200) break;
+    } catch (error) { report.lastPublicProbe = { attempt: i + 1, category: errorCategory(error) }; }
+    if (Date.now() >= readinessDeadline) throw new Error('iam_not_ready');
+    if (i % 4 === 0) {
+      for (const service of ['iam', 'public_gateway']) {
+        const state = await containerState(ownedServices.get(service));
+        if (!state.running || state.oomKilled) throw new Error('fixture_service_exited');
+      }
+    }
     await new Promise(resolveWait => setTimeout(resolveWait, 750));
   }
+  phase = 'public_before';
   await publicBoundary('publicBefore');
   phase = 'nonroot_private_proxy';
   const nonrootPort = await availablePort();
@@ -284,8 +339,9 @@ try {
   phase = 'public_after';
   await publicBoundary('publicAfter');
   report.passed = true;
-} catch {
-  report.failure = { phase, category: 'assertion_or_prerequisite_failed' };
+} catch (error) {
+  report.failure = { phase, category: errorCategory(error) };
+  report.servicesAtFailure = await collectFailureDiagnostics();
   process.exitCode = 1;
 } finally {
   phase = 'cleanup';
