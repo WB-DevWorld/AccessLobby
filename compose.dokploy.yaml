@@ -50,7 +50,9 @@ services:
       KC_METRICS_ENABLED: "true"
     volumes: ["../files/keycloak-import:/opt/keycloak/data/import:ro"]
     expose: ["8080"]
-    networks: [backend, iam-edge]
+    # Outbound DNS/HTTPS is required for signed logout delivery to registered peers.
+    # This dedicated bridge is not the shared Dokploy proxy network. Publish no ports.
+    networks: [backend, iam-edge, iam-egress]
     depends_on:
       iam-db: { condition: service_healthy }
 
@@ -131,6 +133,9 @@ networks:
     internal: true
   iam-edge:
     internal: true
+  iam-egress:
+    driver: bridge
+    internal: false
 volumes:
   iam_data:
   identity_data:

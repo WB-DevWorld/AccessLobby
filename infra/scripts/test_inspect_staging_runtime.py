@@ -31,7 +31,7 @@ def complete_inventory(manifest):
         image = images[image_key] if image_key else "postgres:17.11"
         networks = [MAIN + "_backend"]
         if service == "iam":
-            networks.append(MAIN + "_iam-edge")
+            networks.extend([MAIN + "_iam-edge", MAIN + "_iam-egress"])
         if service == "iam-gateway":
             networks = [MAIN + "_iam-edge", "dokploy-network"]
         if service in {"api", "web"}:
@@ -44,13 +44,22 @@ def complete_inventory(manifest):
     return {"main": main, "consumer": consumer}
 
 
+def complete_network_inventory():
+    return [{"name": MAIN + "_" + name, "driver": "bridge", "internal": internal, "peerCount": peers}
+            for name, internal, peers in (("backend", True, 5), ("iam-edge", True, 2),
+                                          ("iam-egress", False, 1))]
+
+
 class RuntimeInventoryTests(unittest.TestCase):
     def setUp(self):
         self.manifest = inspector.load_manifest(MANIFEST)
         self.projects = {"main": MAIN, "consumer": CONSUMER}
 
+    def assess(self, inventory):
+        return inspector.assess(self.manifest, self.projects, inventory, complete_network_inventory())
+
     def test_complete_digest_pinned_private_topology_passes_without_exporting_environment(self):
-        report = inspector.assess(self.manifest, self.projects, complete_inventory(self.manifest))
+        report = self.assess(complete_inventory(self.manifest))
         self.assertTrue(report["passed"])
         self.assertEqual(len(report["services"]), 9)
         self.assertNotIn("never-export-this", json.dumps(report))
@@ -63,7 +72,7 @@ class RuntimeInventoryTests(unittest.TestCase):
         by_service["iam-config"]["exitCode"] = 1
         by_service["iam-db"]["networks"]["dokploy-network"] = {}
         by_service["iam-db"]["ports"]["5432/tcp"] = [{"HostPort": "5432"}]
-        report = inspector.assess(self.manifest, self.projects, inventory)
+        report = self.assess(inventory)
         self.assertFalse(report["passed"])
         self.assertEqual({item["code"] for item in report["failures"]},
                          {"image_ref_mismatch", "job_not_completed", "private_network_mismatch",
@@ -73,14 +82,14 @@ class RuntimeInventoryTests(unittest.TestCase):
         inventory = complete_inventory(self.manifest)
         inventory["consumer"].clear()
         inventory["main"].append(inventory["main"][0])
-        report = inspector.assess(self.manifest, self.projects, inventory)
+        report = self.assess(inventory)
         self.assertEqual({item["code"] for item in report["failures"]},
                          {"missing_service", "duplicate_service"})
 
     def test_database_without_health_result_fails(self):
         inventory = complete_inventory(self.manifest)
         inventory["main"][0]["health"] = None
-        report = inspector.assess(self.manifest, self.projects, inventory)
+        report = self.assess(inventory)
         self.assertEqual([item["code"] for item in report["failures"]],
                          ["database_not_healthy"])
 
@@ -105,10 +114,60 @@ class RuntimeInventoryTests(unittest.TestCase):
                     "--consumer-project", CONSUMER, "--manifest", str(MANIFEST),
                     "--output", str(output)]
             with patch("sys.argv", argv), patch.object(inspector, "inventory",
-                                                      side_effect=[inventory["main"], inventory["consumer"]]):
+                                                      side_effect=[inventory["main"], inventory["consumer"]]), \
+                    patch.object(inspector, "network_inventory", return_value=complete_network_inventory()):
                 self.assertEqual(inspector.main(), 0)
             self.assertEqual(stat.S_IMODE(os.stat(output).st_mode), 0o600)
             self.assertTrue(json.loads(output.read_text())["passed"])
+
+    def test_missing_egress_or_temporary_default_or_proxy_attachment_fails(self):
+        for networks in ([MAIN + "_backend", MAIN + "_iam-edge"],
+                         [MAIN + "_backend", MAIN + "_iam-edge", MAIN + "_default"],
+                         [MAIN + "_backend", MAIN + "_iam-edge", MAIN + "_iam-egress", "dokploy-network"]):
+            with self.subTest(networks=networks):
+                inventory = complete_inventory(self.manifest)
+                iam = next(item for item in inventory["main"] if item["service"] == "iam")
+                iam["networks"] = {name: {} for name in networks}
+                report = self.assess(inventory)
+                self.assertFalse(report["passed"])
+                self.assertIn("private_network_mismatch", {item["code"] for item in report["failures"]})
+
+    def test_another_service_may_not_share_the_iam_egress_bridge(self):
+        for service in ("iam-db", "api", "iam-gateway", "consumer"):
+            with self.subTest(service=service):
+                inventory = complete_inventory(self.manifest)
+                target = next(item for items in inventory.values() for item in items if item["service"] == service)
+                target["networks"][MAIN + "_iam-egress"] = {}
+                report = self.assess(inventory)
+                self.assertIn("iam_egress_not_exclusive", {item["code"] for item in report["failures"]})
+
+    def test_actual_network_isolation_driver_and_external_peer_count_are_checked(self):
+        for name, field, value, code in (
+            ("backend", "internal", False, "network_isolation_mismatch"),
+            ("iam-edge", "internal", False, "network_isolation_mismatch"),
+            ("iam-egress", "internal", True, "network_isolation_mismatch"),
+            ("iam-egress", "driver", "host", "network_isolation_mismatch"),
+            ("iam-egress", "peerCount", 2, "iam_egress_not_exclusive"),
+        ):
+            with self.subTest(name=name, field=field):
+                networks = complete_network_inventory()
+                next(item for item in networks if item["name"] == MAIN + "_" + name)[field] = value
+                report = inspector.assess(self.manifest, self.projects, complete_inventory(self.manifest), networks)
+                self.assertIn(code, {item["code"] for item in report["failures"]})
+
+    def test_missing_and_duplicate_network_inspection_fails(self):
+        networks = complete_network_inventory()
+        for candidate in (networks[:2], networks + [networks[0]]):
+            report = inspector.assess(self.manifest, self.projects, complete_inventory(self.manifest), candidate)
+            self.assertFalse(report["passed"])
+
+    def test_network_inspection_never_requests_network_peer_details(self):
+        networks = complete_network_inventory()
+        with patch.object(inspector, "docker", return_value="\n".join(json.dumps(item) for item in networks)) as call:
+            self.assertEqual(inspector.network_inventory(MAIN), networks)
+        self.assertIn("--format", call.call_args.args)
+        self.assertIn("peerCount", inspector.NETWORK_INSPECT_FORMAT)
+        self.assertNotIn(".Config.Env", inspector.NETWORK_INSPECT_FORMAT)
 
 
 if __name__ == "__main__":

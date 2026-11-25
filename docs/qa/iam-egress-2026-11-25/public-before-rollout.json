@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-11-25T15:32:35.373448+00:00",
+  "vantage": "ChatGPT Work executor",
+  "scope": "Credential-free pre-rollout public reachability; not private image inventory or signed-in acceptance. No staging change made here.",
+  "checks": [
+    {
+      "check": "api-ready",
+      "status": 200,
+      "readiness": {
+        "status": "ready",
+        "version": "d875712ecb41e06d8905046e0f4bc93bb8e9e7a5"
+      }
+    },
+    {
+      "check": "web",
+      "status": 200
+    },
+    {
+      "check": "discovery",
+      "status": 200,
+      "issuer": "https://iam.accesslobby.realjanelove.com/realms/accesslobby-first-party"
+    },
+    {
+      "check": "jwks",
+      "status": 200,
+      "keyCount": 2
+    },
+    {
+      "check": "/",
+      "status": 404
+    },
+    {
+      "check": "/admin/",
+      "status": 404
+    },
+    {
+      "check": "/realms/master/",
+      "status": 404
+    },
+    {
+      "check": "/metrics",
+      "status": 404
+    },
+    {
+      "check": "/health",
+      "status": 404
+    }
+  ]
+}

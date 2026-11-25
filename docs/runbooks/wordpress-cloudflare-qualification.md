@@ -4,6 +4,8 @@ Relates to #59. Operational guidance for reviewed first-party test sites. Connec
 
 ## Current estate gate
 
+Update 2026-11-25: the operator qualified CETECH training site-only logout/quiet re-entry and both shared-logout directions with signed delivery before a WordPress page load, while an independent browser stayed signed in. Delivery needed a temporary IAM default-network attachment; durable routing and requalification after recreation use the [IAM network runbook](iam-outbound-network-staging.md). See the [current estate record](../qa/wordpress-estate-2026-11-24/README.md). The c6c221b observations below remain the earlier checkpoint. Staging/FLAIROC linking and two-WordPress SSO remain open.
+
 Operator c6c221b reports alpha.9 installed on all three sites, hybrid/JIT off, using the exact qualified ZIP. CETECH training keeps customer45, one dual-proof mapping, order50402 and39 users. Its SSO session survives storefront navigation and a successful peer recheck. Staging keeps customer3212/order54346,2921 users and0 links; FLAIROC keeps customer122/order4043,49 users and0 links. Their browser flows encounter Cloudflare human verification.
 
 Training login/session persistence is qualified by that operator evidence. Two-WordPress quiet SSO, AccessLobby-authenticated logout, signed backchannel delivery and Join/JIT still require their own evidence. Existing local-password logout acceptance is not an AccessLobby-session logout test.

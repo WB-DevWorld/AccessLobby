@@ -30,6 +30,10 @@ INSPECT_FORMAT = (
     '"networks":{{json .NetworkSettings.Networks}},'
     '"ports":{{json .NetworkSettings.Ports}}}'
 )
+NETWORK_INSPECT_FORMAT = (
+    '{"name":{{json .Name}},"internal":{{json .Internal}},'
+    '"driver":{{json .Driver}},"peerCount":{{len .Containers}}}'
+)
 
 
 def load_manifest_data(data: dict) -> dict:
@@ -69,13 +73,39 @@ def inventory(project: str) -> list[dict]:
     return result
 
 
-def assess(manifest: dict, projects: dict[str, str], containers: dict[str, list[dict]]) -> dict:
+def network_inventory(project: str) -> list[dict]:
+    names = [project + "_" + name for name in ("backend", "iam-edge", "iam-egress")]
+    return [json.loads(line) for line in docker("network", "inspect", "--format", NETWORK_INSPECT_FORMAT,
+                                               *names).splitlines() if line.strip()]
+
+
+def assess(manifest: dict, projects: dict[str, str], containers: dict[str, list[dict]],
+           network_metadata: list[dict]) -> dict:
     report = {"checkedAt": datetime.now(timezone.utc).isoformat(),
               "sourceSha": manifest["sourceSha"], "projects": projects,
-              "services": [], "failures": [], "passed": False}
+              "services": [], "networkPolicy": "private-iam-dedicated-egress-v1",
+              "networks": [], "failures": [], "passed": False}
 
     def fail(code: str, role: str, service: str):
         report["failures"].append({"code": code, "projectRole": role, "service": service})
+
+    expected_networks = {projects["main"] + "_" + name: internal for name, internal in
+                         (("backend", True), ("iam-edge", True), ("iam-egress", False))}
+    found_networks = {}
+    for network in network_metadata:
+        name = network.get("name")
+        if name not in expected_networks or name in found_networks:
+            fail("unexpected_or_duplicate_network", "main", "network-policy")
+            continue
+        found_networks[name] = network
+        item = {key: network.get(key) for key in ("name", "internal", "driver", "peerCount")}
+        report["networks"].append(item)
+        if network.get("internal") is not expected_networks[name] or network.get("driver") != "bridge":
+            fail("network_isolation_mismatch", "main", "network-policy")
+        if name.endswith("_iam-egress") and network.get("peerCount") != 1:
+            fail("iam_egress_not_exclusive", "main", "iam")
+    if set(found_networks) != set(expected_networks):
+        fail("missing_network", "main", "network-policy")
 
     for role, expected in (("main", MAIN_SERVICES), ("consumer", CONSUMER_SERVICES)):
         found = {}
@@ -126,12 +156,14 @@ def assess(manifest: dict, projects: dict[str, str], containers: dict[str, list[
             if role == "main" and service in PRIVATE:
                 allowed = {projects["main"] + "_backend"}
                 if service == "iam":
-                    allowed.add(projects["main"] + "_iam-edge")
+                    allowed.update({projects["main"] + "_iam-edge", projects["main"] + "_iam-egress"})
                 # Stopped one-shot containers may no longer retain a network attachment.
                 if (service in JOBS and set(networks) - allowed) or (service not in JOBS and set(networks) != allowed):
                     fail("private_network_mismatch", role, service)
             if service in {"iam-gateway", "api", "web", "consumer"} and "dokploy-network" not in networks:
                 fail("public_service_off_proxy_network", role, service)
+            if service != "iam" and projects["main"] + "_iam-egress" in networks:
+                fail("iam_egress_not_exclusive", role, service)
 
     report["passed"] = not report["failures"]
     return report
@@ -151,7 +183,8 @@ def main() -> int:
     try:
         manifest = load_manifest(args.manifest)
         projects = {"main": args.main_project, "consumer": args.consumer_project}
-        report = assess(manifest, projects, {role: inventory(project) for role, project in projects.items()})
+        report = assess(manifest, projects, {role: inventory(project) for role, project in projects.items()},
+                        network_inventory(projects["main"]))
         args.output.parent.mkdir(parents=True, exist_ok=True)
         fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, "w") as result:

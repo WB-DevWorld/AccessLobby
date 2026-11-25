@@ -82,11 +82,15 @@ jobs:
           import json
           with open('/tmp/accesslobby-compose.json') as source:
               config = json.load(source)
-          assert set(config['networks']) == {'backend', 'iam-edge'}, 'No shared proxy network belongs in source Compose'
-          assert all(network['internal'] for network in config['networks'].values())
+          assert set(config['networks']) == {'backend', 'iam-edge', 'iam-egress'}, 'No shared proxy network belongs in source Compose'
+          assert config['networks']['backend']['internal'] is True
+          assert config['networks']['iam-edge']['internal'] is True
+          assert config['networks']['iam-egress'].get('internal', False) is False
+          assert config['networks']['iam-egress']['driver'] == 'bridge'
+          assert not any(network.get('external') for network in config['networks'].values())
           expected = {
               'iam-db': {'backend'}, 'identity-db': {'backend'},
-              'iam': {'backend', 'iam-edge'}, 'iam-config': {'backend'},
+              'iam': {'backend', 'iam-edge', 'iam-egress'}, 'iam-config': {'backend'},
               'iam-gateway': {'iam-edge'}, 'migrate': {'backend'},
               'api': {'backend'}, 'web': {'backend'},
           }
@@ -106,7 +110,7 @@ jobs:
           assert str(iam_config['PUBLIC_REGISTRATION_ENABLED']).lower() == 'false'
           assert str(iam_config['IAM_VERIFY_EMAIL']).lower() == 'false'
           assert str(iam_config['IAM_RESET_PASSWORD_ENABLED']).lower() == 'false'
-          print('Branded IAM reconciles privately; web binds all interfaces; source Compose has no shared network or host ports')
+          print('Branded IAM reconciles privately with dedicated outbound routing; source Compose has no shared proxy network or host ports')
           PY
           export CONSUMER_IMAGE=ghcr.io/example/reference-consumer@sha256:0000000000000000000000000000000000000000000000000000000000000000
           export CONSUMER_ORIGIN=https://consumer.example.test
@@ -381,3 +385,16 @@ jobs:
               *) echo "Unexpected IAM path $path: $status"; exit 1 ;;
             esac
           done
+      - name: Verify production IAM outbound route and private boundary across recreation
+        env:
+          IAM_NETWORK_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          docker stop accesslobby-ci-iam
+          python3 infra/scripts/iam_network_smoke.py --iam-image accesslobby-iam:ci --output artifacts/iam-network/report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iam-network-smoke
+          path: artifacts/iam-network/report.json
+          if-no-files-found: warn
+          retention-days: 14

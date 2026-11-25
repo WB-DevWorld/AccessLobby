@@ -1,0 +1,54 @@
+{
+  "evidenceType": "production-compose-iam-network-namespace",
+  "sourceRevision": "1ae5aa2191c37937144f1cdc56d7bb3299097189",
+  "candidateRevision": "557e40a43184e49efe253299172871c261b1cd96",
+  "passed": true,
+  "checks": [
+    {
+      "phase": "legacy",
+      "defaultRoutePresent": false,
+      "defaultRouteCount": 0,
+      "defaultRouteMatchesDeclaredEgress": false,
+      "expectedNetworksOnly": false,
+      "publicDnsTls": {
+        "httpReached": false,
+        "httpStatus": null
+      }
+    },
+    {
+      "phase": "declared",
+      "defaultRoutePresent": true,
+      "defaultRouteCount": 1,
+      "defaultRouteMatchesDeclaredEgress": true,
+      "expectedNetworksOnly": true,
+      "publicDnsTls": {
+        "httpReached": true,
+        "httpStatus": 200
+      },
+      "privateHttpDeniedFromUnsharedNetwork": true,
+      "managementDeniedFromUnsharedNetwork": true,
+      "containerRecreated": true
+    },
+    {
+      "phase": "recreated",
+      "defaultRoutePresent": true,
+      "defaultRouteCount": 1,
+      "defaultRouteMatchesDeclaredEgress": true,
+      "expectedNetworksOnly": true,
+      "publicDnsTls": {
+        "httpReached": true,
+        "httpStatus": 200
+      },
+      "privateHttpDeniedFromUnsharedNetwork": true,
+      "managementDeniedFromUnsharedNetwork": true,
+      "containerRecreated": true
+    }
+  ],
+  "scope": "Disposable real IAM/DB; curl shares the IAM namespace. Not signed peer-logout acceptance.",
+  "phase": "recreated",
+  "control": {
+    "httpReached": true,
+    "httpStatus": 200
+  },
+  "cleanupPassed": true
+}
