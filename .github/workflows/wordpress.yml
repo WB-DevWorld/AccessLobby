@@ -1,10 +1,10 @@
 name: WordPress connector
 on:
   pull_request:
-    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml', '.gitattributes']
+    paths: ['integrations/wordpress/**', 'apps/api/**', 'infra/keycloak/**', '.github/workflows/wordpress.yml', '.gitattributes']
   push:
     branches: [main]
-    paths: ['integrations/wordpress/**', '.github/workflows/wordpress.yml', '.gitattributes']
+    paths: ['integrations/wordpress/**', 'apps/api/**', 'infra/keycloak/**', '.github/workflows/wordpress.yml', '.gitattributes']
 permissions:
   contents: read
 jobs:

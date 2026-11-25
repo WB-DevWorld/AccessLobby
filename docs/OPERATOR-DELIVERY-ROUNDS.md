@@ -36,17 +36,21 @@ Cursor's confirmed concurrent work is:
 
 The console lane does not change SMTP, mail policy, WordPress plugin bytes, estate customer links, JIT or enforcement settings. Cursor retains its existing branch/workflow and records exact source, configuration and categorical results. Feature completion still depends on genuine outcomes; sending an instruction is not acceptance.
 
-## Proposed next round — choose two or three bounded features
+## Round 2 — implemented candidate, independently qualified before rollout
 
-| Candidate | A complete useful increment | Dependencies and limits |
+Branch `feat/operator-round-2` stacks on PR73; issue74 tracks the separate acceptance gate. Six agents handled three product features and supporting private-IAM/security/browser qualification. The integrator owns shared API routing, role models, contracts, ledger, full regression and delivery.
+
+| Feature | Implemented behavior | Next live acceptance |
 |---|---|---|
-| Reviewed private activation worker | Durable approved job, private least-privilege worker, retries, status and exact DNS/IAM verification | No IAM credentials on public web/API; replay/stale-review/partial-failure tests; controlled app acceptance |
-| Person suspend/re-enable | Audited operator action with explicit permission, confirmation and documented API/session effects | Define safeguards, existing memberships/grants and bounded peer effects; does not claim to erase all unchecked local sessions |
-| Verified private IAM console route | Working operator browser path for realm/credential operations with hostname/proxy/TLS checks | Protected host access and real login; public admin remains denied; preserve issuer and consumer compatibility |
+| Person controls | Detail, explicit identity-operator suspend/re-enable, audited versions, old token/receipt non-revival and operator/self safeguards | Qualified artifact/schema; privately granted intended operator; controlled real-person/API/peer effects |
+| Owner request lifecycle | Edit/cancel/resubmit inactive requests, preserve IDs/history, invalidate proof/review/jobs, quota/idempotency | Real owner native forms/DNS/review, stale and unauthorized denial |
+| Private activation jobs | Approved durable queue, progress/retry UI, fenced private worker, generation binding, exact DNS/IAM readback and atomic completion | Protected runner/credential issuance and cleanup, current schema, controlled real app/consumer acceptance |
 
-Scope these before coding and select only work that can be accepted with the available operator access. Realm creation automation is a further trust-domain lifecycle feature if needed; exposing Keycloak's console alone does not establish multi-realm AccessLobby support.
+[ADR016](adr/016-operator-controls-and-activation-jobs.md) and [round-two runbook](runbooks/operator-round-2.md) define the contract and recovery boundaries. Migrations011/012/013 follow009/010. Private Keycloak access has a GET-only readiness checker and [runbook](runbooks/private-iam-console.md), not a verified live browser route. Realm creation remains a separate environment/trust-domain decision; ordinary custom apps use clients in the existing realm.
 
-Later rounds can take two or three complete slices from credential recovery, stronger authentication enrollment, session/device inspection and revocation, organization recovery/delegation, app update/retirement, privacy consent and external publisher onboarding. Each requires its own actual behavior and acceptance criteria. Do not combine them into a broad unfinished dashboard or present roadmap buttons as working features.
+Cursor's published result a83634f now records Forward Email587/STARTTLS delivery, genuine verification and training subscriber47 created/reused, users40, JIT restored off. FLAIROC customer122 and bounded cross-domain SSO/shared-logout isolation are accepted in the earlier published evidence. Email-collision refusal and truly new AccessLobby signup from WordPress remain independent pending qualification. The original handoff below is historical; do not repeat completed acceptance merely because it remains listed there.
+
+Future rounds can select two or three bounded slices from verified recovery, stronger authentication enrollment, session/device inspection, organization recovery/delegation, active-app update/retirement, consent and external onboarding. Each needs its own invariants, compatibility and operator evidence; those names are not delivered features.
 
 ## Definition of Done and reporting
 

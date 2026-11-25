@@ -14,3 +14,11 @@ test('requires issuer, subject and allowlisted client', () => {
     { iss: settings.issuer, sub: 'subject', azp: 'unknown' }
   ]) assert.throws(() => validateClaims(claim, settings));
 });
+
+test('only safe integer token issue times are exposed for lifecycle checks', () => {
+  const base = { iss: settings.issuer, sub: 'subject', azp: 'poii' };
+  assert.equal(validateClaims({ ...base, iat: 1795630000 }, settings).issuedAt, 1795630000);
+  for (const iat of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1, '1795630000']) {
+    assert.equal(validateClaims({ ...base, iat } as any, settings).issuedAt, undefined);
+  }
+});

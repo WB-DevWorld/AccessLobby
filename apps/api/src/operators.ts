@@ -1,7 +1,8 @@
 import type { Pool } from 'pg';
 import { validId } from './organizations.js';
 
-export type OperatorRole = 'support_reader' | 'application_reviewer';
+export type OperatorRole = 'support_reader' | 'application_reviewer' | 'identity_operator' | 'application_operator';
+export type OperatorPermission = 'read' | 'review' | 'people' | 'activate';
 export const operatorContract = 'accesslobby.admin.v0.1' as const;
 const pageSize = 25;
 
@@ -11,7 +12,7 @@ export class OperatorError extends Error {
 
 const fail = (status: number, code: string): never => { throw new OperatorError(status, code); };
 export const validOperatorRole = (role: unknown): role is OperatorRole =>
-  role === 'support_reader' || role === 'application_reviewer';
+  role === 'support_reader' || role === 'application_reviewer' || role === 'identity_operator' || role === 'application_operator';
 export const validOperatorReference = (reference: unknown): reference is string =>
   typeof reference === 'string' && /^[A-Za-z0-9._:/-]{4,120}$/.test(reference);
 
@@ -43,14 +44,15 @@ const iso = (value: Date): string => value.toISOString();
 export class OperatorStore {
   constructor(private readonly pool: Pool) {}
 
-  async require(personId: string, permission: 'read' | 'review'): Promise<OperatorRole[]> {
+  async require(personId: string, permission: OperatorPermission): Promise<OperatorRole[]> {
     if (!validId(personId)) return fail(403, 'operator_access_denied');
     const result = await this.pool.query<{ role: OperatorRole }>(`SELECT r.role
       FROM platform_operator_roles r JOIN persons p ON p.id = r.person_id
       WHERE r.person_id = $1 AND r.revoked_at IS NULL AND p.status = 'active'
       ORDER BY r.role`, [personId]);
     const roles = result.rows.map(row => row.role).filter(validOperatorRole);
-    if (!roles.length || (permission === 'review' && !roles.includes('application_reviewer'))) {
+    const needed = { review: 'application_reviewer', people: 'identity_operator', activate: 'application_operator' } as const;
+    if (!roles.length || (permission !== 'read' && !roles.includes(needed[permission]))) {
       return fail(403, 'operator_access_denied');
     }
     return roles;
@@ -59,7 +61,8 @@ export class OperatorStore {
   async access(personId: string) {
     const roles = await this.require(personId, 'read');
     return { contract: operatorContract, roles, capabilities: { read: true as const,
-      reviewApplications: roles.includes('application_reviewer') } };
+      reviewApplications: roles.includes('application_reviewer'), managePeople: roles.includes('identity_operator'),
+      activateApplications: roles.includes('application_operator') } };
   }
 
   async people(actorId: string, query?: unknown, after?: unknown) {

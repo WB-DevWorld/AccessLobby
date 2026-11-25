@@ -186,7 +186,9 @@ try {
     }, 'POST');
     assert.equal(requested.status, 'requested');
     assert.equal(await apps.allowedClient(clientId), false);
-    await assert.rejects(provisionApp(pool, requested.id, '--activate-first-party', 'ci-review-fixture', options), /Current DNS origin proof/);
+    // Approval is checked before external DNS/IAM work; the separate approved
+    // fixture below still proves a missing live DNS proof is refused.
+    await assert.rejects(provisionApp(pool, requested.id, '--activate-first-party', 'ci-review-fixture', options), /Current independent approved application review/);
     assert.equal((await (await admin(`/clients?clientId=${clientId}`)).json()).length, 0);
     const plan = await provisionApp(pool, requested.id, '--plan', undefined, options);
     assert.equal(plan.state, 'plan-only');

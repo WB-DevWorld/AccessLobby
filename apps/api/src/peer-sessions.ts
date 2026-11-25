@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { AuthenticatedSubject } from './auth.js';
 import { SessionRevocations } from './logout.js';
+import { isCurrentPersonAuthentication } from './identity.js';
 
 export class PeerSessionError extends Error {
   constructor(public readonly status: number, public readonly code: string) { super(code); }
@@ -28,8 +29,11 @@ export class PeerSessions {
     const db = await this.pool.connect();
     try {
       await db.query('BEGIN');
-      const person = await db.query<{ status: string }>('SELECT status FROM persons WHERE id=$1 FOR SHARE', [personId]);
-      if (person.rows[0]?.status !== 'active') throw new PeerSessionError(401, 'invalid_peer_session');
+      const person = await db.query<{ status: string; session_not_before: string }>(
+        'SELECT status,session_not_before FROM persons WHERE id=$1 FOR SHARE', [personId]);
+      if (person.rows[0]?.status !== 'active' || !isCurrentPersonAuthentication({
+        sessionNotBefore: Number(person.rows[0].session_not_before),
+      }, actor)) throw new PeerSessionError(401, 'invalid_peer_session');
       await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [JSON.stringify(['peer-receipts', actor.issuer, actor.sid, actor.client])]);
       await db.query("DELETE FROM peer_session_receipts WHERE expires_at < now() - interval '2 hours'");
       const count = await db.query<{ count: string }>(`SELECT count(*) FROM peer_session_receipts

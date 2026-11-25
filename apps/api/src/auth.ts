@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 import type { Config } from './config.js';
 
-export interface AuthenticatedSubject { issuer: string; subject: string; client: string; sid?: string; expiresAt?: number }
+export interface AuthenticatedSubject { issuer: string; subject: string; client: string; sid?: string; expiresAt?: number; issuedAt?: number }
 export type VerifyToken = (token: string) => Promise<AuthenticatedSubject>;
 
 export async function discovery(issuer: string) {
@@ -40,5 +40,6 @@ export function validateClaims(payload: JWTPayload, settings: Config, allowed?: 
   }
   return { issuer: payload.iss, subject: payload.sub, client,
     ...(typeof payload.sid === 'string' ? { sid: payload.sid } : {}),
+    ...(Number.isSafeInteger(payload.iat) && payload.iat! >= 0 ? { issuedAt: payload.iat } : {}),
     ...(Number.isSafeInteger(payload.exp) ? { expiresAt: payload.exp } : {}) };
 }

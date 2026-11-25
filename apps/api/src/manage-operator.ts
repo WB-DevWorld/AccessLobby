@@ -20,6 +20,7 @@ export async function manageOperatorRole(pool: Pool, personId: unknown, operatio
       ? await db.query(`INSERT INTO platform_operator_roles (person_id, role, grant_reference)
           VALUES ($1, $2, $3) ON CONFLICT (person_id, role) DO UPDATE SET granted_at = now(),
           grant_reference = EXCLUDED.grant_reference, revoked_at = NULL, revoke_reference = NULL
+          , grant_version = platform_operator_roles.grant_version + 1
           WHERE platform_operator_roles.revoked_at IS NOT NULL RETURNING person_id`, [personId, role, reference])
       : await db.query(`UPDATE platform_operator_roles SET revoked_at = now(), revoke_reference = $3
           WHERE person_id = $1 AND role = $2 AND revoked_at IS NULL RETURNING person_id`, [personId, role, reference]);
@@ -39,7 +40,7 @@ async function main() {
   const [personId, operation, role, reference, extra] = process.argv.slice(2);
   if (extra || !validId(personId) || !['grant', 'revoke'].includes(operation ?? '') ||
       !validOperatorRole(role) || !validOperatorReference(reference)) {
-    throw new Error('Usage: manage-operator <person-uuid> grant|revoke support_reader|application_reviewer <review-reference>');
+    throw new Error('Usage: manage-operator <person-uuid> grant|revoke support_reader|application_reviewer|identity_operator|application_operator <review-reference>');
   }
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL required on the protected operator runner');
   const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });

@@ -1,9 +1,11 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ActionForm } from '@/components/action-form';
 import { RetryButton } from '@/components/retry-button';
 import { AvailabilityPanel, DataRow, SurfaceCard } from '@/components/ui';
 import { getAdminContext, getAdminData } from '@/lib/admin';
 import { adminNotices, adminUuid, applicationState, parseAdminApplication } from '@/lib/admin-model';
+import { activationNotices } from '@/lib/activation-model';
 import { AdminAccessState, AdminDate, AdminFrame, adminMetadata } from '../../_components';
 
 export const dynamic = 'force-dynamic';
@@ -21,8 +23,10 @@ export default async function AdminApplication({ params, searchParams }: {
     <AvailabilityPanel title="This application cannot be viewed" description="The request may be unavailable or your access may have changed. Try again when the registry is available." action={<RetryButton />} />
   </AdminFrame>;
   const noticeKey = (await searchParams).notice;
-  const notice = typeof noticeKey === 'string' && Object.hasOwn(adminNotices, noticeKey) ? adminNotices[noticeKey] : null;
+  const notices={...adminNotices,...activationNotices};
+  const notice = typeof noticeKey === 'string' && Object.hasOwn(notices, noticeKey) ? notices[noticeKey] : null;
   const currentReview = app.review?.configurationHash === app.configurationHash ? app.review : null;
+  const reviewAuthorityCurrent=currentReview?.authorizationCurrent===true;
   const requested = app.status === 'requested' && app.trustClass === 'unreviewed';
   const independent = context.personId !== app.ownerPersonId;
   const canReview = requested && independent && context.access.capabilities.reviewApplications && !currentReview;
@@ -33,7 +37,7 @@ export default async function AdminApplication({ params, searchParams }: {
         <DataRow label="Application ID" mono>{app.id}</DataRow><DataRow label="Client ID" mono>{app.clientId}</DataRow>
         <DataRow label="Owner AccessLobby ID" mono>{app.ownerPersonId}</DataRow>
         <DataRow label="Platform">{app.platform === 'wordpress' ? 'WordPress' : 'Web application'}</DataRow>
-        <DataRow label="State">{applicationState({ status: app.status, reviewDecision: currentReview?.decision ?? null })}</DataRow>
+        <DataRow label="State">{applicationState({ status: app.status, reviewDecision: currentReview?.decision==='approved'&&!reviewAuthorityCurrent?null:currentReview?.decision ?? null })}</DataRow>
         <DataRow label="Classification">{app.trustClass === 'first_party' ? 'First party' : app.trustClass === 'external' ? 'External' : 'Unreviewed'}</DataRow>
         <DataRow label="Visibility">{app.visibility === 'discoverable' ? 'Discoverable' : 'Hidden'}</DataRow>
         <DataRow label="Entry policy">{app.admission === 'grant_required' ? 'Requires an individual grant' : 'Open to authenticated people'}</DataRow>
@@ -52,7 +56,18 @@ export default async function AdminApplication({ params, searchParams }: {
         <DataRow label="Reviewer AccessLobby ID" mono>{app.review.reviewerPersonId}</DataRow>
         <DataRow label="Recorded"><AdminDate value={app.review.reviewedAt} /></DataRow></dl>
       {!currentReview && <p className="context-alert">The application configuration has changed. This earlier decision does not approve the current request.</p>}
-      {currentReview?.decision === 'approved' && requested && <p>This request is awaiting private activation. Give the private operator its application ID and review reference. Keycloak configuration and current domain proof must pass before it becomes active.</p>}
+      {currentReview?.decision === 'approved' && requested && (reviewAuthorityCurrent?
+        <p>This request is awaiting private activation. Keycloak configuration and current domain proof must pass before it becomes active.</p>:
+        <p className="context-alert">The recorded review no longer has current reviewer authority. Ask the application owner to verify its DNS proof again, then obtain a fresh independent review. This immutable historical decision cannot be reused.</p>)}
+    </SurfaceCard>}
+    {requested&&currentReview?.decision==='approved'&&reviewAuthorityCurrent&&<SurfaceCard title="Private activation request">
+      <p>Queue a protected worker to recheck the exact reviewed configuration, current authority and domain proof. The browser does not activate the application or hold an IAM credential.</p>
+      {context.access.capabilities.activateApplications?<ActionForm action="/admin/activations/action" method="post" pendingLabel="Queuing activation…">
+        <input type="hidden" name="intent" value="queue"/><input type="hidden" name="applicationId" value={app.id}/>
+        <input type="hidden" name="configurationHash" value={app.configurationHash}/><input type="hidden" name="reviewReference" value={currentReview.reference}/>
+        <button className="button button-primary" type="submit" data-confirm="Queue private activation for this exact reviewed configuration? The application stays inactive until all protected checks pass.">Queue private activation</button>
+      </ActionForm>:<p>An application operator grant is required to queue activation. A reviewer grant alone does not authorize this operation.</p>}
+      <Link className="text-link" href="/admin/activations">View activation jobs</Link>
     </SurfaceCard>}
     {requested && !currentReview && <SurfaceCard title="Independent first-party review">
       <p>Check the publisher, hostname and exact routes against the first-party application you intend to connect. Approval is recorded for this configuration and does not activate the client.</p>

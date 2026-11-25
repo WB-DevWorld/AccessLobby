@@ -77,6 +77,11 @@ export class ApplicationStore {
     if (input.visibility !== 'discoverable' && input.visibility !== 'hidden') return fail(400, 'invalid_visibility');
     if (input.admission !== 'authenticated_open' && input.admission !== 'grant_required') return fail(400, 'invalid_admission');
     return this.transaction(async db => {
+      // Existing client IDs stay reserved through cancellation. Refuse known
+      // duplicates before the person lock, avoiding an app/person lock cycle
+      // with lifecycle mutations. The unique constraint still guards new races.
+      const taken = await db.query('SELECT id FROM applications WHERE client_id=$1', [clientId]);
+      if (taken.rowCount) return fail(409, 'client_id_taken');
       // Serialize a person's requests and bound pending review work.
       await db.query('SELECT id FROM persons WHERE id = $1 FOR UPDATE', [personId]);
       const pending = await db.query<{ count: string }>(

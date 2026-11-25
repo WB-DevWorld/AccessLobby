@@ -25,7 +25,7 @@ test('platform authority is explicit, current, least-privilege and independent o
     }
     await manageOperatorRole(pool, reader, 'grant', 'support_reader', 'owner-reviewed-101');
     assert.deepEqual(await store.access(reader!), { contract: 'accesslobby.admin.v0.1', roles: ['support_reader'],
-      capabilities: { read: true, reviewApplications: false } });
+      capabilities: { read: true, reviewApplications: false, managePeople: false, activateApplications: false } });
     await assert.rejects(store.require(reader!, 'review'), rejected(403, 'operator_access_denied'));
     await manageOperatorRole(pool, reviewer, 'grant', 'application_reviewer', 'owner-reviewed-102');
     assert.deepEqual(await store.require(reviewer!, 'review'), ['application_reviewer']);
