@@ -1,6 +1,6 @@
 # ADR014 — Private IAM with durable outbound delivery
 
-Status: implementation qualified in CI, 2026-11-25; staging rollout pending. Relates to #59. This changes network configuration, not identity, client admission, logout scope or WordPress policy.
+Status: implementation qualified in CI and staging network/recreation/logout accepted by operator report, 2026-11-25. Overall inventory has separate job-history limitations. Relates to #59. This changes network configuration, not identity, client admission, logout scope or WordPress policy.
 
 ## Observed failure
 
@@ -21,6 +21,8 @@ The CI-only fixture renders the real production Compose with synthetic configura
 The namespace probe is not a Java HTTP-client or signed logout delivery test. Existing actual IAM/gateway tests remain, and staging must repeat genuine signed peer delivery after the controlled network-only rollout. The operator's prior signed POST200/backchannel events qualify training under the temporary attachment, not the durable source change. Another browser remaining signed in proves browser-session isolation, not a different physical device.
 
 [Exact red/green evidence](../qa/iam-egress-2026-11-25/README.md) records qualified implementation557e40a43184e49efe253299172871c261b1cd96, all three successful relevant CI jobs, the real namespace checks and cleanup. Evidence-only successors require their own checks; live rollout is not inferred.
+
+The later operator report applies merged423b9ac8, recreates only IAM with preserved images/data, reloads the same gateway and repeats actual signed training logout in both directions, quiet re-entry and independent-browser isolation. The [acceptance record](../qa/iam-egress-2026-11-25/README.md) preserves audit/timing and provenance. The runtime inspector reports networkPolicyPassed independently; its overall gate/exit remains failed when job containers or other deployment evidence are missing. This adds diagnostic precision, not a missing-job bypass or complete-estate claim.
 
 ## Deployment and rollback
 

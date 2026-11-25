@@ -1,0 +1,84 @@
+{
+  "evidenceType": "operator-reported-staging-iam-recreation-and-wordpress-logout",
+  "date": "2026-11-25",
+  "provenance": {
+    "source": "Owner-supplied Cursor operator report",
+    "qualificationBranch": "feat/wordpress-estate-qualification",
+    "reportedLocalCommits": ["061857b", "5e778d9"],
+    "canonicalGithubCommitsResolvedByWork": false,
+    "privateHostOrBrowserTestsReexecutedByWork": false
+  },
+  "composeSourceRevision": "423b9ac8a2db5fba332252b08737794692236a24",
+  "imageSourceRevision": "d875712ecb41e06d8905046e0f4bc93bb8e9e7a5",
+  "deployment": {
+    "imagePinsUnchanged": true,
+    "databaseVolumesPreserved": true,
+    "onlyIamRecreated": true,
+    "gatewaySameContainer": true,
+    "gatewayConfigTestPassed": true,
+    "gatewayReloaded": true,
+    "temporaryDefaultAttachmentKeptUntilReplacement": true,
+    "backendInternal": true,
+    "iamEdgeInternal": true,
+    "egressInternal": false,
+    "egressDriver": "bridge",
+    "egressPeers": 1,
+    "ipv4DefaultRouteCount": 1,
+    "defaultRouteUsesDeclaredEgress": true,
+    "hostPortPublished": false,
+    "networkPolicyMatches": true,
+    "overallRuntimeInventoryPassed": false,
+    "inventoryFindings": [
+      {"code": "missing_service", "service": "iam-config"},
+      {"code": "missing_service", "service": "migrate"}
+    ],
+    "jobCompletionHistoryIndependentlyVerifiedByWork": false
+  },
+  "flows": {
+    "accesslobbyInitiatedSharedLogout": {
+      "acceptedAuditId": 75,
+      "acceptedAtUnix": 1795622222,
+      "acceptedAtUtc": "2026-11-25T15:57:02Z",
+      "originPostStatus": 200,
+      "signedBackchannelAcceptedBeforeNextWordpressPage": true
+    },
+    "siteOnlyLogout": {"auditId": 79},
+    "quietReentry": {"auditIds": [80, 81, 82]},
+    "wordpressInitiatedSharedLogout": {
+      "sharedLogoutRecordedAuditId": 83,
+      "requestedAuditId": 84,
+      "localLogoutAuditId": 85,
+      "separateAcceptedAuditId": 86,
+      "originPostStatus": 200,
+      "originPostAtUtc": "2026-11-25T15:59:38Z"
+    },
+    "sessionReconciledEndedFollowed": false,
+    "independentBrowserSessionPreserved": true,
+    "differentPhysicalDeviceTested": false
+  },
+  "wordpress": {
+    "site": "https://training.cetechbpa.com/",
+    "pluginVersion": "0.1.0-alpha.9",
+    "mode": "hybrid",
+    "jitEnabled": false,
+    "enforcedModeEnabled": false,
+    "customerId": 45,
+    "linkState": "active",
+    "linkProvenance": "dual_proof",
+    "role": "customer",
+    "orderId": 50402,
+    "orderOwnerId": 45,
+    "userCount": 39,
+    "localDataAndGuestPolicyPreserved": true
+  },
+  "remainingBrowserGate": {
+    "site": "staging.cetechbpa.com",
+    "path": "/wp-login.php",
+    "rayId": "a601de7339f8d057-ACC",
+    "qualificationProfile": "%LOCALAPPDATA%\\al-qual-edge",
+    "requiresOwnerChallengeCompletionAndFreshLocalLogin": true,
+    "cloudflareServiceRuleAndActualSourceIpKnown": false
+  },
+  "overallWordpressEstateStatus": "PARTIALLY QUALIFIED",
+  "issue59RemainsOpen": true
+}

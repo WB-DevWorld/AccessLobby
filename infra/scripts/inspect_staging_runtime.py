@@ -84,9 +84,12 @@ def assess(manifest: dict, projects: dict[str, str], containers: dict[str, list[
     report = {"checkedAt": datetime.now(timezone.utc).isoformat(),
               "sourceSha": manifest["sourceSha"], "projects": projects,
               "services": [], "networkPolicy": "private-iam-dedicated-egress-v1",
-              "networks": [], "failures": [], "passed": False}
+              "networks": [], "networkPolicyPassed": False, "failures": [], "passed": False}
+    network_failed = False
 
-    def fail(code: str, role: str, service: str):
+    def fail(code: str, role: str, service: str, *, network: bool = False):
+        nonlocal network_failed
+        network_failed = network_failed or network
         report["failures"].append({"code": code, "projectRole": role, "service": service})
 
     expected_networks = {projects["main"] + "_" + name: internal for name, internal in
@@ -95,37 +98,39 @@ def assess(manifest: dict, projects: dict[str, str], containers: dict[str, list[
     for network in network_metadata:
         name = network.get("name")
         if name not in expected_networks or name in found_networks:
-            fail("unexpected_or_duplicate_network", "main", "network-policy")
+            fail("unexpected_or_duplicate_network", "main", "network-policy", network=True)
             continue
         found_networks[name] = network
         item = {key: network.get(key) for key in ("name", "internal", "driver", "peerCount")}
         report["networks"].append(item)
         if network.get("internal") is not expected_networks[name] or network.get("driver") != "bridge":
-            fail("network_isolation_mismatch", "main", "network-policy")
+            fail("network_isolation_mismatch", "main", "network-policy", network=True)
         if name.endswith("_iam-egress") and network.get("peerCount") != 1:
-            fail("iam_egress_not_exclusive", "main", "iam")
+            fail("iam_egress_not_exclusive", "main", "iam", network=True)
     if set(found_networks) != set(expected_networks):
-        fail("missing_network", "main", "network-policy")
+        fail("missing_network", "main", "network-policy", network=True)
 
     for role, expected in (("main", MAIN_SERVICES), ("consumer", CONSUMER_SERVICES)):
         found = {}
         for container in containers[role]:
             if container.get("project") != projects[role]:
-                fail("project_label_mismatch", role, "unknown")
+                fail("project_label_mismatch", role, "unknown", network=True)
                 continue
             service = container.get("service")
             if service not in expected:
-                fail("unexpected_service", role, service or "unknown")
+                fail("unexpected_service", role, service or "unknown", network=True)
                 continue
             if service in found:
-                fail("duplicate_service", role, service)
+                fail("duplicate_service", role, service, network=True)
                 continue
             found[service] = container
 
         for service, image_key in expected.items():
             container = found.get(service)
             if container is None:
-                fail("missing_service", role, service)
+                # Missing completed jobs leave deployment evidence incomplete; they do
+                # not invalidate inspection of the running services' network boundary.
+                fail("missing_service", role, service, network=service not in JOBS)
                 continue
             health = container.get("health")
             networks = sorted(container.get("networks") or {})
@@ -152,19 +157,20 @@ def assess(manifest: dict, projects: dict[str, str], containers: dict[str, list[
             elif health and health != "healthy":
                 fail("service_unhealthy", role, service)
             if published:
-                fail("host_port_published", role, service)
+                fail("host_port_published", role, service, network=True)
             if role == "main" and service in PRIVATE:
                 allowed = {projects["main"] + "_backend"}
                 if service == "iam":
                     allowed.update({projects["main"] + "_iam-edge", projects["main"] + "_iam-egress"})
                 # Stopped one-shot containers may no longer retain a network attachment.
                 if (service in JOBS and set(networks) - allowed) or (service not in JOBS and set(networks) != allowed):
-                    fail("private_network_mismatch", role, service)
+                    fail("private_network_mismatch", role, service, network=True)
             if service in {"iam-gateway", "api", "web", "consumer"} and "dokploy-network" not in networks:
-                fail("public_service_off_proxy_network", role, service)
+                fail("public_service_off_proxy_network", role, service, network=True)
             if service != "iam" and projects["main"] + "_iam-egress" in networks:
-                fail("iam_egress_not_exclusive", role, service)
+                fail("iam_egress_not_exclusive", role, service, network=True)
 
+    report["networkPolicyPassed"] = not network_failed
     report["passed"] = not report["failures"]
     return report
 
@@ -193,7 +199,8 @@ def main() -> int:
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as error:
         print(f"Inspection failed: {error}", file=sys.stderr)
         return 2
-    print(f"Runtime inventory: {len(report['services'])} services, "
+    print(f"Runtime inventory: overall {'PASS' if report['passed'] else 'FAIL'}; network policy "
+          f"{'PASS' if report['networkPolicyPassed'] else 'FAIL'}; {len(report['services'])} services, "
           f"{len(report['failures'])} findings; report written to {args.output}")
     return 0 if report["passed"] else 1
 
