@@ -1,0 +1,81 @@
+{
+  "contract": "accesslobby.wordpress-jane-qualification.v1",
+  "sourceCommit": "6e4cb0fda389fc6a3d1cb2b4ea3f1a205a6a65e1",
+  "sourceBranch": "feat/wordpress-estate-qualification",
+  "issueComment": "https://github.com/WB-DevWorld/AccessLobby/issues/59#issuecomment-7175168358",
+  "provenance": "Committed Cursor operator evidence reviewed by integrator; no repeated live test",
+  "runtimeSource": "d875712",
+  "plugin": "0.1.0-alpha.9",
+  "collision": {
+    "result": "PASS",
+    "localFixtureUserId": 48,
+    "verifiedByDeliveredMessage": true,
+    "freshFlow": true,
+    "jitEnabledDuringRefusal": true,
+    "refusal": {
+      "auditId": 130,
+      "timestamp": 1795641390,
+      "event": "account_link_required",
+      "httpStatus": 400
+    },
+    "usersAfterRefusal": 41,
+    "activeMappingsAfterRefusal": 2,
+    "localAccountCreated": false,
+    "linkCreated": false,
+    "sessionCreated": false,
+    "jitOffAuditId": 131
+  },
+  "cleanup": {
+    "result": "PASS",
+    "onlyNewEmptyUnlinkedLocalFixtureRemoved": true,
+    "onlyNewDisposableIamFixtureRemoved": true,
+    "durableIdentityAndAuditPreserved": true,
+    "usersAfter": 40,
+    "activeMappingsAfter": 2
+  },
+  "registration": {
+    "result": "PASS_bounded_registration_verification_fresh_login",
+    "normalWordPressOriginatedRegistration": true,
+    "newIamAccountAfterCleanup": true,
+    "iamCreatedAtMillis": 1795641522633,
+    "genuineDeliveredVerification": true,
+    "administrativeVerifiedOverride": false,
+    "unassistedPublicVerificationInitiation": "NOT_ESTABLISHED",
+    "initialJitOffReturnCreatedLocalAccount": false,
+    "provisionAuditId": 137,
+    "provisionedAt": 1795641961,
+    "localUserId": 49,
+    "role": "subscriber",
+    "manageOptions": false,
+    "linkState": "active",
+    "linkMethod": "validated_jit",
+    "repeatCallbackAuditId": 143,
+    "repeatUserId": 49,
+    "duplicateProvisioning": false,
+    "usersAfter": 41,
+    "activeMappingsAfter": 3,
+    "jitOffAuditId": 144
+  },
+  "preserved": {
+    "customer45": true,
+    "subscriber47": true,
+    "order50402Owner": 45,
+    "order50402Status": "on-hold",
+    "guestCheckout": true,
+    "smtpConfiguration": true,
+    "imagePins": true,
+    "realmWideVerification": false,
+    "duplicateEmailsAllowed": false,
+    "tokenLifespanSeconds": 300,
+    "stagingAndFlairocUnchanged": true
+  },
+  "final": {
+    "mode": "hybrid",
+    "jit": false,
+    "enforcedMode": false,
+    "users": 41,
+    "activeMappings": 3,
+    "issue59": "open",
+    "productionQualified": false
+  }
+}

@@ -52,6 +52,19 @@ Cursor's published result a83634f now records Forward Email587/STARTTLS delivery
 
 Future rounds can select two or three bounded slices from verified recovery, stronger authentication enrollment, session/device inspection, organization recovery/delegation, active-app update/retirement, consent and external onboarding. Each needs its own invariants, compatibility and operator evidence; those names are not delivered features.
 
+## Round 3 — four assigned lanes, 2026-11-25
+
+The owner requested the Cursor prompt first, then3–4agents immediately. [Cursor handoff](runbooks/wordpress-collision-and-registration-cursor-handoff.md) preserves accepted mail/Join and scopes collision/new registration separately. Issue76 tracks branch feat/operator-round-3, based on qualified PR75 source750f51a with14passing checks.
+
+| Agent lane | Owned increment | Independent live gate |
+|---|---|---|
+| Application controls | Full-stack audited first-party suspension, exact confirmation/version, receipt-race protection | Qualified artifact/operator and real consumer denial/session observation |
+| Session controls | Opaque receipt-backed association inventory/targeted end, stale/fresh-session protection | Real operator and negotiated peer-status observation; no device/global-IAM claim |
+| Organization investigation | Detail plus native-paged membership/invitation/organization history | Real stored data and current operator acceptance; no owner takeover |
+| Private IAM access | Optional canonical-origin TLS companion, exact-authority browser helper, strict preflight and real disposable admin-login acceptance | Actual host certificate/network/tunnel/private browser login; public denial retained |
+
+Root integrates shared API routes, migrations014/015, navigation, contracts/ledger, adversarial/combined browser tests and CI/PR. Private IAM package work changes no live realm/SMTP/production Compose. App suspension provides no browser reinstatement. New sessions means recorded app receipts, not complete IAM/device inventory. Do not count source delivery as staging or production acceptance. [ADR017](adr/017-operator-investigation-and-suspension.md).
+
 ## Definition of Done and reporting
 
 Every feature needs a bounded issue/acceptance statement, owned paths, implementation, meaningful positive/negative tests, review, passing CI for the exact head, immutable artifact identity, compatible migration/rollback plan, controlled staging and real authorized-user acceptance. Preserve identity IDs, explicit links, application-local authorization and IAM/identity database separation.

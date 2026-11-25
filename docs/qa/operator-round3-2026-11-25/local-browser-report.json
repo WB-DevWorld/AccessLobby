@@ -1,0 +1,43 @@
+{
+  "source": "750f51a890d65d3b17306b7d47e2f8f2012880fc",
+  "dirtyWorktree": true,
+  "observedAt": "2026-11-25T20:56:27.959Z",
+  "scope": "synthetic OIDC and DNS fixtures; real isolated PostgreSQL, compiled API and production Next browser",
+  "privateIamConsole": "Qualified separately by a disposable native IAM fixture, not this synthetic issuer",
+  "liveIam": "NOT RUN",
+  "estate": "NOT RUN",
+  "installedDevices": "NOT RUN",
+  "staging": "NOT RUN",
+  "production": "NOT RUN",
+  "result": "PASS",
+  "checks": [
+    {
+      "name": "new investigation and control routes require current platform authority",
+      "result": "PASS"
+    },
+    {
+      "name": "organization inspection paginates actual stored members and separates invitations and history",
+      "result": "PASS"
+    },
+    {
+      "name": "receipt-backed app selection is opaque and stale inspection cannot end renewed associations",
+      "result": "PASS"
+    },
+    {
+      "name": "private organization pages expose real records and native pagination at narrow and wide widths",
+      "result": "PASS"
+    },
+    {
+      "name": "native app-association ending is confirmed, same-origin and visible to actual peer checks",
+      "result": "PASS"
+    },
+    {
+      "name": "native suspension invalidates client receipts and denies admission without claiming IAM mutation",
+      "result": "PASS"
+    },
+    {
+      "name": "new controls reject existing browser authority immediately after role revocation",
+      "result": "PASS"
+    }
+  ]
+}

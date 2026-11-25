@@ -34,6 +34,8 @@ jobs:
       - run: python3 -m unittest discover -s infra/scripts -p 'test_*.py'
       - run: node --test infra/scripts/private-client-token.test.mjs
       - run: node --test infra/scripts/iam-email-diagnostics.test.mjs
+      - run: python3 -m unittest discover -s infra/private-iam -p 'test_*.py'
+      - run: node --test infra/private-iam/test_connect_proxy.mjs
       - run: pnpm audit --prod --audit-level high
       - run: pnpm --filter @accesslobby/api migrate
       - run: pnpm typecheck
@@ -51,6 +53,15 @@ jobs:
         run: node infra/scripts/operator-console-smoke.mjs
       - name: Verify person controls, application lifecycle and activation queue
         run: node infra/scripts/operator-round2-smoke.mjs
+      - name: Verify suspension, participating sessions and organization investigation
+        run: node infra/scripts/operator-round3-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-operator-round3
+          path: artifacts/operator-round3/
+          if-no-files-found: warn
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -427,3 +438,33 @@ jobs:
           path: artifacts/iam-network/report.json
           if-no-files-found: warn
           retention-days: 14
+
+  private-iam-console:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install native fixture dependencies
+        run: |
+          npm install -g pnpm@11.19.0
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+          sudo apt-get install -y libnss3-tools
+      - name: Build the exact IAM and gateway fixture images
+        run: |
+          docker build -f infra/keycloak/Dockerfile -t accesslobby-iam:ci .
+          docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
+      - name: Verify private IAM console with trusted TLS and real admin login
+        run: node infra/scripts/private-iam-console-live-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-private-iam-console
+          path: artifacts/private-iam-console/
+          if-no-files-found: warn
+          retention-days: 7
