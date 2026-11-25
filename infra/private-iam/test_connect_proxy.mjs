@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { createConnectProxy, parseOrigin } from './connect-proxy.mjs';
 import { loopbackHttpsGet } from './loopback-https.mjs';
+import { canonicalCapabilities } from './runtime-assertions.mjs';
 import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence, disposableConfigDiagnostic } from './diagnostics.mjs';
 
 test('unsafe origins, browser port substitution and unsafe target ports are refused', async () => {
@@ -166,4 +167,14 @@ test('Docker local log-driver rejection is distinguished from NGINX configuratio
   assert.equal(summary.cli.loggingCompressionRetentionInvalid, true);
   assert.equal(summary.nginx.configurationTestFailed, false);
   assert.equal(summary.nginx.configurationTestSuccessful, false);
+});
+
+test('Docker capability CAP_ spelling preserves the exact limited set', () => {
+  const expected = ['SETGID', 'SETUID'];
+  for (const values of [['SETUID', 'SETGID'], ['CAP_SETUID', 'CAP_SETGID'], ['SETUID', 'CAP_SETGID']]) assert.deepEqual(canonicalCapabilities(values), expected);
+  assert.deepEqual(canonicalCapabilities([]), []);
+  assert.notDeepEqual(canonicalCapabilities(['CAP_SETUID', 'CAP_SETGID', 'CAP_SYS_ADMIN']), expected);
+  assert.notDeepEqual(canonicalCapabilities(['CAP_SETUID', 'CAP_SETGID', 'CAP_SETGID']), expected);
+  assert.notDeepEqual(canonicalCapabilities(['CAP_CAP_SETUID', 'CAP_SETGID']), expected);
+  for (const malformed of [null, 'CAP_SETUID', ['setuid'], [' CAP_SETUID'], ['CAP_SETUID '], [42]]) assert.throws(() => canonicalCapabilities(malformed));
 });
