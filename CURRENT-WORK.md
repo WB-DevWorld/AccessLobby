@@ -1,6 +1,13 @@
 # Execution ledger — MVP-0
 
 
+## Jane-only collision and new-registration evidence accepted — 2026-11-25 UTC
+
+Retrieved remote qualification head6e4cb0fda389fc6a3d1cb2b4ea3f1a205a6a65e1 and Issue59comment7175168358. This supersedes the earlier mailbox blocker and pending sequential plan below. Cursor used the owner-open Jane inbox: a genuinely verified disposable IAM identity encountered empty/unlinked WordPress subscriber48 with the same email; fresh JIT-on login refused HTTP400/account_link_required130 at1795641390, with no local account/link/session. Users stayed41, links2. JIT returned off131; supported deletion removed only the two exact new throwaway accounts, returning40users/2links while preserving central durable identity/audit.
+
+A separate normal WordPress Join then registered a new IAM account created1795641522633. Its first unverified/JIToff return created nothing. A genuinely delivered second verification completed; fresh JIT-on login provisioned subscriber49/audit137 at1795641961, active validated_jit. Repeat login reused49/callback143 with no duplicate. Final41users/3active mappings/hybrid/JIToff144/enforcedoff.45/47/order50402/on-hold/owner45/guestcheckout remain; runtime d875712/plugin alpha.9/SMTP587/pins/realm verificationoff/300second tokens unchanged. This is bounded registration→genuineverification→freshentry; how verification-send was initiated is not established, so fully unassisted public signup is not inferred. The integrator reviewed committed evidence without repeating live tests. [Reconciled evidence](docs/qa/wordpress-jane-2026-11-25/README.md). Main remains de71ec978d9c5dcc2eaa4e3076eb7a7da94ed223.59staysopen for remaining gates; private operator CI is independent.
+
+
 ## Single receiving inbox selected for sequential qualification — 2026-11-25 UTC
 
 Retrieved Cursor evidence ee3dee9f65c3876f04197e97bb7d9f29e3e888f9 and issue59comment7174247008 records both collision and new registration BLOCKED before fixture creation: training40users/twoactive mappings/hybrid/JIToff;45/47/order50402/guest unchanged. Existing unused Jane/partners/suppliers/support mailboxes were reported, but dashboard webmail retained official and Jane sign-in stalled; the cause was not established. No alias/password/DNS/mail/realm/site change occurred in that report.
@@ -9,6 +16,9 @@ The owner subsequently confirms only jane@cetechbpa.com is available and open in
 
 
 ## Owner-accelerated operator round 3 — four assigned lanes, 2026-11-25 UTC
+
+
+Headb1ccd57d064c598eedd9b50494756e625da53171 native artifact15065659080/run45709876649 (PRmerge source97c7a10cbdaaa554fe469ccf9c3be327f020a6e6) now proves BOTH actual trusted masterTLS200, metrics404/wrongHost421, exact runtime127bindings/networkisolation, read-only filesystem/binds, exact capabilities and no-new-privileges. Next failure is host-dependent docker top process command exit1, before browser authentication; exact host utility cause is not established. The fixture instead reads only NGINX Name/Pid/PPid/fourUID fields inside its exact owned container, strictly requiring root PID1 master and at least one direct child entirely UID101. Malformed/duplicate/unexpected identities fail. Only booleans/counts enter the report; no process arguments/environment/raw status is retained.8Python+11Node checks/syntax pass. Genuine browser/admin login and successor native/CI remain pending; the separately accepted Jane qualification above is not delayed by this fixture work.
 
 
 Consolidated PR78 head99b22ffd94b5484bfec4c2012c8264d3d3374330/tree091e69248284f910a085467f9efe89a6ab005ac9 has a passing security scan. Native artifact15066162607/run45709161529 (PR merge source36afc0714a18153b6b1b9bbe5eff42d14abab9cb) proves both effective localhost bindings, both exclusive owned ingress/IAM-unchanged checks and genuine nonroot masterTLS200/metrics404/wrongHost421. It then fails the root hardening readback before root TLS/browser login; both proxies stay healthy and all owned cleanup passes. The candidate now canonicalizes only Docker’s optional CAP_ capability spelling and still demands exactly SETGID/SETUID for root or none for nonroot, rejecting extras/duplicates/malformed forms. Each hardening assertion has its own safe boolean/phase, with additional no-new-privileges and exact three read-only bind checks.8Python+10Node cases and native syntax pass. Root TLS/browser/login/logout and successor exact-head CI remain required, not inferred from the passing nonroot route. PR77 is superseded with its diagnostic branch preserved; no live route or realm change.

@@ -1,5 +1,7 @@
 # ACCESSLOBBY DEV — Use the open Jane inbox and complete both tests
 
+**Completed:** Cursor6e4cb0fda389fc6a3d1cb2b4ea3f1a205a6a65e1 records both bounded tests passing and final41users/3active mappings/hybrid/JIToff. See [accepted evidence](../qa/wordpress-jane-2026-11-25/README.md). The original instructions below are retained as history, not a request to repeat completed qualification. Fully unassisted public verification initiation remains separately unestablished; Issue59staysopen for remaining gates.
+
 Current owner decision, 2026-11-25: **jane@cetechbpa.com is open in Cursor’s qualification Edge profile. Use that inbox and make both tests work.** This supersedes the earlier distinct-address plan. No second inbox, plus-addressing, alias creation, mailbox password generation or provider change is required. Continue through results, not another plan.
 
 ## Reconcile and preserve

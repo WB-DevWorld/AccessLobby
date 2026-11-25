@@ -2,7 +2,11 @@
 
 Relates to #59. Keep the WordPress verified-email gate, current image pins, hybrid mode and local authorization unchanged. This procedure diagnoses an incomplete test prerequisite; it does not authorize manually setting emailVerified, forging claims or changing the ordinary identity contract.
 
-## Recorded blocker
+## Current accepted evidence
+
+The earlier blocker below is historical. Accepted a83634f established genuine Forward Email587 delivery/verification and subscriber47 provisioning/reuse. Cursor6e4cb0fda389fc6a3d1cb2b4ea3f1a205a6a65e1 then passed real email-collision refusal with new disposable fixture48, exact fixture cleanup, and separate WordPress-originated new registration/genuine verification/fresh entry provisioning subscriber49 and repeat reuse. Final training41users/3active mappings/hybrid/JIToff/enforcedoff;45/47/order50402/guest policy preserved. The verification-send initiation for new registration is not described, so fully unassisted public signup is not inferred. See [reconciled evidence](../qa/wordpress-jane-2026-11-25/README.md). Keep59open for remaining gates. The existing diagnostics/procedure remain useful for a new concrete regression; accepted tests are not pending merely because old observations remain below.
+
+## Historical recorded blocker
 
 Published operator source [d3650bb2f621fe0d4c05c576b0ceb578fa603cc1](https://github.com/WB-DevWorld/AccessLobby/commit/d3650bb2f621fe0d4c05c576b0ceb578fa603cc1) records training's safe subscriber role (read, level_0 and the supported own-account Wordfence capability), temporary JIT enablement on that site only, and refused Join: verified_email_required audit103 at1795629249. Users remain39 and only customer45 has an active link. JIT is restored off at audit104/1795629304. This qualifies refusal without local creation, not successful JIT, exactly-one reuse or collision handling.
 
@@ -32,8 +36,10 @@ Client-only provisioning credentials intentionally lack realm/user read access a
 
 Official primary guidance: Keycloak [realm email configuration](https://www.keycloak.org/docs/latest/server_admin/index.html#_email), [user email verification and per-user required actions](https://www.keycloak.org/docs/latest/server_admin/index.html), and [Admin REST read endpoints](https://www.keycloak.org/docs-api/latest/rest-api/index.html). Native CI checks this helper against the repository's pinned disposable IAM; it does not certify staging SMTP or deliver real email.
 
-## Other current qualification conditions
+## Historical other qualification conditions
 
 The prior control authenticated at1795625611 and expired at1795625911: an observed300-second lifetime. Expiry is740seconds before WordPress-initiated logout1795626651. The later unauthenticated Orders request therefore cannot establish reverse-direction live-browser isolation or a logout regression. Keep accepted cfd71f0 signed receiver/targeted-removal results. For a later bounded isolation check, prepare the main sites first, renew the independent control last, confirm its actual expiry exceeds the planned test window, then perform the event and control request promptly. Preserve lifetimes; do not lengthen them for a passing test.
 
 FLAIROC's observed coming-soon homepage with an admin toolbar is an authenticated WordPress context, not the customer login form. Identify only the current non-secret account label/role; the toolbar alone does not establish Administrator privileges. End that site's current session using site-only logout, then open wp-login.php in the qualification profile. If a challenge actually appears, hand it to the owner; otherwise use the existing synthetic customer122 and its established private credential route. Confirm that exact customer before Connect AccessLobby. Do not connect from the unidentified toolbar session. Preserve order4043, roles, coming-soon policy and the existing account exemption. No production change or enforced-mode enablement.
+
+Later accepted cross-domain/control/FLAIROC results are recorded in [three-site evidence](../qa/wordpress-three-site-2026-11-25/README.md); the historical prerequisites above do not supersede those accepted observations.

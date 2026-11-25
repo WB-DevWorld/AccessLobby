@@ -11,7 +11,7 @@ import net from 'node:net';
 import { chromium } from 'playwright';
 import { createConnectProxy } from '../private-iam/connect-proxy.mjs';
 import { loopbackHttpsGet } from '../private-iam/loopback-https.mjs';
-import { canonicalCapabilities } from '../private-iam/runtime-assertions.mjs';
+import { canonicalCapabilities, nginxProcessIdentity, nginxProcStatusCommand } from '../private-iam/runtime-assertions.mjs';
 import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence, disposableConfigDiagnostic } from '../private-iam/diagnostics.mjs';
 
 const execute = promisify(execFile);
@@ -235,9 +235,9 @@ async function renderAndStart(keyFile, label, port, rootMode = false) {
   assert.equal(responses.wrongHostStatus, 421);
   if (rootMode) {
     phase = `${label}_worker_identity`;
-    const processes = await docker(['top', id, '-eo', 'uid,args']);
-    assert.match(processes, /(?:^|\n)\s*0\s+nginx: master process/);
-    assert.match(processes, /(?:^|\n)\s*101\s+nginx: worker process/);
+    const selectedStatus = await docker(['exec', id, '/bin/sh', '-c', nginxProcStatusCommand]);
+    report.privateWorkerIdentity = nginxProcessIdentity(selectedStatus);
+    assert.equal(report.privateWorkerIdentity.passed, true);
   }
   report.checks[`${label}ImageConfigAndTrustedTls`] = true;
   return id;

@@ -10,7 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { createConnectProxy, parseOrigin } from './connect-proxy.mjs';
 import { loopbackHttpsGet } from './loopback-https.mjs';
-import { canonicalCapabilities } from './runtime-assertions.mjs';
+import { canonicalCapabilities, nginxProcessIdentity } from './runtime-assertions.mjs';
 import { errorCategory, logCategories, startupFailureEvidence, commandFailureEvidence, disposableConfigDiagnostic } from './diagnostics.mjs';
 
 test('unsafe origins, browser port substitution and unsafe target ports are refused', async () => {
@@ -177,4 +177,17 @@ test('Docker capability CAP_ spelling preserves the exact limited set', () => {
   assert.notDeepEqual(canonicalCapabilities(['CAP_SETUID', 'CAP_SETGID', 'CAP_SETGID']), expected);
   assert.notDeepEqual(canonicalCapabilities(['CAP_CAP_SETUID', 'CAP_SETGID']), expected);
   for (const malformed of [null, 'CAP_SETUID', ['setuid'], [' CAP_SETUID'], ['CAP_SETUID '], [42]]) assert.throws(() => canonicalCapabilities(malformed));
+});
+
+test('container proc status proves root master and only direct UID101 NGINX workers', () => {
+  const master = 'nginx\t1\t0\t0\t0\t0\t0';
+  const worker = 'nginx\t7\t1\t101\t101\t101\t101';
+  assert.deepEqual(nginxProcessIdentity(`${master}\n${worker}\n`), {
+    validRecords: true, masterRoot: true, workerCount: 1, workersDirectChildren: true, workersUnprivileged: true, passed: true });
+  for (const value of [master, worker, `${master}\nnginx\t7\t1\t101\t0\t101\t101`, `${master}\nnginx\t7\t2\t101\t101\t101\t101`,
+    `nginx\t1\t0\t101\t0\t0\t0\n${worker}`, `${master}\n${worker}\n${worker}`, `${master}\nnginx\t8\t1\t1001\t1001\t1001\t1001`,
+    `${master}\nsh\t8\t1\t101\t101\t101\t101`, `${master}\nnginx\t8\t1\t101\t101`, `${master}\nnginx\t8\t1\t101\t101\t101\tsecret`, '', 'x'.repeat(8193)]) {
+    assert.equal(nginxProcessIdentity(value).passed, false);
+  }
+  assert.equal(JSON.stringify(nginxProcessIdentity(`${master}\n${worker}`)).includes('nginx\t'), false);
 });
