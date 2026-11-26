@@ -98,6 +98,16 @@ Training JIT was enabled at `configuration_changed` 135 at `1795641936`, while u
 
 Site-only logout 140 at `1795642022` and the following login wrote `auth_started` 141 at `1795642027`, then `session_started` 142 and `callback_succeeded` 143 at `1795642029` for the same user 49. There was no second `account_provisioned`. Users stayed 41, active links stayed 3, and user 49 had one session. JIT was restored off at `configuration_changed` 144 at `1795642086`. Mode is hybrid, the default role is `subscriber`, and the plugin reports `0.1.0-alpha.9`. Customer 45, subscriber 47, subscriber 49, order 50402 on-hold for customer 45, and guest checkout on remain. Realm `verifyEmail` stays false, duplicate emails stay disallowed, and the access-token lifespan stays 300 seconds. The operator session file was removed. Staging and FLAIROC were not changed. Enforced mode stays off. Issue 59 stays open.
 
+## Read-only confirmation — 2026-11-26 UTC
+
+Fetched main is now `f92eec2b50536936df234d094393faa46e5de104`. It accepts the qualification evidence through `6e4cb0f`. This branch was not rebased or merged. `abe267a94a8af395e6f3d77f62630713f78e96c2` and `cfd71f0` are already on `origin/feat/wordpress-estate-qualification`. The accepted delivery, Join, collision, registration, FLAIROC link, and cross-domain logout tests were not repeated.
+
+A private realm read still shows `smtp.forwardemail.net`, port 587, authentication on, STARTTLS on, implicit SSL off, a sender address set, and a password present. `verifyEmail` is false, duplicate emails stay disallowed, and the access-token lifespan is 300 seconds. `al-qual-join` and `al-qual-jane` are enabled, verified, and have no required action. The temporary operator session file was removed. No SMTP field was written.
+
+Training still reports plugin `0.1.0-alpha.9`, hybrid, JIT off, and default role `subscriber`. Users are 41. Three links are active: customer 45 `dual_proof`, subscriber 47 `validated_jit`, and subscriber 49 `validated_jit`. Order 50402 is on-hold for customer 45. Guest checkout is on.
+
+Fully unassisted public verification remains unestablished. The accepted registration completed a genuine delivered message after a targeted send, because realm-wide verification stays off. Enforced mode, emergency recovery, production migration, and external-publisher activation stay outside this step. Issue 59 stays open.
+
 ## PR64 fingerprint compatibility review — 2026-11-24 UTC
 
 Relates to #59 and PR64. Candidate source 7a09d7b normalizes new fingerprints, but its legacy reader recognizes only canonical URLs and the current raw pair. An old slashed site URL with an unslashed home URL is still rejected when the next request spells both with trailing slashes. A local digest reproduction confirms this counterexample; PHP is unavailable locally, so native PHP and browser evidence must come from CI.
