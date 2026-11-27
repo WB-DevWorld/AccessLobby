@@ -11,8 +11,8 @@ The integrator retrieved [Cursor’s rollout evidence](https://github.com/WB-Dev
 | Preserved IAM and gateway | Existing image pins and container identities were retained |
 | Public boundary | Web, API, discovery, JWKS and IAM gateway denials passed at 13:49:11 UTC |
 | Anonymous administrative API | `GET /v1/admin/access` returned `401 unauthorized` |
-| Administrative web document | `/admin` returned a `200` page shell; signed-in operator authorization remains untested |
-| Human operator | No grant was made; the owner’s confirmed AccessLobby ID is still required |
+| Administrative web document | Initial anonymous `200` was only a shell; later signed-in HTML contains all three capabilities, but the visible overview remains on its loading state |
+| Human operator | Later private confirmation and three active grants accepted under `OWNER-BOOTSTRAP-20261127`; signed-in directories and grant history rendered |
 | Private Keycloak browser | The companion was not started; a compatible protected certificate facility remains blocked; no certificate material was exported |
 
 ## Runtime and recovery
@@ -48,11 +48,21 @@ The observed total is now **42 users**. Local customer 50 registered at 13:37:56
 
 The API/web deployment, recorded restore rehearsal, migrations, durable pins and public boundary checks are accepted within this evidence’s scope. Full operator staging qualification remains pending:
 
-- Confirm the intended real human’s AccessLobby ID and grant the required roles privately.
-- Complete signed-in console access, capability, denial and audit checks.
+- Complete visible overview acceptance with an active worker and a fresh session; the human identity, three grants and visible directory/audit reads are already established.
+- Complete the remaining applicable live denial/revocation and administrative workflow checks with separate controlled fixtures.
 - Establish the protected certificate facility and qualify the actual private Keycloak route.
 - Complete the applicable live worker, controlled administrative mutation and consumer checks.
 
-An anonymous API `401` and a web-shell `200` do not establish those remaining cases. Issues 59, 72, 74 and 76 stay open. The synthetic WordPress identity, an email match or a WordPress administrator name cannot identify the initial human operator.
+An anonymous API `401` and a web-shell `200` do not establish those remaining cases. Issues 59, 72, 74 and 76 stay open. The actual human was confirmed privately; the synthetic WordPress identity, an email match or a WordPress administrator name was not substituted.
 
 [Earlier operator confirmation](https://github.com/WB-DevWorld/AccessLobby/commit/f88b36f09a750411744aede20ea0d5ae0a417862) establishes that Jane’s accepted registration used a targeted verification send. Fully unassisted public verification remains unqualified. This rollout does not change that policy or repeat the accepted mail and WordPress tests.
+
+## Human access follow-up and visible overview defect
+
+Remote evidence [8aa3db2](https://github.com/WB-DevWorld/AccessLobby/commit/8aa3db23ec8e90594620b8ef9836079ec0c03d32) and [3c7834b](https://github.com/WB-DevWorld/AccessLobby/commit/3c7834b34be189714dc4b31a8dfa8172d3e7fbc5) supersedes the initial “owner ID pending” state. The confirmed active person initially had no operator roles. Private tooling granted `identity_operator`, `application_reviewer` and `application_operator` at 14:17:39.880148, 14:17:40.083729 and 14:17:40.273274 UTC respectively, all under `OWNER-BOOTSTRAP-20261127`. Readback found all three active. The person identifier remains private.
+
+After the owner signed in, their account showed signed-in status. People visibly rendered 14 active identities; organizations rendered two active organizations with their membership counts; applications rendered the five registered applications. Audit rendered the three bootstrap grants attributed to private tooling. The `/admin` document contained all three expected capability sentences, but its visible overview remained “Checking operator access…” while a worker controlled that tab. This accepts the recorded directory/audit reads and grants, not the stuck overview.
+
+The later reload bypassing the worker returned the sign-in page. No actual token-expiry timestamp was retained for that reload. With the unchanged 300-second token lifetime, this observation cannot distinguish expected expiry from a worker-related failure. It does not justify extending sessions, bypassing authorization or clearing browser storage.
+
+The integrator reproduced and fixed a concrete optional-cache failure separately: rejected cache reads/writes prevented good JavaScript/CSS responses from reaching the browser, and a pending write delayed delivery. Healthy worker-controlled overview navigation already passed before the fix. The exact staging loading phenotype was **not** reproduced. [Local baseline/fix evidence and limits](../operator-worker-resilience-2026-11-27/README.md) record the distinction. Actual staging requalification remains required.

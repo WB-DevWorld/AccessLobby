@@ -103,7 +103,7 @@
   ],
   "staging": {
     "promoted": true,
-    "operatorGranted": false,
+    "operatorGranted": true,
     "privateIamCompanionInstalled": false,
     "remainingIssues": [
       59,
@@ -111,7 +111,7 @@
       74,
       76
     ],
-    "acceptanceStatus": "api_web_restore_migrations_accepted_operator_and_private_iam_pending",
+    "acceptanceStatus": "api_web_restore_migrations_operator_grants_directory_reads_accepted_overview_and_private_iam_pending",
     "evidenceSourceSha": "0d81d1f8a19a1dcaeb1bd7fc89552e8015d508e8",
     "evidenceObservedOn": "2026-11-27",
     "evidencePath": "docs/qa/operator-staging-2026-11-27/operator-followup.json",
@@ -164,6 +164,12 @@
       "order50402Owner": 45,
       "order50402Status": "on-hold",
       "guestCheckout": true
-    }
+    },
+    "signedInDirectoryReadAccepted": true,
+    "signedInOverviewVisibleAccepted": false,
+    "operatorFollowupEvidenceSources": [
+      "8aa3db23ec8e90594620b8ef9836079ec0c03d32",
+      "3c7834b34be189714dc4b31a8dfa8172d3e7fbc5"
+    ]
   }
 }
