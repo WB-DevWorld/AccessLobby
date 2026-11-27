@@ -136,6 +136,12 @@ Published `/sw.js` is build `c4206d9a0aaaf3455d45554bc792a23fd57f87f4` with `cac
 
 With that worker controlling the tab, visible `/admin` said “Sign in to continue.” The three capability sentences, directory records and audit records were not on screen. There is no fresh owner session in this profile yet. WordPress was not changed. Issues 59, 72, 74 and 76 stay open.
 
+## Visible overview after the worker release — 2026-11-27 UTC
+
+The owner signed in again in the qualification profile. At `2026-11-27T16:35:04Z` the account page showed that person, not the qualification person. The worker was activated and had no waiting worker. Document status was 200, `workerStart` was set, and script and stylesheet failure counts were 0.
+
+Visible `/admin` stayed on “Checking operator access…” through `16:37:04Z`, including after a normal hard reload. The three capability sentences were present in the document but the paragraph box was 0 by 0. The loading region was 1032 by 708. Client navigation reached people, audit, organizations and applications. Their tables contained 14, 3, 2 and 5 rows, all with 0 by 0 boxes, while the same loading region remained visible. The hidden audit rows are the three `OWNER-BOOTSTRAP-20261127` grants. No console exception was captured after inspection started, and the session had not returned to the sign-in page. The worker was not bypassed. Visible overview acceptance remains open. Issues 59, 72, 74 and 76 stay open.
+
 ## PR64 fingerprint compatibility review — 2026-11-24 UTC
 
 Relates to #59 and PR64. Candidate source 7a09d7b normalizes new fingerprints, but its legacy reader recognizes only canonical URLs and the current raw pair. An old slashed site URL with an unslashed home URL is still rejected when the next request spells both with trailing slashes. A local digest reproduction confirms this counterexample; PHP is unavailable locally, so native PHP and browser evidence must come from CI.
