@@ -39,3 +39,11 @@ These results were obtained on an explicitly dirty candidate tree and are not at
 ## Staging follow-up
 
 Deploy only a reviewed, source-bound application release, preserving the session secret and all IAM/mail/WordPress settings. Do not regrant the owner's roles. Use a fresh owner session, retain worker control, and observe actual visible overview completion plus the three capabilities, directory navigation and audit. Capture only safe error categories and static resource status counts if it still stalls. Keep the actual token-expiry boundary distinct from an unexplained sign-out. The independent private IAM certificate/access and controlled administrative workflow gates remain open.
+
+## Retained enlarged-text defect found by CI
+
+The first committed-head CI run [46026032355](https://github.com/WB-DevWorld/AccessLobby/actions/runs/46026032355) passed typechecking, tests and build, then failed the existing 200% text check before reaching the joined operator step. Independent source-backed investigation reproduced a real layout defect: `html { min-width: 20rem }` expands to 640 pixels at the actual 32-pixel root font on a 390-pixel viewport. Immediate test measurement could still see the old 16-pixel font, and horizontal clipping could mask the oversized root. Those explain why a local initial run could falsely pass.
+
+The minimum is now `min(20rem, 100%)`. The retained browser test waits for fonts and two animation frames, requires the actual 32-pixel resized font and bounds the root width while retaining the original document-scroll-width assertion. Diagnostics include only element classes and geometry, not account content. Before the product correction it deterministically failed at document/root width 640; after rebuilding, all 14 retained UI groups pass at document/root width 390 with no overflowing elements or browser runtime/hydration errors. The before/after local screenshot was visually inspected. This is an additional narrow-screen correction, not evidence that the staging overview stall was a layout failure.
+
+[Protected rollout and visible-acceptance handoff](../../runbooks/operator-overview-worker-followup.md).

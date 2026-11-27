@@ -195,8 +195,28 @@ try {
     await page.keyboard.press('Escape'); assert(await summary.evaluate(el => document.activeElement === el));
     assert.equal(await page.locator('.identifier-block code').innerText(), personId);
     assert(await page.locator('.identifier-block code').evaluate(el => el.scrollWidth <= el.clientWidth + 1));
-    await page.evaluate(() => document.documentElement.style.fontSize = '200%');
-    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'text resizing overflows');
+    const resized = await page.evaluate(async () => {
+      document.documentElement.style.fontSize = '200%';
+      await document.fonts.ready;
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return {
+        viewport: innerWidth, documentWidth: document.documentElement.scrollWidth,
+        rootWidth: Math.round(document.documentElement.getBoundingClientRect().width),
+        fontSize: getComputedStyle(document.documentElement).fontSize,
+        overflowing: Array.from(document.querySelectorAll('body *')).flatMap(element => {
+          const box = element.getBoundingClientRect();
+          return box.width > 0 && (box.right > innerWidth + 1 || box.left < -1) ? [{
+            tag: element.tagName.toLowerCase(), className: typeof element.className === 'string' ? element.className : '',
+            left: Math.round(box.left), right: Math.round(box.right), width: Math.round(box.width),
+            scrollWidth: element.scrollWidth, clientWidth: element.clientWidth,
+          }] : [];
+        }).slice(0, 20),
+      };
+    });
+    console.log(`Text resize diagnostic ${JSON.stringify(resized)}`);
+    assert.equal(resized.fontSize, '32px', 'The resize check must measure the requested 200% text size');
+    assert(resized.documentWidth <= resized.viewport + 1, `text resizing overflows: ${JSON.stringify(resized)}`);
+    assert(resized.rootWidth <= resized.viewport + 1, `text resizing expands the page beyond the viewport: ${JSON.stringify(resized)}`);
     await page.screenshot({ path: resolve(artifacts, 'account-text-200.png'), fullPage: true });
     await page.evaluate(() => document.documentElement.style.fontSize = '');
     await page.setViewportSize({ width: 1366, height: 900 });
