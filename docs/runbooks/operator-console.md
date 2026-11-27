@@ -1,6 +1,8 @@
 # AccessLobby operator console
 
-Candidate runbook, 2026-11-25. Use this procedure with a qualified artifact that includes [ADR 015](../adr/015-operator-console.md). The round-two candidate additionally implements [ADR016](../adr/016-operator-controls-and-activation-jobs.md); use its [runbook](operator-round-2.md) for migrations011–013, status changes and queued private activation. The instructions do not establish that this console has deployed or that any real person has been granted an operator role.
+Staging update, 2026-11-27: the qualified29292fbe API/web release and migrations009–015 are deployed, with bounded backup/restore and public/anonymous checks accepted. Initial human role bootstrap and signed-in operator acceptance remain pending; [deployment evidence](../qa/operator-staging-2026-11-27/README.md). The private Keycloak companion is not installed.
+
+Original runbook, 2026-11-25. Use this procedure with a qualified artifact that includes [ADR 015](../adr/015-operator-console.md). The round-two candidate additionally implements [ADR016](../adr/016-operator-controls-and-activation-jobs.md); use its [runbook](operator-round-2.md) for migrations011–013, status changes and queued private activation. Deployment facts come from the evidence linked above. These instructions alone grant no person an operator role.
 
 ## Where to manage each responsibility
 
@@ -13,7 +15,7 @@ Candidate runbook, 2026-11-25. Use this procedure with a qualified artifact that
 | Containers, qualified images, domains, secrets and backups | The Dokploy instance hosting AccessLobby |
 | Local WordPress roles, orders and connector settings | Each installation's WordPress dashboard |
 
-After deployment and private role bootstrap, the intended staging console address is `https://accesslobby.realjanelove.com/admin`. Its existence as a source route does not prove current live availability. A successful login alone does not grant console access.
+The deployed staging web route is `https://accesslobby.realjanelove.com/admin`. The reported document200 is a page shell. Private role bootstrap and signed-in acceptance are still required for management access; a successful login alone grants no console role.
 
 Do not confuse that address with `https://iam.accesslobby.realjanelove.com/admin/`. The public IAM administration path remains blocked. No working private Keycloak browser URL has been verified in this record.
 

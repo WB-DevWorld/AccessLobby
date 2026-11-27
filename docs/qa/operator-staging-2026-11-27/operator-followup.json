@@ -1,0 +1,162 @@
+{
+  "contract": "accesslobby.operator-staging-observation.v1",
+  "observedOn": "2026-11-27",
+  "sourceCommit": "0d81d1f8a19a1dcaeb1bd7fc89552e8015d508e8",
+  "sourceBranch": "feat/wordpress-estate-qualification",
+  "provenance": "Committed Cursor protected-host observations reviewed by integrator; no repeated host test or live mutation by integrator",
+  "applicationSource": "29292fbe80a99804eaf069144f9103b935902293",
+  "repositoryMainAtObservation": "f92eec2b50536936df234d094393faa46e5de104",
+  "runtimeImages": {
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:73361254da9189e747d07561abaaee18d9b08d222f390b8f9af9165fed3199d1",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:5da7761fdcd833d7503ff59a037def5c930a42efd343d137669af3882dab6e69",
+    "iam": "ghcr.io/wb-devworld/accesslobby-iam@sha256:e0e92a6697f8d022a8e96dbff6966f272687c32ff8637fa331a0fa8ec984653f",
+    "iam-gateway": "ghcr.io/wb-devworld/accesslobby-iam-gateway@sha256:0596f93a8bf4662f811645aedae7c28e4c5a5bebdce48fe94eefd531974d1558"
+  },
+  "promotion": {
+    "apiWebDeployed": true,
+    "iamRecreated": false,
+    "gatewayRecreated": false,
+    "operatorGrantedByRollout": false,
+    "privateIamCompanionStarted": false
+  },
+  "recovery": {
+    "format": "custom",
+    "identityDumpBytes": 38747,
+    "iamDumpBytes": 265151,
+    "isolatedPostgreSqlVersion": "17.11",
+    "isolatedRestoreMatched": true,
+    "isolatedInstanceRemoved": true,
+    "restoredOverLiveDatabases": false,
+    "restoredSchemaVersions": [
+      "001",
+      "002",
+      "003",
+      "004",
+      "005",
+      "006"
+    ],
+    "identityCountsCompared": {
+      "persons": 14,
+      "applications": 5,
+      "organizations": 2,
+      "memberships": 5,
+      "receipts": 9
+    },
+    "iamCountsCompared": {
+      "realms": 2,
+      "users": 15,
+      "clients": 20
+    }
+  },
+  "migrations": {
+    "commandSucceeded": true,
+    "versionsReadBack": [
+      "001",
+      "002",
+      "003",
+      "004",
+      "005",
+      "006",
+      "009",
+      "010",
+      "011",
+      "012",
+      "013",
+      "014",
+      "015"
+    ],
+    "reservedVersionsAbsent": [
+      "007",
+      "008"
+    ]
+  },
+  "publicPreflight": {
+    "observedAt": "2026-11-27T13:49:11Z",
+    "passed": true,
+    "webPassed": true,
+    "apiLiveSource": "29292fbe80a99804eaf069144f9103b935902293",
+    "apiReadySource": "29292fbe80a99804eaf069144f9103b935902293",
+    "discoveryPassed": true,
+    "jwksPassed": true,
+    "publicDenialsPassed": [
+      "admin",
+      "master",
+      "health",
+      "metrics"
+    ],
+    "anonymousAdminAccessStatus": 401,
+    "anonymousAdminAccessError": "unauthorized",
+    "adminDocumentStatus": 200,
+    "adminDocumentIsNotSignedInAuthorizationEvidence": true
+  },
+  "durableConfiguration": {
+    "dokployRecordEncrypted": true,
+    "previousStoredSourcePrefix": "3d9220a140d6",
+    "previousStoredApiDigestPrefix": "c0e725da9b31",
+    "previousStoredWebDigestPrefix": "23dcf4b79da8",
+    "previousPrefixesAreNotRollbackPins": true,
+    "updatedSharedKeys": [
+      "API_IMAGE",
+      "WEB_IMAGE",
+      "GIT_SHA"
+    ],
+    "storedAndEffectiveReleasePinsMatch": true,
+    "otherStoredKeysPreserved": true
+  },
+  "iamPreserved": {
+    "smtpHost": "smtp.forwardemail.net",
+    "smtpPort": 587,
+    "smtpAuth": true,
+    "smtpStartTls": true,
+    "smtpImplicitSsl": false,
+    "smtpPasswordPresent": true,
+    "verifyEmail": false,
+    "duplicateEmailsAllowed": false,
+    "accessTokenLifespanSeconds": 300
+  },
+  "identityCountsAfter": {
+    "persons": 14,
+    "applications": 5,
+    "organizations": 2
+  },
+  "wordpress": {
+    "site": "training.cetechbpa.com",
+    "changedByRollout": false,
+    "plugin": "0.1.0-alpha.9",
+    "mode": "hybrid",
+    "jit": false,
+    "enforced": false,
+    "users": 42,
+    "activeMappings": 3,
+    "mappedLocalUsers": [
+      45,
+      47,
+      49
+    ],
+    "unlinkedLocalCustomer": {
+      "id": 50,
+      "registeredAtUtc": "2026-11-27T13:37:56Z",
+      "hasAccessLobbyLink": false,
+      "outsideRollout": true
+    },
+    "order50402Owner": 45,
+    "order50402Status": "on-hold",
+    "guestCheckout": true
+  },
+  "remaining": {
+    "ownerConfirmedHumanPersonId": "PENDING",
+    "signedInOperatorAcceptance": "NOT_RUN",
+    "privateIamCompanion": "NOT_STARTED",
+    "privateIamCertificateFacility": "BLOCKED",
+    "certificateMaterialExported": false,
+    "activationWorkerAcceptance": "NOT_ESTABLISHED",
+    "fullOperatorStagingQualified": false,
+    "productionQualified": false,
+    "issuesKeptOpen": [
+      59,
+      72,
+      74,
+      76
+    ]
+  }
+}

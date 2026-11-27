@@ -77,5 +77,10 @@
     "activeMappings": 3,
     "issue59": "open",
     "productionQualified": false
+  },
+  "laterConfirmation": {
+    "sourceCommit": "f88b36f09a750411744aede20ea0d5ae0a417862",
+    "verificationInitiation": "targeted_send",
+    "fullyUnassistedPublicVerificationQualified": false
   }
 }

@@ -52,7 +52,7 @@
     "conclusion": "success",
     "checkoutShaVerified": "29292fbe80a99804eaf069144f9103b935902293",
     "allFourTagsMatchSource": true,
-    "hostPullReadbackPending": true
+    "hostPullReadbackPending": false
   },
   "promoteImages": {
     "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:73361254da9189e747d07561abaaee18d9b08d222f390b8f9af9165fed3199d1",
@@ -102,7 +102,7 @@
     "trustedExistingPrivateIamCertificatePathsAndMasterAdministrator"
   ],
   "staging": {
-    "promoted": false,
+    "promoted": true,
     "operatorGranted": false,
     "privateIamCompanionInstalled": false,
     "remainingIssues": [
@@ -110,6 +110,60 @@
       72,
       74,
       76
-    ]
+    ],
+    "acceptanceStatus": "api_web_restore_migrations_accepted_operator_and_private_iam_pending",
+    "evidenceSourceSha": "0d81d1f8a19a1dcaeb1bd7fc89552e8015d508e8",
+    "evidenceObservedOn": "2026-11-27",
+    "evidencePath": "docs/qa/operator-staging-2026-11-27/operator-followup.json",
+    "evidenceProvenance": "committed_operator_observations_reviewed_by_integrator",
+    "runtimeImages": {
+      "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:73361254da9189e747d07561abaaee18d9b08d222f390b8f9af9165fed3199d1",
+      "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:5da7761fdcd833d7503ff59a037def5c930a42efd343d137669af3882dab6e69",
+      "iam": "ghcr.io/wb-devworld/accesslobby-iam@sha256:e0e92a6697f8d022a8e96dbff6966f272687c32ff8637fa331a0fa8ec984653f",
+      "iam-gateway": "ghcr.io/wb-devworld/accesslobby-iam-gateway@sha256:0596f93a8bf4662f811645aedae7c28e4c5a5bebdce48fe94eefd531974d1558"
+    },
+    "migrationsReadBack": [
+      "001",
+      "002",
+      "003",
+      "004",
+      "005",
+      "006",
+      "009",
+      "010",
+      "011",
+      "012",
+      "013",
+      "014",
+      "015"
+    ],
+    "isolatedRestoreMatched": true,
+    "publicPreflightPassed": true,
+    "anonymousAdminAccessStatus": 401,
+    "dokployStoredAndEffectivePinsMatch": true,
+    "currentWordPressObservation": {
+      "site": "training.cetechbpa.com",
+      "changedByRollout": false,
+      "plugin": "0.1.0-alpha.9",
+      "mode": "hybrid",
+      "jit": false,
+      "enforced": false,
+      "users": 42,
+      "activeMappings": 3,
+      "mappedLocalUsers": [
+        45,
+        47,
+        49
+      ],
+      "unlinkedLocalCustomer": {
+        "id": 50,
+        "registeredAtUtc": "2026-11-27T13:37:56Z",
+        "hasAccessLobbyLink": false,
+        "outsideRollout": true
+      },
+      "order50402Owner": 45,
+      "order50402Status": "on-hold",
+      "guestCheckout": true
+    }
   }
 }
