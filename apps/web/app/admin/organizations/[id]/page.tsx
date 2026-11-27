@@ -20,8 +20,8 @@ function PersonLink({ id }: { id: string }) {
 }
 function InspectionTable({ section, page }: { section: OrganizationSection; page: OrganizationInspectionPage<InspectionRow> }) {
   if (!page.items.length) return <AvailabilityPanel title={section === 'members' ? 'No membership records' : section === 'invitations' ? 'No invitation records' : 'No recorded organization events'}
-    description={section === 'members' ? 'No memberships were found on this results page.' : section === 'invitations' ?
-      'No invitations were found on this results page.' : 'No organization events were found on this results page. This history contains stored organization events, not a complete cross-system security history.'} />;
+    description={section === 'members' ? 'No memberships on this page.' : section === 'invitations' ?
+      'No invitations on this page.' : 'No organization events on this page.'} />;
   return <AdminTable label={organizationSectionLabels[section]}>
     <thead><tr>{(section === 'members' ? ['Person', 'Role', 'Membership status', 'Person status', 'Joined', 'Ended'] : section === 'invitations' ?
       ['Invitation / person', 'Invited by', 'Role', 'Stored status', 'Expires', 'Created / decided'] : ['Event', 'Actor', 'Target', 'Recorded']).map(label => <th scope="col" key={label}>{label}</th>)}</tr></thead>
@@ -50,7 +50,7 @@ export default async function AdminOrganization({ params, searchParams }: {
   if (!adminUuid(id)) notFound();
   const query = await searchParams;
   const section = organizationSection(query.section);
-  if (!section || !organizationInspectionPath(id, section, query.after)) return <AdminFrame active="organizations" title="Organization record" description="Inspect stored organization participation.">
+  if (!section || !organizationInspectionPath(id, section, query.after)) return <AdminFrame active="organizations" title="Organization record" description="View members, invitations and history.">
     <InvalidAdminQuery /><Link className="text-link" href={`/admin/organizations/${id}`}>Start with this organization</Link>
   </AdminFrame>;
   const parser = (value: unknown): OrganizationInspectionPage<InspectionRow> | null => section === 'members' ? parseOrganizationMembers(value, id) :
@@ -64,12 +64,12 @@ export default async function AdminOrganization({ params, searchParams }: {
     if (result.state === 'signed-out' || result.state === 'forbidden') return <AdminAccessState context={{ state: result.state }} />;
     if (result.state === 'not-found') notFound();
   }
-  if (detail.state !== 'ready') return <AdminFrame active="organizations" title="Organization record" description="Inspect stored organization participation.">
-    <AvailabilityPanel title="Organization details could not be loaded" description="No organization details have been confirmed. Try again when the service is available." action={<RetryButton />} />
+  if (detail.state !== 'ready') return <AdminFrame active="organizations" title="Organization record" description="View members, invitations and history.">
+    <AvailabilityPanel title="Organization details could not be loaded" description="Try again when the service is available." action={<RetryButton />} />
     <Link className="text-link" href="/admin/organizations">Back to organizations</Link>
   </AdminFrame>;
   const organization = detail.data;
-  return <AdminFrame active="organizations" title="Organization record" description="Inspect organization identity, participation and recorded history.">
+  return <AdminFrame active="organizations" title="Organization record" description="View members, invitations and history.">
     <Link className="text-link" href="/admin/organizations">Back to organizations</Link>
     <section className="context-grid" aria-label="Organization details">
       <SurfaceCard title={organization.name}><dl className="admin-detail">
@@ -77,25 +77,23 @@ export default async function AdminOrganization({ params, searchParams }: {
         <DataRow label="Status">{organization.status === 'active' ? 'Active' : 'Suspended'}</DataRow>
         <DataRow label="Created"><AdminDate value={organization.createdAt} /></DataRow>
         <DataRow label="Created by"><PersonLink id={organization.createdByPersonId} /></DataRow>
-      </dl><p className="hero-note">The name is the stored organization name. This record does not establish legal ownership or verified company status.</p></SurfaceCard>
+      </dl><details className="information-details"><summary>About this organization</summary><p>The name is self-asserted; this record does not verify company status or legal ownership.</p></details></SurfaceCard>
       <SurfaceCard title="Participation"><dl className="admin-detail">
         <DataRow label="Active members">{organization.activeMemberCount}</DataRow>
         <DataRow label="Active owners">{organization.activeOwnerCount}</DataRow>
         <DataRow label="All membership records">{organization.totalMembershipCount}</DataRow>
         <DataRow label="All invitation records">{organization.totalInvitationCount}</DataRow>
-      </dl><p className="hero-note">Active counts include active memberships whose person is active. The tables also retain left, removed and suspended-person records.</p></SurfaceCard>
+      </dl><details className="information-details"><summary>Count details</summary><p>Active counts require an active membership and person. Historical and suspended-person records remain in the tables.</p></details></SurfaceCard>
     </section>
     <SurfaceCard title="Organization investigation">
-      <p>This view is read-only. Organization ownership and membership changes use their authorized organization workflows.</p>
+      <p>Read-only records.</p>
       <nav className="admin-sections" aria-label="Organization record sections">
         {(Object.keys(organizationSectionLabels) as OrganizationSection[]).map(key => <Link key={key}
           href={organizationInspectionHref(id, key)!} className={`button button-secondary button-compact${key === section ? ' admin-section-active' : ''}`}
           aria-current={key === section ? 'page' : undefined}>{organizationSectionLabels[key]}</Link>)}
       </nav>
       <h3>{organizationSectionLabels[section]}</h3>
-      {section === 'members' ? <p className="hero-note">Membership status and person status are separate. This directory does not grant application permissions.</p> :
-        section === 'invitations' ? <p className="hero-note">Stored status is shown separately from expiry. An overdue pending invitation cannot be accepted. No invitation credentials or acceptance links are displayed.</p> :
-          <p className="hero-note">Newest stored organization events appear first. This is organization history; application and IAM activity have separate records.</p>}
+      {section === 'invitations' && <p className="hero-note">Expired invitations cannot be accepted.</p>}
       {records.state === 'ready' ? <>
         <InspectionTable section={section} page={records.data} />
         <div className="context-actions" aria-label="Organization results pagination">
@@ -103,7 +101,13 @@ export default async function AdminOrganization({ params, searchParams }: {
           <Link className="text-link" href={organizationInspectionHref(id, section)!}>First page</Link>
         </div>
       </> : records.state === 'invalid-query' ? <InvalidAdminQuery /> : <AvailabilityPanel title="These records could not be loaded"
-        description="The organization details are available, but this section could not be confirmed. Try again to load its records." action={<RetryButton />} />}
+        description="This section is unavailable. Try again." action={<RetryButton />} />}
+      <details className="information-details"><summary>About these records</summary>
+        <p>Manage ownership and memberships from the organization’s account. Membership does not grant application permissions.</p>
+        {section === 'members' ? <p>Membership and person status are shown separately.</p> : section === 'invitations' ?
+          <p>Invitation status and expiry are shown separately. Acceptance links are not included.</p> :
+          <p>Newest organization events appear first. Keycloak and apps keep separate histories.</p>}
+      </details>
     </SurfaceCard>
   </AdminFrame>;
 }

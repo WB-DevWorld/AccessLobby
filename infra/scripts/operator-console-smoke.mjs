@@ -277,7 +277,7 @@ try {
     noPrivateValues(await page.content());
   });
   workerSummary = await runOperatorWorkerSmoke({
-    browser, origin, reviewerToken: operatorToken, sessionKey: key,
+    browser, origin, reviewerToken: operatorToken, ordinaryToken: ownerToken, organizationId, sessionKey: key,
     revokeReviewer: async () => {
       for (const role of ['identity_operator', 'application_reviewer', 'application_operator']) {
         await manageOperatorRole(pool, actors.fullOperator.id, 'revoke', role, 'operator-worker-fixture-revoke');

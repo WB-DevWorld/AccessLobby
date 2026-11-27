@@ -96,10 +96,10 @@ export function AccountAccessState({ result }: { result: Exclude<CurrentIdentity
         <h1>{signedOut ? 'Sign in to continue' : restricted ? 'This account cannot continue' : 'We cannot load your account right now'}</h1>
         <p>
           {signedOut
-            ? 'Sign in to view your AccessLobby account and account controls.'
+            ? 'Sign in to open your account.'
             : restricted
-              ? 'AccessLobby cannot make this identity available. Contact the account administrator for help, or sign in as a different person.'
-            : 'Your account information was not changed or replaced. Please try again when the service is available.'}
+              ? 'Contact your account administrator or use a different account.'
+            : 'Your account could not be checked. Please try again.'}
         </p>
         <div className="state-actions">
           {signedOut || restricted ? <Link className="button button-primary" href={restricted ? '/auth/login?intent=switch' : '/auth/login'}>

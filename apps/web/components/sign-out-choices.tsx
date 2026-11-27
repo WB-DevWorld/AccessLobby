@@ -4,7 +4,7 @@ export function SignOutChoices() {
   return <div className="sign-out-options">
     <section className="surface-card">
       <h2>This app only</h2>
-      <p>End your session here. Your shared AccessLobby sign-in stays active, so returning may sign you in without asking for your password.</p>
+      <p>Sign out here. AccessLobby stays signed in, so returning may sign you in automatically.</p>
       <ActionForm action="/auth/logout" method="post" pendingLabel="Signing out…">
         <input type="hidden" name="scope" value="current" />
         <button className="button button-secondary" type="submit">Sign out of this app</button>
@@ -12,7 +12,7 @@ export function SignOutChoices() {
     </section>
     <section className="surface-card">
       <h2>AccessLobby & supported apps</h2>
-      <p>End the shared sign-in session in this browser. Some apps may keep a separate local session until they receive or process the shared sign-out.</p>
+      <p>End shared sign-in in this browser. Connected apps may take time to sign out.</p>
       <ActionForm action="/auth/logout" method="post" pendingLabel="Signing out…">
         <input type="hidden" name="scope" value="all" />
         <button className="button button-primary" type="submit">Sign out of AccessLobby and supported apps</button>

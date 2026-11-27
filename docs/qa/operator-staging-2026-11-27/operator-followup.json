@@ -145,7 +145,7 @@
   },
   "remaining": {
     "ownerConfirmedHumanPersonId": "CONFIRMED_PRIVATELY",
-    "signedInOperatorAcceptance": "DIRECTORIES_AND_AUDIT_OBSERVED_OVERVIEW_VISUAL_PENDING",
+    "signedInOperatorAcceptance": "CURRENT_RELEASE_SIGNED_IN_BUT_OVERVIEW_AND_TABLES_HIDDEN",
     "privateIamCompanion": "NOT_STARTED",
     "privateIamCertificateFacility": "BLOCKED",
     "certificateMaterialExported": false,
@@ -200,5 +200,68 @@
     "sessionExpiryAtLaterReload": "NOT_RECORDED",
     "serviceWorkerCausation": "NOT_ESTABLISHED",
     "runtimeOrIamOrMailOrWordPressChanged": false
+  },
+  "workerReleaseFollowup": {
+    "sourceCommit": "ba39cd813f96d0bc1f297fb8e51180a05b83566b",
+    "applicationSource": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
+    "runtimeImages": {
+      "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:ac0f3b2fd2a4e60765b00b9a617c979744f30fcc4eac5c0db62c780bf2272dca",
+      "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:44ccc64e45d760995747a88e2fe20cf6079d595eba14268a5a1d4ab4ad103aa5"
+    },
+    "liveAndReadySourceMatch": true,
+    "effectiveAndDurablePinsMatch": true,
+    "migrationRan": false,
+    "previousRollbackPairRetained": true,
+    "sessionSecretPreserved": true,
+    "iamContainerPreserved": "d9186d9d2352",
+    "gatewayContainerPreserved": "1cf176cf3f61",
+    "existingThreeRolesPreserved": true,
+    "tokenLifetimeSeconds": 300,
+    "anonymousAdminAccessStatus": 401,
+    "workerBuild": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
+    "workerScriptNoStore": true,
+    "adminDocumentPrivateNoStore": true,
+    "normalHomeUpdateNowUsed": true,
+    "workerActivated": true,
+    "followingUpdateHasNoWaitingOrInstallingWorker": true,
+    "cacheNameInspection": "TIMED_OUT_AFTER_FIVE_SECONDS_NOT_EVIDENCE",
+    "storageCookiesWorkerClearedOrBypassed": false,
+    "visibleAdminState": "Sign in to continue",
+    "freshOwnerSession": "PENDING",
+    "signedInVisualAcceptance": false,
+    "wordPressChanged": false
+  },
+  "visibleWorkerReleaseFollowup": {
+    "sourceCommit": "5f6008d487f0f17a13a0edd17d8c2342e9e4874c",
+    "accountPersonConfirmedAtUtc": "2026-11-27T16:35:04Z",
+    "adminHardReloadCheckedAtUtc": "2026-11-27T16:37:04Z",
+    "workerActivated": true,
+    "waitingWorker": false,
+    "workerBypassed": false,
+    "scriptRequestFailures": 0,
+    "stylesheetRequestFailures": 0,
+    "consoleExceptionCapturedAfterInspectionStarted": false,
+    "signedInStatePreserved": true,
+    "visibleLoadingText": "Checking operator access\u2026",
+    "loadingBox": {
+      "width": 1032,
+      "height": 708
+    },
+    "overviewCapabilitiesPresent": true,
+    "overviewCapabilityBox": {
+      "width": 0,
+      "height": 0
+    },
+    "directoryRowsPresentButNotVisible": {
+      "people": 14,
+      "organizations": 2,
+      "applications": 5,
+      "auditBootstrapGrants": 3
+    },
+    "allDirectoryTableBoxesZero": true,
+    "documentVisibilityAndFocus": "NOT_RECORDED",
+    "revealFrameQueue": "NOT_RECORDED",
+    "exactLiveRenderingCause": "NOT_ESTABLISHED",
+    "signedInVisualAcceptance": false
   }
 }

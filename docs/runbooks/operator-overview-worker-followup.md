@@ -1,5 +1,9 @@
 # ACCESSLOBBY DEV — deploy the optional-cache fix and finish visible operator acceptance
 
+**Fresh-session follow-up:** 5f6008d confirms the real signed-in owner but records the overview and all directory tables hidden behind the route loading screen, with zero failed assets. Preserve that evidence. Before changing the existing tab, record safe visibility/focus, hidden-ancestor and pending reveal-queue booleans/counts; bring its actual window/tab to the foreground and re-observe without manually revealing nodes or executing React completion functions. Do not repeat accepted deployment or grants. A separately qualified server-rendering correction and fresh visible acceptance are still needed if the boundary remains stuck.
+
+**Rollout completed:** ba39cd8 records this exact release and activated worker running. Continue at the fresh-session visible checks below; do not repeat accepted deployment, migrations or grants. Keep the worker in place. The signed-out “Sign in to continue” page is not signed-in acceptance.
+
 **Qualified release:** source `c4206d9a0aaaf3455d45554bc792a23fd57f87f4`, exact immutable API/web pins and compatible rollback pair in [the release manifest](../releases/operator-worker-staging-2026-11-27.json). PR81 passed all five head checks; main CI46028104519 and publisher46028704657 passed. The publisher's actual checkout and all four image tags match this source. Promote only API/web. This documentation handoff does not establish host promotion or visible staging overview acceptance.
 
 Continue implementation and protected staging qualification, rather than another plan. Preserve existing checkouts and the qualification branch. The owner has already authorized this continuation.

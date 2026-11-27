@@ -47,7 +47,7 @@
     "conclusion": "success",
     "checkoutShaVerified": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
     "allFourTagsMatchSource": true,
-    "hostPullReadbackPending": true
+    "hostPullReadbackPending": false
   },
   "promoteImages": {
     "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:ac0f3b2fd2a4e60765b00b9a617c979744f30fcc4eac5c0db62c780bf2272dca",
@@ -95,7 +95,7 @@
     "directoryAndAuditObserved": true
   },
   "staging": {
-    "promoted": false,
+    "promoted": true,
     "observedRuntimeAtPreparation": "29292fbe80a99804eaf069144f9103b935902293",
     "privateIamCompanionInstalled": false,
     "remainingIssues": [
@@ -103,7 +103,15 @@
       72,
       74,
       76
-    ]
+    ],
+    "rolloutEvidenceSource": "ba39cd813f96d0bc1f297fb8e51180a05b83566b",
+    "applicationSource": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
+    "effectiveAndDurablePinsMatch": true,
+    "migrationRan": false,
+    "workerUpdatedNormally": true,
+    "workerControlledSignedInVisualAcceptance": "BLOCKED_VISIBLE_LOADING_BOUNDARY",
+    "anonymousAdminAccessStatus": 401,
+    "signedInVisualEvidenceSource": "5f6008d487f0f17a13a0edd17d8c2342e9e4874c"
   },
   "handoff": "docs/runbooks/operator-overview-worker-followup.md"
 }
