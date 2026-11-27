@@ -51,7 +51,7 @@ export function AppShell({ active, title, description, children, actions, contex
     <div className="app-workspace">
       <header className="app-header">
         <div className="mobile-bar"><Link href="/account"><BrandMark /></Link></div>
-        <div className="page-heading"><p className="eyebrow">AccessLobby Identity</p><h1>{title}</h1><p>{description}</p></div>
+        <div className="page-heading"><h1>{title}</h1><p>{description}</p></div>
         <div className="header-actions">
           {!loading && <Link className="context-switch" href="/contexts" aria-label={`Personal and organization selection${contextName ? `: ${contextName}` : ''}`}>
             <span aria-hidden="true">◈</span><span>{contextName ?? 'Personal & organizations'}</span><span aria-hidden="true">⌄</span>

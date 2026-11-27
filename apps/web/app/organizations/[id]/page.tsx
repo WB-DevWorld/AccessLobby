@@ -21,12 +21,12 @@ export default async function OrganizationPage({ params, searchParams }: {
   const notice = contextNotice((await searchParams).notice);
 
   return <AppShell active="contexts" title={data?.name ?? 'Organization unavailable'}
-    description="Manage the people who can represent this organization in AccessLobby."
+    description="Manage members and invitations."
     personStatus={identity.person.status} actions={<Link className="button button-secondary button-compact" href="/contexts">Personal & organizations</Link>}>
     {error && <p className="context-alert" role="alert">{error}</p>}
     {notice && <p className="context-alert context-success" role="status">{notice}</p>}
     {!data ? <AvailabilityPanel title="Organization unavailable" description="You may no longer be a member, or the service may be unavailable." action={<RetryButton />} /> : <>
-      <p className="hero-note">Your role: <strong>{data.role}</strong>. Organization ID: <code>{data.id}</code>. App entry, billing and app-specific permissions remain separate.</p>
+      <p className="hero-note">Your role: <strong>{data.role}</strong>. Organization ID: <code>{data.id}</code></p>
       <section className="context-grid">
         <SurfaceCard title="Members">
           <ul className="context-list">{data.members.map(member => <li key={member.personId}>
@@ -48,7 +48,7 @@ export default async function OrganizationPage({ params, searchParams }: {
           </li>)}</ul>
         </SurfaceCard>
         {data.role !== 'member' && <SurfaceCard title="Invite an existing person">
-          <p>Ask the person for their AccessLobby ID. The invitation appears only in their signed-in account and expires in seven days.</p>
+          <p>Use their AccessLobby ID. Invitations appear in their account and expire after seven days.</p>
           <ActionForm className="context-form" action="/contexts/action" method="post">
             <input type="hidden" name="intent" value="invite" /><input type="hidden" name="organizationId" value={id} />
             <label htmlFor="invite-person">AccessLobby ID</label><input id="invite-person" name="personId" type="text" required pattern="[0-9a-fA-F-]{36}" />
@@ -67,7 +67,7 @@ export default async function OrganizationPage({ params, searchParams }: {
           </li>)}</ul>}
         </SurfaceCard>}
       </section>
-      <p className="hero-note">Only an owner can assign ownership or administrator roles. The last owner must appoint another owner before leaving.</p>
+      <details className="information-details"><summary>Membership and ownership rules</summary><p>Only owners can assign owner or administrator roles. The last owner must appoint another before leaving. App access and billing stay separate.</p></details>
     </>}
   </AppShell>;
 }

@@ -19,8 +19,8 @@ export default async function AdminApplication({ params, searchParams }: {
   const { id } = await params;
   if (!adminUuid(id)) notFound();
   const app = await getAdminData(`/v1/admin/applications/${id}`, parseAdminApplication);
-  if (!app) return <AdminFrame active="applications" title="Application request" description="Inspect the current registered request.">
-    <AvailabilityPanel title="This application cannot be viewed" description="The request may be unavailable or your access may have changed. Try again when the registry is available." action={<RetryButton />} />
+  if (!app) return <AdminFrame active="applications" title="Application request" description="Review the app request.">
+    <AvailabilityPanel title="This application cannot be viewed" description="The request or your access may have changed. Try again." action={<RetryButton />} />
   </AdminFrame>;
   const noticeKey = (await searchParams).notice;
   const notices={...adminNotices,...activationNotices};
@@ -30,7 +30,7 @@ export default async function AdminApplication({ params, searchParams }: {
   const requested = app.status === 'requested' && app.trustClass === 'unreviewed';
   const independent = context.personId !== app.ownerPersonId;
   const canReview = requested && independent && context.access.capabilities.reviewApplications && !currentReview;
-  return <AdminFrame active="applications" title={app.name} description="Inspect the exact application configuration before recording a first-party decision.">
+  return <AdminFrame active="applications" title={app.name} description="Review this app and its connection settings.">
     {notice && <p className={`context-alert${noticeKey === 'approved' || noticeKey === 'rejected' ? ' context-success' : ''}`} role={noticeKey === 'approved' || noticeKey === 'rejected' ? 'status' : 'alert'}>{notice}</p>}
     <p><Link className="text-link" href={`/admin/applications/${id}/suspension`}>Application suspension controls</Link></p>
     <section className="context-grid" aria-label="Application configuration">
@@ -49,37 +49,37 @@ export default async function AdminApplication({ params, searchParams }: {
         <DataRow label="Backchannel logout URL">{app.backchannelLogoutUri ? <code>{app.backchannelLogoutUri}</code> : 'Not registered'}</DataRow>
         <DataRow label="Verified callback host">{app.originVerifiedHost ? <code>{app.originVerifiedHost}</code> : 'Not verified'}</DataRow>
         <DataRow label="Domain proof checked">{app.originVerifiedAt ? <AdminDate value={app.originVerifiedAt} /> : 'Waiting for the app owner to verify DNS'}</DataRow>
-      </dl><p className="hero-note">Domain control and first-party classification are separate checks. The private activation process verifies live DNS proof again.</p></SurfaceCard>
+      </dl></SurfaceCard>
     </section>
     {app.review && <SurfaceCard title={currentReview ? 'Recorded decision' : 'Earlier configuration decision'}>
       <dl className="admin-detail"><DataRow label="Decision">{app.review.decision === 'approved' ? 'Approved' : 'Rejected'}</DataRow>
         <DataRow label="Review reference">{app.review.reference}</DataRow>
         <DataRow label="Reviewer AccessLobby ID" mono>{app.review.reviewerPersonId}</DataRow>
         <DataRow label="Recorded"><AdminDate value={app.review.reviewedAt} /></DataRow></dl>
-      {!currentReview && <p className="context-alert">The application configuration has changed. This earlier decision does not approve the current request.</p>}
+      {!currentReview && <p className="context-alert">The app has changed. This earlier decision no longer applies.</p>}
       {currentReview?.decision === 'approved' && requested && (reviewAuthorityCurrent?
-        <p>This request is awaiting private activation. Keycloak configuration and current domain proof must pass before it becomes active.</p>:
-        <p className="context-alert">The recorded review no longer has current reviewer authority. Ask the application owner to verify its DNS proof again, then obtain a fresh independent review. This immutable historical decision cannot be reused.</p>)}
+        <p>Approved; awaiting private activation.</p>:
+        <p className="context-alert">Reviewer access has changed. The app owner must verify DNS again before a fresh independent review. This decision cannot be reused.</p>)}
     </SurfaceCard>}
     {requested&&currentReview?.decision==='approved'&&reviewAuthorityCurrent&&<SurfaceCard title="Private activation request">
-      <p>Queue a protected worker to recheck the exact reviewed configuration, current authority and domain proof. The browser does not activate the application or hold an IAM credential.</p>
+      <p>The app stays inactive until its approval, domain and connection settings pass.</p>
       {context.access.capabilities.activateApplications?<ActionForm action="/admin/activations/action" method="post" pendingLabel="Queuing activation…">
         <input type="hidden" name="intent" value="queue"/><input type="hidden" name="applicationId" value={app.id}/>
         <input type="hidden" name="configurationHash" value={app.configurationHash}/><input type="hidden" name="reviewReference" value={currentReview.reference}/>
         <button className="button button-primary" type="submit" data-confirm="Queue private activation for this exact reviewed configuration? The application stays inactive until all protected checks pass.">Queue private activation</button>
-      </ActionForm>:<p>An application operator grant is required to queue activation. A reviewer grant alone does not authorize this operation.</p>}
+      </ActionForm>:<p>An application operator grant is required to queue activation.</p>}
       <Link className="text-link" href="/admin/activations">View activation jobs</Link>
     </SurfaceCard>}
     {requested && !currentReview && <SurfaceCard title="Independent first-party review">
-      <p>Check the publisher, hostname and exact routes against the first-party application you intend to connect. Approval is recorded for this configuration and does not activate the client.</p>
-      {!context.access.capabilities.reviewApplications ? <p>A reviewer grant is required to record a decision. Your current grant permits inspection.</p> :
+      <p>Check the owner, domain and exact URLs. Approval does not activate the app.</p>
+      {!context.access.capabilities.reviewApplications ? <p>A reviewer grant is required to record a decision.</p> :
         !independent ? <p>The application owner cannot review their own request. Ask another authorized reviewer.</p> : canReview &&
           <ActionForm action="/admin/action" method="post" className="context-form admin-review-reference" pendingLabel="Recording decision…">
             <input type="hidden" name="intent" value="review" /><input type="hidden" name="applicationId" value={app.id} />
             <input type="hidden" name="configurationHash" value={app.configurationHash} />
             <label htmlFor="review-reference">Review reference</label>
             <input id="review-reference" name="reference" required minLength={4} maxLength={120} pattern="[A-Za-z0-9._:/-]{4,120}" aria-describedby="review-reference-help" autoCapitalize="none" spellCheck={false} />
-            <small id="review-reference-help">Use a recorded issue, ticket or review reference. Do not enter credentials or personal information.</small>
+            <small id="review-reference-help">Use a ticket or review reference. Do not enter credentials or personal information.</small>
             {!app.originVerifiedAt && <p className="context-alert">The app owner must verify the callback domain before approval. You can still reject this request.</p>}
             <div className="context-actions">
               <button className="button button-primary" type="submit" name="decision" value="approved" disabled={!app.originVerifiedAt}
@@ -89,11 +89,10 @@ export default async function AdminApplication({ params, searchParams }: {
             </div>
           </ActionForm>}
     </SurfaceCard>}
-    <SurfaceCard title="How activation completes"><ol className="admin-stage-list">
-      <li>The application owner requests a connection and proves control of its callback domain.</li>
-      <li>An independent platform reviewer records a first-party decision for the exact configuration.</li>
-      <li>The private operator process checks the current approval, domain proof and exact Keycloak client configuration.</li>
-      <li>Only a successful private check marks the application active. The application retains its own roles and resource permissions.</li>
-    </ol><p>External-customer activation and creating additional realms are outside this review workflow.</p></SurfaceCard>
+    <details className="information-details"><summary>How activation works</summary><ol className="admin-stage-list">
+      <li>The owner proves control of the callback domain.</li>
+      <li>An independent reviewer approves the exact connection settings.</li>
+      <li>Private checks confirm current approval, DNS proof and Keycloak settings before activation.</li>
+    </ol><p>Apps manage their own permissions. External customers and additional realms require separate setup.</p></details>
   </AdminFrame>;
 }

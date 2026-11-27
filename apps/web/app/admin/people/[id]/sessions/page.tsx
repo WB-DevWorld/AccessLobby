@@ -21,14 +21,17 @@ export default async function PersonSessions({ params, searchParams }: {
   const result = validCursor ? await getAdminData(`/v1/admin/people/${id}/sessions${query.after ? `?after=${encodeURIComponent(query.after)}` : ''}`, parseSessionInspection) : null;
   const notice = typeof query.notice === 'string' && Object.hasOwn(sessionInspectionNotices, query.notice) ? sessionInspectionNotices[query.notice] : null;
   const canEnd = result && context.access.capabilities.managePeople === true && context.personId !== id && !result.person.protectedOperator;
-  return <AdminFrame active="people" title="Participating app sessions" description="Inspect currently recorded, unexpired app receipt associations for this person.">
+  return <AdminFrame active="people" title="Participating app sessions" description="View this person’s recorded app associations.">
     <Link className="text-link" href={`/admin/people/${id}`}>Back to person</Link>
-    <p>These are centrally recorded associations from participating apps. Browser activity, devices, ordinary IAM sessions and apps without receipts are outside this list.</p>
-    <p>Ending an association invalidates its recorded receipts. Participating apps apply this on their next session check, using their existing outage grace and expiry rules. IAM browser sign-out and other app associations remain separate operations.</p>
+    <p>Ending an association takes effect at the app’s next session check.</p>
+    <details className="information-details"><summary>What this list includes</summary>
+      <p>Unexpired associations recorded by participating apps. This is not a device list or a complete list of Keycloak sessions.</p>
+      <p>Ending an association invalidates its recorded receipts. Apps apply their outage grace and expiry rules; other app associations and Keycloak sign-in remain separate.</p>
+    </details>
     {notice && <p className="context-alert" role={['ended', 'unchanged'].includes(query.notice ?? '') ? 'status' : 'alert'}>{notice}</p>}
-    {!validCursor ? <p className="context-alert" role="alert">Use a valid results link.</p> : !result ? <AvailabilityPanel title="App associations could not be loaded" description="The record may be unavailable or your access may have changed. Try again when the session service is available." action={<RetryButton />} /> : <>
-      {result.person.protectedOperator ? <p>Protected operator associations require the protected offboarding process.</p> : context.personId === id ? <p>Use your account sign-out controls for your own sessions.</p> : !canEnd && <p>Your current role allows inspection. Ending associations requires an identity operator grant.</p>}
-      {!result.sessions.length ? <p>No unexpired participating app receipt associations are recorded for this person.</p> : <section className="context-grid" aria-label="Recorded app associations">
+    {!validCursor ? <p className="context-alert" role="alert">Use a valid results link.</p> : !result ? <AvailabilityPanel title="App associations could not be loaded" description="The record or your access may have changed. Try again." action={<RetryButton />} /> : <>
+      {result.person.protectedOperator ? <p>Protected operator associations require the protected offboarding process.</p> : context.personId === id ? <p>Use your account sign-out controls for your own sessions.</p> : !canEnd && <p>Ending associations requires an identity operator grant.</p>}
+      {!result.sessions.length ? <p>No unexpired app associations are recorded.</p> : <section className="context-grid" aria-label="Recorded app associations">
         {result.sessions.map(session => <SurfaceCard title={session.applicationName ?? session.clientId} key={session.handle}>
           <dl className="admin-detail"><DataRow label="Client ID" mono>{session.clientId}</DataRow>
             <DataRow label="First receipt recorded"><AdminDate value={session.createdAt} /></DataRow>

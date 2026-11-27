@@ -1,0 +1,72 @@
+{
+  "scope": "presentation-only loopback synthetic API; production Next; service worker blocked; default closed details; counts include headings, actions and fixture values",
+  "baseline": "Existing compiled production presentation before copy edits; application bytes correspond to the c4206d9a UI",
+  "candidate": "Dirty copy candidate above main963c6ef; separate committed-tree CI required",
+  "measurement": "main.innerText split on whitespace; includes fixture values and action labels, excludes shared header/nav and closed details content",
+  "view": "1366x900 Chromium; same synthetic fixtures and routes; no real user/session/role mutation",
+  "pages": [
+    {
+      "path": "/",
+      "beforeVisibleWords": 272,
+      "afterVisibleWords": 182,
+      "reductionPercent": 33,
+      "closedDetailsAfter": 3
+    },
+    {
+      "path": "/account",
+      "beforeVisibleWords": 117,
+      "afterVisibleWords": 67,
+      "reductionPercent": 43,
+      "closedDetailsAfter": 0
+    },
+    {
+      "path": "/identity",
+      "beforeVisibleWords": 76,
+      "afterVisibleWords": 31,
+      "reductionPercent": 59,
+      "closedDetailsAfter": 1
+    },
+    {
+      "path": "/contexts",
+      "beforeVisibleWords": 94,
+      "afterVisibleWords": 38,
+      "reductionPercent": 60,
+      "closedDetailsAfter": 1
+    },
+    {
+      "path": "/apps/manage",
+      "beforeVisibleWords": 127,
+      "afterVisibleWords": 90,
+      "reductionPercent": 29,
+      "closedDetailsAfter": 3
+    },
+    {
+      "path": "/admin",
+      "beforeVisibleWords": 262,
+      "afterVisibleWords": 91,
+      "reductionPercent": 65,
+      "closedDetailsAfter": 1
+    },
+    {
+      "path": "/help",
+      "beforeVisibleWords": 326,
+      "afterVisibleWords": 36,
+      "reductionPercent": 89,
+      "closedDetailsAfter": 8
+    },
+    {
+      "path": "/recovery",
+      "beforeVisibleWords": 59,
+      "afterVisibleWords": 41,
+      "reductionPercent": 31,
+      "closedDetailsAfter": 0
+    },
+    {
+      "path": "/sign-out",
+      "beforeVisibleWords": 77,
+      "afterVisibleWords": 60,
+      "reductionPercent": 22,
+      "closedDetailsAfter": 0
+    }
+  ]
+}

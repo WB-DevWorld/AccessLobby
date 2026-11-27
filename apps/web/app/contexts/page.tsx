@@ -19,14 +19,13 @@ export default async function ContextPage({ searchParams }: { searchParams: Prom
   const active = data ? await selectedContext(identity.person.id, data.contexts) : null;
 
   return <AppShell active="contexts" title="Personal & organizations"
-    description="Use one personal identity when acting for yourself or for an organization you have joined."
+    description="Choose personal use or an organization."
     personStatus={identity.person.status}>
     {error && <p className="context-alert" role="alert">{error}</p>}
     {notice && <p className="context-alert context-success" role="status">{notice}</p>}
     {!data ? <AvailabilityPanel title="Organizations could not be checked" description="Please try again before acting for an organization." action={<RetryButton />} /> : <>
       <section className="context-grid" aria-label="Your contexts">
         <SurfaceCard title="For yourself">
-          <p>This is your personal account view. It stays the same when you join or leave an organization.</p>
           <ActionForm action="/contexts/action" method="post">
             <input type="hidden" name="intent" value="select" />
             <button className="button button-secondary" type="submit" disabled={!active}>{!active ? 'Selected here' : 'Use personal account'}</button>
@@ -34,7 +33,7 @@ export default async function ContextPage({ searchParams }: { searchParams: Prom
         </SurfaceCard>
         {data.contexts.filter(c => c.type === 'organization').map(org => org.type === 'organization' &&
           <SurfaceCard title={org.name} key={org.id}>
-            <p>Your organization role: <strong>{org.role}</strong>. This membership does not itself grant access inside connected apps.</p>
+            <p>Your role: <strong>{org.role}</strong></p>
             <ActionForm action="/contexts/action" method="post">
               <input type="hidden" name="intent" value="select" />
               <input type="hidden" name="organizationId" value={org.id} />
@@ -45,7 +44,7 @@ export default async function ContextPage({ searchParams }: { searchParams: Prom
       </section>
       <section className="context-grid" aria-label="Organization actions">
         <SurfaceCard title="Create an organization">
-          <p>You will become its first owner. You can invite people who already have an AccessLobby ID.</p>
+          <p>You become its first owner.</p>
           <ActionForm action="/contexts/action" method="post" className="context-form">
             <input type="hidden" name="intent" value="create" />
             <label htmlFor="organization-name">Organization name</label>
@@ -65,7 +64,7 @@ export default async function ContextPage({ searchParams }: { searchParams: Prom
             </li>)}</ul>}
         </SurfaceCard>
       </section>
-      <p className="hero-note">This selection changes your AccessLobby account view. Connected apps must check your current membership and their own access rules separately.</p>
+      <details className="information-details"><summary>About this selection</summary><p>This changes your AccessLobby view. Your identity stays the same; apps check membership and permissions separately.</p></details>
     </>}
   </AppShell>;
 }

@@ -13,8 +13,8 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
   if (notice) redirect(`/apps/manage?notice=${encodeURIComponent(notice)}`);
   const identity = await getCurrentIdentity();
   if (identity.state !== 'ready') return <AccountAccessState result={identity} />;
-  return <AppShell active="apps" title="Your apps" description="Registered apps available to your AccessLobby identity." personStatus={identity.person.status}>
+  return <AppShell active="apps" title="Your apps" description="Apps available to your account." personStatus={identity.person.status}>
     <Suspense fallback={<SectionSkeleton label="Loading available apps" />}><AvailableApps /></Suspense>
-    <div className="developer-link"><div><strong>Manage an application?</strong><p>Connection requests and entry grants live in developer tools.</p></div><Link className="button button-secondary" href="/apps/manage">Developer tools →</Link></div>
+    <div className="developer-link"><strong>Manage an application?</strong><Link className="button button-secondary" href="/apps/manage">Developer tools →</Link></div>
   </AppShell>;
 }

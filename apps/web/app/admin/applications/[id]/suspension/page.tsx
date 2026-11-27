@@ -17,13 +17,13 @@ export default async function ApplicationSuspension({ params, searchParams }: {
   if (context.state !== 'ready') return <AdminAccessState context={context} />;
   const { id } = await params; if (!adminUuid(id)) notFound();
   const detail = await getAdminData(`/v1/admin/applications/${id}/suspension`, parseApplicationSuspensionDetail);
-  if (!detail) return <AdminFrame active="applications" title="Application suspension" description="Manage AccessLobby admission for this application.">
+  if (!detail) return <AdminFrame active="applications" title="Application suspension" description="Manage this app’s AccessLobby access.">
     <AvailabilityPanel title="This application cannot be viewed" description="The record may be unavailable or your access may have changed." action={<RetryButton />} />
   </AdminFrame>;
   const app = detail.application, noticeKey = (await searchParams).notice;
   const notice = typeof noticeKey === 'string' && Object.hasOwn(applicationSuspensionNotices, noticeKey) ? applicationSuspensionNotices[noticeKey] : null;
   const success = ['suspended', 'unchanged'].includes(noticeKey ?? '') && app.status === 'suspended';
-  return <AdminFrame active="applications" title="Application suspension" description="Suspend this application's AccessLobby admission through an audited platform action.">
+  return <AdminFrame active="applications" title="Application suspension" description="Manage this app’s AccessLobby access.">
     <Link className="text-link" href={`/admin/applications/${app.id}`}>Back to application</Link>
     {notice && <p className="context-alert" role={success ? 'status' : 'alert'}>{notice}</p>}
     <section className="context-grid" aria-label="Application suspension details">
@@ -35,10 +35,11 @@ export default async function ApplicationSuspension({ params, searchParams }: {
         {app.suspensionReference && <DataRow label="Suspension reference" mono>{app.suspensionReference}</DataRow>}
       </dl></SurfaceCard>
       <SurfaceCard title="AccessLobby admission">
-        <p>Suspension denies this client's current and new AccessLobby identity and admission checks. Existing peer-session receipts are removed and cannot revive after reinstatement.</p>
-        <p>Connected applications enforce their own session recheck and expiry policies. This action does not disable the Keycloak client or directly remove application cookies. Application IDs, configuration, grants and history are retained.</p>
-        <p>Reinstatement requires a separately governed private operator process. There is no browser reinstatement control.</p>
-        {!context.access.capabilities.activateApplications ? <p>Your current role allows inspection. Suspension requires an application operator grant.</p> :
+        <p>Suspension blocks this app’s AccessLobby access. Existing sessions follow the app’s checks and expiry rules. Reinstatement requires a private operator.</p>
+        <details className="information-details"><summary>What suspension changes</summary>
+          <p>Recorded session associations end and cannot revive after reinstatement. App records and history are retained; Keycloak clients and app cookies are managed separately.</p>
+        </details>
+        {!context.access.capabilities.activateApplications ? <p>Suspension requires an application operator grant.</p> :
           !detail.canSuspend ? <p className="context-alert">{app.status === 'suspended' ? 'This application is already suspended.' : ['accesslobby-web', 'accesslobby-api'].includes(app.clientId) ?
             'Core AccessLobby services require the protected private operator process.' : 'Only an active first-party application can be suspended here.'}</p> :
             <ActionForm className="context-form" method="post" action={`/admin/applications/${app.id}/suspension/action`} pendingLabel="Suspending application…">
@@ -49,7 +50,7 @@ export default async function ApplicationSuspension({ params, searchParams }: {
               <small id="suspension-client-help">Type {app.clientId} exactly to confirm this application.</small>
               <label htmlFor="suspension-reference">Change reference</label>
               <input id="suspension-reference" name="reference" required minLength={4} maxLength={120} pattern="[A-Za-z0-9._:/-]{4,120}" autoCapitalize="none" spellCheck={false} aria-describedby="suspension-reference-help" />
-              <small id="suspension-reference-help">Use an issue or recorded change reference. Keep credentials and personal information out of this field.</small>
+              <small id="suspension-reference-help">Use an issue or change reference. Do not enter credentials or personal information.</small>
               <button className="button button-danger" type="submit" data-confirm={`Suspend ${app.clientId} in AccessLobby? Admission and existing peer-session receipts will end. IAM clients and application cookies are managed separately.`}>Suspend application</button>
             </ActionForm>}
       </SurfaceCard>

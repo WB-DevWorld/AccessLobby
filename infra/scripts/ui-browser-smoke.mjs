@@ -103,7 +103,7 @@ try {
     await page.screenshot({ path: resolve(artifacts, 'account-loading.png') });
     await page.getByRole('heading', { name: "You're signed in", exact: true }).waitFor();
     await page.getByText('Loading organizations and invitations', { exact: true }).waitFor();
-    await page.getByText('1 organization linked to your identity.', { exact: true }).waitFor();
+    await page.getByText('1 organization', { exact: true }).waitFor();
     assert.equal(await page.getByText(personId, { exact: true }).count(), 1);
     identityDelay = 0; sectionDelay = 0;
     await page.getByText('Sample app 4', { exact: true }).waitFor();
@@ -125,7 +125,7 @@ try {
     assert.equal(await page.locator('input[name="redirectUri"]').count(), 0);
     await page.getByRole('searchbox').fill('app 8'); assert.equal(await page.locator('.app-card-list li').count(), 1);
     await page.getByRole('searchbox').fill('missing'); await page.getByText('No apps match your search.', { exact: true }).waitFor();
-    empty = true; await page.reload(); await page.getByRole('heading', { name: 'No registered apps available yet', exact: true }).waitFor(); empty = false;
+    empty = true; await page.reload(); await page.getByRole('heading', { name: 'No apps listed', exact: true }).waitFor(); empty = false;
   });
   await check('native validation, unsaved guard and request submitter transport', async () => {
     await page.goto(`${origin}/apps/manage`); await page.getByRole('button', { name: 'Save app request', exact: true }).click();
@@ -134,7 +134,7 @@ try {
     await page.locator('#app-callback').fill('https://example.test/auth/callback'); await page.locator('#app-logout').fill('https://example.test');
     await page.locator('#app-backchannel').evaluate(el => { el.value = 'bad URL'; });
     await page.getByRole('button', { name: 'Save app request', exact: true }).click();
-    assert.equal(await page.locator('.information-details').getAttribute('open'), ''); assert.equal(mutations.length, 0);
+    assert.equal(await page.locator('details').filter({ has: page.locator('#app-backchannel') }).getAttribute('open'), ''); assert.equal(mutations.length, 0);
     await page.locator('#app-backchannel').fill('');
     const guard = page.waitForEvent('dialog'); const leave = page.getByRole('link', { name: 'Back to apps', exact: true }).click();
     const prompt = await guard; assert.match(prompt.message(), /unsaved/); await prompt.dismiss(); await leave; assert.match(page.url(), /apps\/manage$/);
@@ -176,7 +176,7 @@ try {
     const logout = 'https://wordpress.example.test/gh/wp-login.php?action=al_signed_out';
     const backchannel = 'https://wordpress.example.test/gh/?rest_route=/accesslobby/v1/backchannel-logout';
     await page.locator('#app-callback').fill(callback); await page.locator('#app-logout').fill(logout);
-    await page.getByText('Advanced: shared sign-out endpoint', { exact: true }).click();
+    await page.locator('details').filter({ has: page.locator('#app-backchannel') }).locator('summary').click();
     await page.locator('#app-backchannel').fill(backchannel);
     const count = mutations.length;
     await page.getByRole('button', { name: 'Save app request', exact: true }).click();

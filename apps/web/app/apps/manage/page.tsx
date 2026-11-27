@@ -25,14 +25,14 @@ async function list(path: string): Promise<App[] | null> {
 }
 
 const notices: Record<string, string> = {
-  requested: 'Application request saved. It is inactive until its domain and first-party status are reviewed and its OIDC client is verified.',
-  verified: 'Callback domain proof verified. The application still needs a first-party review before activation.',
-  origin_proof_missing: 'The exact DNS TXT record has not appeared yet. Check the value and try again after DNS propagation.',
+  requested: 'Request saved. Domain verification and first-party approval are required before activation.',
+  verified: 'Domain verified. First-party approval is still required.',
+  origin_proof_missing: 'DNS record not found. Check the TXT value and allow time for propagation.',
   origin_verification_unavailable: 'DNS verification is unavailable. Please try again.',
-  application_verification_unavailable: 'This application can no longer be verified in its current state.',
-  public_domain_required: 'Domain proof requires a public HTTPS callback hostname.',
-  granted: 'App entry granted. The app still controls its own resources and roles.',
-  revoked: 'App entry revoked. Existing sessions inside that app follow its own expiry and recheck policy.',
+  application_verification_unavailable: 'This application’s current state does not allow verification.',
+  public_domain_required: 'Use a public HTTPS callback hostname.',
+  granted: 'Entry granted. The app manages its own roles.',
+  revoked: 'Entry revoked. Existing sessions follow the app’s expiry and recheck policy.',
   invalid_application_url: 'Use an exact HTTPS URL for the callback and logout on the same origin.',
   application_origin_mismatch: 'The callback and logout URLs must have the same origin.',
   application_path_mismatch: 'WordPress callback and logout URLs must use the same wp-login.php path.',
@@ -61,7 +61,7 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
     {notice && <p className="context-alert" role={["requested", "verified", "granted", "revoked"].includes((await searchParams).notice ?? "") ? "status" : "alert"}>{notice}</p>}
     <section className="context-grid" aria-label="Application access">
       <SurfaceCard title="Connect your app">
-        <p>Requests stay inactive until a controlled first-party review and client registration. External integrations need a separate identifier and data-sharing contract.</p>
+        <p>Requests need domain verification and first-party approval.</p>
         <ActionForm className="context-form" action="/apps/action" method="post">
           <input type="hidden" name="intent" value="request" />
           <label htmlFor="app-name">Application name</label><input id="app-name" name="name" required minLength={2} maxLength={120} />
@@ -69,14 +69,14 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
           <label htmlFor="app-platform">Platform</label><select id="app-platform" name="platform">
             <option value="web">Web application</option><option value="wordpress">WordPress</option>
           </select>
-          <p>For WordPress, copy the exact URLs from the AccessLobby plugin settings.</p>
+          <p>WordPress: copy URLs from the plugin settings.</p>
           <label htmlFor="app-callback">Exact HTTPS callback URL</label><input id="app-callback" name="redirectUri" type="url" pattern="https://.+" required />
           <label htmlFor="app-logout">Exact HTTPS logout return URL</label><input id="app-logout" name="logoutUri" type="url" pattern="https://.+" required />
-          <details className="information-details"><summary>Advanced: shared sign-out endpoint</summary><label htmlFor="app-backchannel">Backchannel logout URL (optional)</label>
+          <details className="information-details"><summary>Shared sign-out (optional)</summary><label htmlFor="app-backchannel">Backchannel logout URL (optional)</label>
           <input id="app-backchannel" name="backchannelLogoutUri" type="url" pattern="https://.+" />
-          <p>Register this only after the app verifies signed logout tokens. It must be on the callback origin.</p></details>
+          <p>Use the callback origin. Validate signed logout tokens before registering.</p></details>
           <label htmlFor="app-visibility">Visibility</label><select id="app-visibility" name="visibility">
-            <option value="discoverable">Discoverable</option><option value="hidden">Hidden until granted</option>
+            <option value="discoverable">Discoverable</option><option value="hidden">Hidden</option>
           </select>
           <label htmlFor="app-admission">Entry policy</label><select id="app-admission" name="admission">
             <option value="grant_required">Requires a grant</option><option value="authenticated_open">Open to authenticated people</option>
@@ -90,20 +90,22 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
       {!mine ? <AvailabilityPanel title="Your applications cannot be checked" description="Try again when AccessLobby is available." action={<RetryButton />} /> :
         mine.length === 0 ? <p>You have not requested an application yet.</p> :
           <div className="context-grid">{mine.map(app => <SurfaceCard title={app.name} key={app.id}>
-            <p>Client ID: <code>{app.clientId}</code></p>
-            <p>Platform: {app.platform === 'wordpress' ? 'WordPress' : 'Web application'}.</p>
             <p>Status: <strong>{app.status === 'active' ? 'Active' : app.status === 'suspended' ? 'Suspended' : app.status === 'cancelled' ? 'Cancelled' : 'Requested'}</strong>. Entry: {app.admission === 'grant_required' ? 'Grant required' : 'Authenticated open'}.</p>
             <p><Link className="text-link" href={`/apps/manage/${app.id}`}>{app.status === 'requested' || app.status === 'cancelled' ? 'Manage request' : 'View request'}</Link></p>
-            <p>Backchannel logout: {app.backchannelLogoutUri ? <code>{app.backchannelLogoutUri}</code> : 'Not registered'}</p>
+            <details className="information-details"><summary>Connection details</summary>
+              <p>Client ID: <code>{app.clientId}</code></p>
+              <p>Platform: {app.platform === 'wordpress' ? 'WordPress' : 'Web application'}</p>
+              <p>Backchannel logout: {app.backchannelLogoutUri ? <code>{app.backchannelLogoutUri}</code> : 'Not registered'}</p>
+            </details>
             {app.status === 'requested' && app.originVerificationHost && app.originVerificationValue && <>
-              <p>Publish this DNS TXT record to prove control of the callback hostname:</p>
+              <p>Add this DNS TXT record:</p>
               <p><code>{app.originVerificationHost}</code> → <code>{app.originVerificationValue}</code></p>
-              <p>Domain proof: <strong>{app.originVerifiedAt ? 'Verified' : 'Waiting for verification'}</strong>. A first-party review is still required.</p>
+              <p>Domain proof: <strong>{app.originVerifiedAt ? 'Verified' : 'Waiting for verification'}</strong></p>
               <ActionForm action="/apps/action" method="post"><input type="hidden" name="applicationId" value={app.id} />
                 <button className="button button-secondary" name="intent" value="verify" type="submit">Verify DNS record</button></ActionForm>
             </>}
             {app.status === 'active' && app.admission === 'grant_required' && <>
-              <p>Grant or revoke broad entry using an existing person’s AccessLobby ID. This does not assign a role inside the app.</p>
+              <p>Use an AccessLobby ID. The app’s roles stay unchanged.</p>
               <ActionForm className="context-form" action="/apps/action" method="post">
                 <input type="hidden" name="applicationId" value={app.id} />
                 <label htmlFor={`grant-${app.id}`}>Person ID</label>
@@ -116,5 +118,6 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
             </>}
           </SurfaceCard>)}</div>}
     </section>
+    <details className="information-details"><summary>External integrations</summary><p>External apps require a separate identity and data-sharing contract before activation.</p></details>
   </AppShell>;
 }

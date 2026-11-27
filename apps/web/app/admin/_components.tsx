@@ -18,6 +18,9 @@ const sections = [
   { key: 'audit', href: '/admin/audit', label: 'Operator history' },
 ] as const;
 
+// Pages await identity, current grants and records before returning this frame.
+// Keep primary admin content outside route-wide loading boundaries: a deferred
+// client reveal must not hide already-authorized server-rendered records.
 export function AdminFrame({ active, title, description, children }: {
   active: typeof sections[number]['key']; title: string; description: string; children: ReactNode;
 }) {
@@ -38,9 +41,9 @@ export function AdminAccessState({ context }: { context: Exclude<AdminContext, {
     <main className="state-panel" id="main-content">
       <p className="eyebrow">AccessLobby operator console</p>
       <h1>{signedOut ? 'Sign in to continue' : unavailable ? 'Operator access could not be checked' : 'Operator access required'}</h1>
-      <p>{signedOut ? 'Sign in with the person account that has an operator grant.' : unavailable ?
-        'Administration is unavailable. No administrative data or controls have been loaded. Please try again.' :
-        'This account does not have access to the operator console. An organization role or application ownership does not grant platform administration.'}</p>
+      <p>{signedOut ? 'Sign in with an authorized operator account.' : unavailable ?
+        'Operator access is unavailable. Please try again.' :
+        'This account needs a platform operator grant.'}</p>
       <div className="state-actions">
         {unavailable ? <RetryButton /> : <Link className="button button-primary" href={signedOut ? '/auth/login' : '/auth/login?intent=switch'}>{signedOut ? 'Sign in' : 'Use a different account'}</Link>}
         <Link className="button button-secondary" href="/account">Your account</Link>
@@ -55,7 +58,7 @@ export function AdminSearch({ kind, q }: { kind: Exclude<AdminListKind, 'audit'>
     <div className="admin-search-controls"><input id="admin-query" name="q" type="search" maxLength={120} autoCapitalize="none" spellCheck={false}
       defaultValue={typeof q === 'string' && q.length <= 120 ? q : ''} />
       <button className="button button-primary" type="submit">Search</button><Link className="button button-secondary" href={`/admin/${kind}`}>Clear</Link></div>
-    {kind === 'people' && <small>Search by at least four characters. Names and email addresses are not stored in this directory.</small>}
+    {kind === 'people' && <small>Enter at least four ID characters.</small>}
   </form>;
 }
 
@@ -74,5 +77,5 @@ export function AdminDate({ value }: { value: string }) {
   return <time dateTime={value}>{new Date(value).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC</time>;
 }
 export function InvalidAdminQuery() {
-  return <p className="context-alert" role="alert">Check the search text and page address. Use a short search and a valid results link.</p>;
+  return <p className="context-alert" role="alert">Check your search text or use a valid results link.</p>;
 }

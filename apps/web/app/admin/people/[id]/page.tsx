@@ -19,14 +19,14 @@ export default async function AdminPerson({ params, searchParams }: {
   const { id } = await params;
   if (!adminUuid(id)) notFound();
   const person = await getAdminData(`/v1/admin/people/${id}`, parseAdminPersonDetail);
-  if (!person) return <AdminFrame active="people" title="Person" description="Inspect this person's platform record.">
-    <AvailabilityPanel title="This person cannot be viewed" description="The record may be unavailable or your access may have changed. Try again when the directory is available." action={<RetryButton />} />
+  if (!person) return <AdminFrame active="people" title="Person" description="View this person’s AccessLobby record.">
+    <AvailabilityPanel title="This person cannot be viewed" description="The record or your access may have changed. Try again." action={<RetryButton />} />
   </AdminFrame>;
   const noticeKey = (await searchParams).notice;
   const notice = typeof noticeKey === 'string' && Object.hasOwn(personControlNotices, noticeKey) ? personControlNotices[noticeKey] : null;
   const success = ['suspended', 'reenabled', 'unchanged'].includes(noticeKey ?? '');
   const canChange = context.access.capabilities.managePeople === true && context.personId !== person.id && !person.protectedOperator;
-  return <AdminFrame active="people" title="Person record" description="Inspect participation and manage AccessLobby person status.">
+  return <AdminFrame active="people" title="Person record" description="View account status and participation.">
     <Link className="text-link" href="/admin/people">Back to people</Link>
     <p><Link className="text-link" href={`/admin/people/${id}/sessions`}>Inspect participating app sessions</Link></p>
     {notice && <p className="context-alert" role={success ? 'status' : 'alert'}>{notice}</p>}
@@ -40,17 +40,19 @@ export default async function AdminPerson({ params, searchParams }: {
         <DataRow label="Protected operator">{person.protectedOperator ? 'Yes' : 'No'}</DataRow>
       </dl></SurfaceCard>
       <SurfaceCard title="Person status">
-        <p>Suspension blocks AccessLobby identity and admission checks and ends existing peer-session receipts. Re-enabling requires a fresh authentication response.</p>
-        <p>Connected applications apply their own session recheck and expiry policies. Existing identity links, organization records and application information are retained.</p>
+        <p>Suspension blocks AccessLobby access. Apps apply their session checks and expiry rules. Re-enabling requires a fresh sign-in.</p>
+        <details className="information-details"><summary>How suspension affects apps</summary>
+          <p>Recorded app sessions end through each app’s checks and expiry rules. Identity links, organization records and app information are retained.</p>
+        </details>
         {person.protectedOperator ? <p className="context-alert">This person holds a platform operator role. Use the protected operator offboarding process.</p> :
           context.personId === person.id ? <p>You cannot change your own person status here.</p> :
-            !context.access.capabilities.managePeople ? <p>Your current role allows inspection. Person administration requires an identity operator grant.</p> : canChange &&
+            !context.access.capabilities.managePeople ? <p>Person administration requires an identity operator grant.</p> : canChange &&
               <ActionForm className="context-form" action="/admin/people/action" method="post" pendingLabel="Saving person status…">
                 <input type="hidden" name="intent" value="change-status" /><input type="hidden" name="personId" value={person.id} />
                 <input type="hidden" name="expectedVersion" value={person.statusVersion} />
                 <label htmlFor="person-change-reference">Change reference</label>
                 <input id="person-change-reference" name="reference" required minLength={4} maxLength={120} pattern="[A-Za-z0-9._:/-]{4,120}" autoCapitalize="none" spellCheck={false} aria-describedby="person-change-help" />
-                <small id="person-change-help">Use an issue or recorded change reference. Keep credentials and personal information out of this field.</small>
+                <small id="person-change-help">Use an issue or change reference. Do not enter credentials or personal information.</small>
                 {person.status === 'active' ? <button className="button button-danger" type="submit" name="status" value="suspended"
                   data-confirm="Suspend this person? Current AccessLobby access and peer-session receipts will end. Their existing information is retained.">Suspend person</button> :
                   <button className="button button-primary" type="submit" name="status" value="active"
