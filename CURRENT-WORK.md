@@ -122,6 +122,12 @@ Realm SMTP remains `smtp.forwardemail.net` port 587, authentication on, STARTTLS
 
 Training was not changed by this rollout. It is still plugin `0.1.0-alpha.9`, hybrid, JIT off, with active mappings for customer 45, subscriber 47 and subscriber 49. Order 50402 is on-hold for customer 45 and guest checkout is on. The user total is now 42 because unlinked local customer 50 was registered at `2026-11-27 13:37:56`, outside this deployment. Enforced mode stays off. Issues 59, 72, 74 and 76 stay open.
 
+## Owner operator grant — 2026-11-27 UTC
+
+The owner-confirmed person was active and had no operator roles. From the running API container, the protected grant command added `identity_operator`, `application_reviewer`, and `application_operator`. Each returned changed. The reference is `OWNER-BOOTSTRAP-20261127`. The audit records are `operator.role.identity_operator.granted` at `2026-11-27 14:17:39.880148+00`, `operator.role.application_reviewer.granted` at `14:17:40.083729+00`, and `operator.role.application_operator.granted` at `14:17:40.273274+00`. All three roles read back active. The person identifier is omitted from this public record. This replaces the pending-grant sentence in the rollout section above.
+
+The qualification browser opened `/admin`, `/admin/people`, `/admin/organizations`, `/admin/applications`, and `/admin/audit`. Every page said “Sign in to continue.” The capability sentences and directory records were not shown, so signed-in console access is not yet observed. API, web, IAM, and gateway digests are unchanged. Issues 59, 72, 74, and 76 stay open.
+
 ## PR64 fingerprint compatibility review — 2026-11-24 UTC
 
 Relates to #59 and PR64. Candidate source 7a09d7b normalizes new fingerprints, but its legacy reader recognizes only canonical URLs and the current raw pair. An old slashed site URL with an unslashed home URL is still rejected when the next request spells both with trailing slashes. A local digest reproduction confirms this counterexample; PHP is unavailable locally, so native PHP and browser evidence must come from CI.
