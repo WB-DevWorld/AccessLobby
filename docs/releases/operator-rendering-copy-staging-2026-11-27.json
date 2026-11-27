@@ -1,0 +1,89 @@
+{
+  "contract": "accesslobby.operator-rendering-copy-release.v1",
+  "preparedOn": "2026-11-27",
+  "sourceSha": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+  "sourceTree": "d73dc724b786efd60eb8aa4d823b1948988aff8a",
+  "pullRequest": 83,
+  "qualifiedHead": "01143da06a6623522d63c250dcddd2f87794e35a",
+  "mergeTreeMatchesQualifiedHead": true,
+  "qualification": {
+    "headCi": {
+      "run": 46037788982,
+      "verifyJob": 140637495523,
+      "iamJob": 140637495377,
+      "privateConsoleJob": 140637495595,
+      "conclusion": "success"
+    },
+    "headTheme": {
+      "run": 46037788951,
+      "conclusion": "success"
+    },
+    "headChecksPassed": 5,
+    "mainCi": {
+      "run": 46038462056,
+      "verifyJob": 140639773355,
+      "iamJob": 140639773363,
+      "privateConsoleJob": 140639773120,
+      "conclusion": "success"
+    },
+    "mainTheme": {
+      "run": 46038461967,
+      "conclusion": "success"
+    },
+    "webTests": 85,
+    "uiBrowserGroups": 14,
+    "operatorBrowserGroups": 23,
+    "roundTwoBrowserGroups": 11,
+    "roundThreeBrowserGroups": 7,
+    "actualWorkerArtifact": {
+      "id": 15219652211,
+      "digest": "sha256:b3c756a606326d5a4939d2c9c5f06ae079730ac438f37265158a1b7fbb0792b3"
+    },
+    "deferredFrameMechanismReproduced": true,
+    "exactLiveBrowserCauseEstablished": false,
+    "stagingQualified": false,
+    "productionQualified": false
+  },
+  "publication": {
+    "run": 46039027634,
+    "job": 140641684360,
+    "conclusion": "success",
+    "checkoutShaVerified": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+    "allFourTagsMatchSource": true,
+    "hostPullReadbackPending": true
+  },
+  "promoteImages": {
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:d8147b06374620b2e91a61e70716223557ed82fcb229e493ae3f9354491411d7",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:5319c7279b27cc50a69693695d7a8ed1f715fb3c99435b03eab2e08fb6673f0a"
+  },
+  "preserveRuntimeImages": [
+    "iam",
+    "iam-gateway",
+    "iam-db",
+    "identity-db",
+    "consumer"
+  ],
+  "migrationChange": false,
+  "operatorRegrantRequired": false,
+  "sessionSecretChange": false,
+  "rollback": {
+    "sourceSha": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:ac0f3b2fd2a4e60765b00b9a617c979744f30fcc4eac5c0db62c780bf2272dca",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:44ccc64e45d760995747a88e2fe20cf6079d595eba14268a5a1d4ab4ad103aa5",
+    "databaseRestoreRequired": false
+  },
+  "staging": {
+    "promoted": false,
+    "observedRuntimeAtPreparation": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
+    "latestVisibleEvidence": "5f6008d487f0f17a13a0edd17d8c2342e9e4874c",
+    "latestVisibleState": "SIGNED_IN_BUT_HIDDEN_ON_PREVIOUS_RELEASE",
+    "privateIamCompanionInstalled": false,
+    "remainingIssues": [
+      59,
+      72,
+      74,
+      76
+    ]
+  },
+  "handoff": "docs/runbooks/operator-rendering-and-copy-followup.md"
+}

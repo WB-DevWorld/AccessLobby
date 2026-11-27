@@ -1,6 +1,15 @@
 # Execution ledger — MVP-0
 
 
+## Admin rendering and concise copy merged, qualified and published — 2026-11-27 UTC
+
+PR83 merged as `713140ad93ba1ade406ec6af4cfffb052a817a9c`, matching qualified head01143da06a6623522d63c250dcddd2f87794e35a/treed73dc724b786efd60eb8aa4d823b1948988aff8a. All five head checks pass: CI46037788982 (verify140637495523/IAM140637495377/privateconsole140637495595), theme46037788951 and security. Main CI46038462056 (verify140639773355/IAM140639773363/privateconsole140639773120), theme46038461967 and publisher46039027634/job140641684360 pass. Actual publisher checkout and all four tags match713140ad; [immutable API/web pins and c4206d9a rollback](docs/releases/operator-rendering-copy-staging-2026-11-27.json) bind this selected release independently of later documentation images.
+
+All23operator,14UI,11round-two and7round-three browser groups plus85webtests/typecheck/build and retained PWA lifecycle pass. Main operator artifact15219652211/digestsha256:b3c756a606326d5a4939d2c9c5f06ae079730ac438f37265158a1b7fbb0792b3 records actual-worker frame/script faults with visible overview, four directories and nested organization details, plus ordinary/revoked/expired denial. These exact committed-source results supersede the candidate/CI-pending entries below.
+
+The exact release pins and [incremental Cursor procedure](docs/runbooks/operator-rendering-and-copy-followup.md) were supplied for the existing protected host route. This workspace made no live deployment change. Latest staging evidence remains5f6008d on c4206d9a: signed-in records hidden. Actual Edge cause and visible acceptance of713140ad remain open until rollout/fresh-session observation; no migration, role regrant, IAM/mail/WordPress or token change is needed. Preserve all accepted prior state. Issues59/72/74/76 remain open.
+
+
 ## Fresh-session admin remains hidden; reveal dependency correction prepared — 2026-11-27 UTC
 
 Remote5f6008d487f0f17a13a0edd17d8c2342e9e4874c supersedes the signed-out blocker: at16:35:04UTC the confirmed human was signed in; at16:37:04 normal worker-controlled admin reload still showed the1032×708loader. Three capabilities and14people/2organizations/5apps/3bootstrap audit rows were present but all0×0. Zero script/style requests failed; no exception was captured after inspection started. No worker bypass or sign-in fallback occurred. The previous cache fix did not complete live overview acceptance. Keep59/72/74/76 open; grants/runtime/IAM/mail/WordPress are preserved.
