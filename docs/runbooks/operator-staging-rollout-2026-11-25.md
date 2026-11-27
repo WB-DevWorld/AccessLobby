@@ -1,5 +1,8 @@
 # Operator console staging rollout — 2026-11-25 UTC
 
+**Deployment stage completed, 2026-11-27:** Cursor0d81d1f records source29292fbe API/web promotion, isolated restore comparison, migrations001–006/009–015, durable Dokploy pin correction and public/anonymous boundary checks. [Accepted evidence](../qa/operator-staging-2026-11-27/README.md). Continue with confirmed-human bootstrap/signed-in qualification and the independent private IAM certificate/access stage. Preserve the42users/3mappings observation, including unlinked local customer50. Retain the procedure below as the original rollout/recovery reference; accepted stages do not require repetition to refresh this summary.
+
+
 The owner authorized integrating PR73 → PR75 → PR78 and proceeding to protected staging deployment/bootstrap. These merges are complete:78a3fb9ad7b6470d9eff90bfd5f443b34bcec14f,8d7fd911eb9916beb557de2cb67f7c7e4e268291,29292fbe80a99804eaf069144f9103b935902293. Every merge preserves its qualified head tree. The final source is29292fbe80a99804eaf069144f9103b935902293/tree656e12fb7064d71b3e8d228e01c9484e489421d1. [PR78](https://github.com/WB-DevWorld/AccessLobby/pull/78) passed15checks, including genuine private Keycloak admin login; main-merge CI/publication has its own verdict.
 
 ## Protected inputs

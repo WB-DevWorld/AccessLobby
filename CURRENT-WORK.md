@@ -1,6 +1,17 @@
 # Execution ledger — MVP-0
 
 
+## Staging API/web deployed; human operator and private IAM acceptance pending — 2026-11-27 UTC
+
+Retrieved remote qualification evidence0d81d1f8a19a1dcaeb1bd7fc89552e8015d508e8. Cursor deployed source29292fbe80a99804eaf069144f9103b935902293 with API73361254da9189e747d07561abaaee18d9b08d222f390b8f9af9165fed3199d1 and web5da7761fdcd833d7503ff59a037def5c930a42efd343d137669af3882dab6e69, matching the qualified release. IAM/gateway images and container identities were preserved. Fresh identity/IAM dumps were restored to isolated PostgreSQL17.11 and schema/count comparisons matched; the isolated instance was removed, with no restore over live databases. Migration execution succeeded with explicit001–006/009–015 readback and007/008 absent. Public preflight13:49:11UTC passed web/API/source/discovery/JWKS/IAM denials; anonymous/v1/admin/access is401. A web/admin200 shell is not operator-authorization evidence.
+
+OnlyAPI_IMAGE/WEB_IMAGE/GIT_SHA in Dokploy's encrypted stored record were corrected to match effective release pins; earlier stored source3d9220a140d6 and API/web prefixes were stale. Other stored settings, IAM SMTP587/auth/STARTTLS/implicitSSLoff, verificationoff, duplicate-email prohibition and300second tokens remain. This corrects the durable deployment drift without a broad IAM/reconciler rollout. [Evidence](docs/qa/operator-staging-2026-11-27/README.md) and the release manifest record bounded stage acceptance; full operator-staging qualification remainsfalse.
+
+No human operator grant or signed-in administrative acceptance occurred: the owner's actual AccessLobby ID remains pending. The private Keycloak companion was not started, no certificate material exported, and a compatible protected certificate facility remains blocked. Live private-worker and administrative mutation/consumer acceptance remain unestablished. Issues59/72/74/76 stay open for their remaining gates. This review accepted committed operator observations without repeating private tests or making live changes.
+
+Training now has42users with unchanged3active mappings45/47/49: unlinked local customer50 registered13:37:56UTC outside this deployment. Preserve50 rather than force the old41-user count. Alpha.9/hybrid/JIToff/enforcedoff/order50402-onhold-owner45/guestcheckouton are unchanged. Earlier f88b36f confirms Jane's genuine verification followed a targeted send; fully unassisted public verification remains unqualified. This entry supersedes earlier pending API/web/migration/restore/readback and current41-user statements while preserving their dated evidence.
+
+
 ## Owner-authorized admin integration and release preparation — 2026-11-25 UTC
 
 The owner said go ahead with integrating PR73→75→78, reviewed artifact promotion, protected initial human-operator bootstrap and actual private IAM access. All three PRs are merged into main:73→78a3fb9ad7b6470d9eff90bfd5f443b34bcec14f;75→8d7fd911eb9916beb557de2cb67f7c7e4e268291;78→29292fbe80a99804eaf069144f9103b935902293. Each merge tree exactly equals its qualified head; finaltree656e12fb7064d71b3e8d228e01c9484e489421d1 preserves all accepted operator source. Linked59/72/74/76 were inspected and remain open for actual staging/acceptance gates. This supersedes earlier unmerged/main-de71/current-CI-pending status statements below.
