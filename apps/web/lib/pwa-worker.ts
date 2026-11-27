@@ -32,16 +32,20 @@ function checkWindow(client) {
 }
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_SHELL)));
+  // Cache Storage is optional. A storage failure must not prevent a worker
+  // that can still deliver network responses and the neutral offline fallback.
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_SHELL)).catch(() => {}));
   // A new worker waits until the application explicitly reaches a safe update boundary.
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    const names = (await caches.keys()).filter((name) => name.startsWith(CACHE_PREFIX));
-    const previous = names.filter((name) => name !== CACHE_NAME).at(-1);
-    await Promise.all(names.filter((name) => name !== CACHE_NAME && name !== previous)
-      .map((name) => caches.delete(name)));
+    try {
+      const names = (await caches.keys()).filter((name) => name.startsWith(CACHE_PREFIX));
+      const previous = names.filter((name) => name !== CACHE_NAME).at(-1);
+      await Promise.all(names.filter((name) => name !== CACHE_NAME && name !== previous)
+        .map((name) => caches.delete(name)));
+    } catch { /* Optional old-cache cleanup cannot prevent taking control. */ }
     await self.clients.claim();
   })());
 });
@@ -87,8 +91,11 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request, { cache: 'no-store' }).catch(async () => {
-      const cached = await caches.match(OFFLINE_URL);
-      return cached || new Response('<h1>Connection required</h1><p>Reconnect before using AccessLobby.</p>',
+      try {
+        const cached = await caches.match(OFFLINE_URL);
+        if (cached) return cached;
+      } catch { /* The same neutral fallback works without browser storage. */ }
+      return new Response('<h1>Connection required</h1><p>Reconnect before using AccessLobby.</p>',
         { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
     }));
     return;
@@ -96,16 +103,28 @@ self.addEventListener('fetch', (event) => {
 
   // Only Next.js content-hashed build assets are eligible. All other requests use the network.
   if (!url.pathname.startsWith('/_next/static/')) return;
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    const response = await fetch(request);
-    if (response.ok && response.type === 'basic' && !response.headers.has('set-cookie')) {
-      await cache.put(request, response.clone());
+  let cacheWrite = Promise.resolve();
+  const response = (async () => {
+    let cache;
+    try {
+      cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match(request);
+      if (cached) return cached;
+    } catch { cache = undefined; }
+    const network = await fetch(request);
+    if (cache && network.ok && network.type === 'basic' && !network.headers.has('set-cookie')) {
+      try {
+        // Clone before handing the response to the browser. Storage rejection
+        // or a stalled write must not discard or delay a ready JS/CSS response.
+        cacheWrite = Promise.resolve(cache.put(request, network.clone())).catch(() => {});
+      } catch { /* A synchronous clone/storage failure is optional too. */ }
     }
-    return response;
-  })());
+    return network;
+  })();
+  event.respondWith(response);
+  // Register the lifetime during dispatch, independently of response delivery.
+  // A genuine network failure still rejects respondWith, not this cleanup task.
+  event.waitUntil(response.then(() => cacheWrite).catch(() => {}));
 });
 `;
 }

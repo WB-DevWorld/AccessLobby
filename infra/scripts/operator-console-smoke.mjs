@@ -12,6 +12,7 @@ import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
+import { runOperatorWorkerSmoke } from './operator-console-worker-smoke.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const web = resolve(root, 'apps/web');
@@ -36,10 +37,10 @@ const dirtyWorktree = execFileSync('git', ['status', '--porcelain'], { cwd: root
 const checks = [], children = [], contexts = [];
 let issuerServer, browser, schemaCreated = false;
 const key = randomBytes(32);
-const actors = Object.fromEntries(['reviewer', 'reader', 'owner', 'suspended'].map(name => [name, {
+const actors = Object.fromEntries(['reviewer', 'reader', 'owner', 'suspended', 'fullOperator'].map(name => [name, {
   id: randomUUID(), subject: `private-subject-canary-${name}-${randomUUID()}`, sid: randomUUID(),
 }]));
-let issuer, apiOrigin, origin, app, selfApp, browserApp, reviewerToken, readerToken, ownerToken;
+let issuer, apiOrigin, origin, app, selfApp, browserApp, reviewerToken, readerToken, ownerToken, operatorToken, workerSummary;
 const appName = 'Independent console review fixture';
 
 async function freePort() {
@@ -97,7 +98,7 @@ function noPrivateValues(value) {
     assert(!text.includes(actor.subject), 'Provider subject reached console output');
     assert(!text.includes(actor.sid), 'IAM session identifier reached console output');
   }
-  for (const token of [reviewerToken, readerToken, ownerToken]) if (token) assert(!text.includes(token), 'Bearer reached console output');
+  for (const token of [reviewerToken, readerToken, ownerToken, operatorToken]) if (token) assert(!text.includes(token), 'Bearer reached console output');
 }
 async function contextFor(token) {
   const context = await browser.newContext({ serviceWorkers: 'block' }); contexts.push(context);
@@ -139,6 +140,9 @@ try {
   await pool.query("INSERT INTO organization_memberships(organization_id,person_id,role,status) VALUES($1,$2,'owner','active')", [organizationId, actors.owner.id]);
   await manageOperatorRole(pool, actors.reviewer.id, 'grant', 'application_reviewer', 'console-fixture-reviewer');
   await manageOperatorRole(pool, actors.reader.id, 'grant', 'support_reader', 'console-fixture-reader');
+  for (const role of ['identity_operator', 'application_reviewer', 'application_operator']) {
+    await manageOperatorRole(pool, actors.fullOperator.id, 'grant', role, 'operator-worker-fixture-grant');
+  }
   const applications = new ApplicationStore(pool, []);
   async function fixtureApp(owner, name, suffix) {
     const requested = await applications.request(owner, { clientId: `console-${suffix}-${randomUUID()}`, name,
@@ -152,6 +156,7 @@ try {
   selfApp = await fixtureApp(actors.reviewer.id, 'Self review must be refused', 'self');
   browserApp = await fixtureApp(actors.owner.id, 'Browser application review fixture', 'browser');
   reviewerToken = await mint(actors.reviewer); readerToken = await mint(actors.reader); ownerToken = await mint(actors.owner);
+  operatorToken = await mint(actors.fullOperator);
   const apiChild = start(process.execPath, ['dist/main.js'], apiDirectory, { DATABASE_URL: database.href,
     OIDC_ISSUER: issuer, OIDC_API_AUDIENCE: 'accesslobby-api', ALLOWED_CLIENT_IDS: 'accesslobby-web,console-peer', PORT: String(apiPort), GIT_SHA: 'operator-console-fixture' });
   await ready(`${apiOrigin}/health/ready`, apiChild);
@@ -271,6 +276,25 @@ try {
     assert.equal(after.application.review.decision, 'approved'); assert.equal(after.application.status, 'requested');
     noPrivateValues(await page.content());
   });
+  workerSummary = await runOperatorWorkerSmoke({
+    browser, origin, reviewerToken: operatorToken, sessionKey: key,
+    revokeReviewer: async () => {
+      for (const role of ['identity_operator', 'application_reviewer', 'application_operator']) {
+        await manageOperatorRole(pool, actors.fullOperator.id, 'revoke', role, 'operator-worker-fixture-revoke');
+      }
+    },
+    restoreReviewer: async () => {
+      for (const role of ['identity_operator', 'application_reviewer', 'application_operator']) {
+        await manageOperatorRole(pool, actors.fullOperator.id, 'grant', role, 'operator-worker-fixture-restore');
+      }
+    },
+    mintExpiredToken: async () => new SignJWT({ azp: 'accesslobby-web', sid: actors.fullOperator.sid })
+      .setProtectedHeader({ alg: 'RS256', kid: jwk.kid }).setIssuer(issuer).setSubject(actors.fullOperator.subject)
+      .setAudience('accesslobby-api').setIssuedAt(Math.floor(Date.now() / 1000) - 120)
+      .setExpirationTime(Math.floor(Date.now() / 1000) - 60).sign(privateKey),
+    check, noPrivateValues,
+  });
+
   await check('reader cannot submit reviews and operator revocation takes effect with the same bearer', async () => {
     const readerContext = await contextFor(readerToken), readerPage = await readerContext.newPage();
     await readerPage.goto(`${origin}/admin/applications/${selfApp.id}`);
@@ -299,6 +323,6 @@ try {
     source, dirtyWorktree, observedAt: new Date().toISOString(),
     scope: 'synthetic OIDC issuer; real isolated PostgreSQL, compiled API and production Next browser',
     liveIam: 'NOT RUN', staging: 'NOT RUN', production: 'NOT RUN',
-    result: process.exitCode ? 'FAIL' : 'PASS', checks,
+    result: process.exitCode ? 'FAIL' : 'PASS', checks, ...(workerSummary ? { workerSummary } : {}),
   }, null, 2) + '\n');
 }

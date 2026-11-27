@@ -144,8 +144,8 @@
     "guestCheckout": true
   },
   "remaining": {
-    "ownerConfirmedHumanPersonId": "PENDING",
-    "signedInOperatorAcceptance": "NOT_RUN",
+    "ownerConfirmedHumanPersonId": "CONFIRMED_PRIVATELY",
+    "signedInOperatorAcceptance": "DIRECTORIES_AND_AUDIT_OBSERVED_OVERVIEW_VISUAL_PENDING",
     "privateIamCompanion": "NOT_STARTED",
     "privateIamCertificateFacility": "BLOCKED",
     "certificateMaterialExported": false,
@@ -157,6 +157,48 @@
       72,
       74,
       76
-    ]
+    ],
+    "operatorRolesGrantedAndActive": true
+  },
+  "humanOperatorFollowup": {
+    "sources": [
+      "8aa3db23ec8e90594620b8ef9836079ec0c03d32",
+      "3c7834b34be189714dc4b31a8dfa8172d3e7fbc5"
+    ],
+    "personConfirmedPrivately": true,
+    "personIdentifierPublished": false,
+    "reference": "OWNER-BOOTSTRAP-20261127",
+    "rolesReadBackActive": [
+      {
+        "role": "identity_operator",
+        "audit": "operator.role.identity_operator.granted",
+        "atUtc": "2026-11-27T14:17:39.880148Z"
+      },
+      {
+        "role": "application_reviewer",
+        "audit": "operator.role.application_reviewer.granted",
+        "atUtc": "2026-11-27T14:17:40.083729Z"
+      },
+      {
+        "role": "application_operator",
+        "audit": "operator.role.application_operator.granted",
+        "atUtc": "2026-11-27T14:17:40.273274Z"
+      }
+    ],
+    "signedInAccountObserved": true,
+    "overviewCapabilitySentencesPresentInDocument": true,
+    "overviewVisiblySettled": false,
+    "overviewObservedState": "Checking operator access\u2026",
+    "overviewServiceWorkerControlled": true,
+    "directoryRecordsVisiblyRendered": {
+      "people": 14,
+      "activeOrganizations": 2,
+      "applications": 5
+    },
+    "threeBootstrapGrantsVisibleInAudit": true,
+    "laterWorkerBypassReload": "SIGN_IN_PAGE",
+    "sessionExpiryAtLaterReload": "NOT_RECORDED",
+    "serviceWorkerCausation": "NOT_ESTABLISHED",
+    "runtimeOrIamOrMailOrWordPressChanged": false
   }
 }

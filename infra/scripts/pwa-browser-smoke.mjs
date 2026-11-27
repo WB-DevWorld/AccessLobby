@@ -53,7 +53,7 @@ async function stop(child) {
 
 try {
   server = await start('a'.repeat(40));
-  browser = await chromium.launch();
+  browser = await chromium.launch({ executablePath: process.env.UI_BROWSER_EXECUTABLE || undefined });
   const context = await browser.newContext({ serviceWorkers: 'allow' });
   const page = await context.newPage();
   const manifest = await (await fetch(`${origin}/manifest.webmanifest`)).json();
