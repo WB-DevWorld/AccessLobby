@@ -1,5 +1,7 @@
 # ACCESSLOBBY DEV — visible admin records and concise pages
 
+**Qualified release:** `713140ad93ba1ade406ec6af4cfffb052a817a9c`, with exact immutable API/web and rollback pins in [the release manifest](../releases/operator-rendering-copy-staging-2026-11-27.json). All five PR83 head checks, main CI46038462056 and publisher46039027634 pass. The publisher’s actual checkout and all four image tags match this source. Source qualification is complete; host rollout and visible actual-profile acceptance remain separate.
+
 Continue the authorized protected staging work. Preserve current checkouts and qualification evidence. Read AGENTS.md, CURRENT-WORK.md and [the source-backed regression record](../qa/concise-ui-2026-11-27/README.md).
 
 ## Accepted baseline
