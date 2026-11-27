@@ -1,5 +1,7 @@
 # ACCESSLOBBY DEV — deploy the optional-cache fix and finish visible operator acceptance
 
+**Qualified release:** source `c4206d9a0aaaf3455d45554bc792a23fd57f87f4`, exact immutable API/web pins and compatible rollback pair in [the release manifest](../releases/operator-worker-staging-2026-11-27.json). PR81 passed all five head checks; main CI46028104519 and publisher46028704657 passed. The publisher's actual checkout and all four image tags match this source. Promote only API/web. This documentation handoff does not establish host promotion or visible staging overview acceptance.
+
 Continue implementation and protected staging qualification, rather than another plan. Preserve existing checkouts and the qualification branch. The owner has already authorized this continuation.
 
 ## Reconcile before writing

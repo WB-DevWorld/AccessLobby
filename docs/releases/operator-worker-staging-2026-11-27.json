@@ -1,0 +1,109 @@
+{
+  "contract": "accesslobby.operator-worker-staging-release.v1",
+  "preparedOn": "2026-11-27",
+  "sourceSha": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
+  "sourceTree": "b35963dac6f5d48043a414f54fe46eb32a803d6c",
+  "pullRequest": 81,
+  "qualifiedHead": "778807a60be231efb951b64ead66039bf552f680",
+  "mergeTreeMatchesQualifiedHead": true,
+  "qualification": {
+    "headCi": {
+      "run": 46027396267,
+      "verifyJob": 140602216230,
+      "iamJob": 140602216293,
+      "privateConsoleJob": 140602215878,
+      "conclusion": "success"
+    },
+    "headTheme": {
+      "run": 46027396498,
+      "conclusion": "success"
+    },
+    "headChecksPassed": 5,
+    "mainCi": {
+      "run": 46028104519,
+      "verifyJob": 140604617089,
+      "iamJob": 140604617628,
+      "privateConsoleJob": 140604617517,
+      "conclusion": "success"
+    },
+    "mainTheme": {
+      "run": 46028104497,
+      "conclusion": "success"
+    },
+    "joinedOperatorBrowserGroups": 18,
+    "retainedUiBrowserGroups": 14,
+    "webTests": 85,
+    "actualWorkerArtifact": {
+      "id": 15212792998,
+      "digest": "sha256:c3684a6081785b2aafa4d61900bf62999fbc16c371512e18a954ddcb8fcfa5e4"
+    },
+    "liveOverviewQualified": false,
+    "productionQualified": false,
+    "exactStagingLoadingPhenotypeReproduced": false
+  },
+  "publication": {
+    "run": 46028704657,
+    "job": 140606666285,
+    "conclusion": "success",
+    "checkoutShaVerified": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
+    "allFourTagsMatchSource": true,
+    "hostPullReadbackPending": true
+  },
+  "promoteImages": {
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:ac0f3b2fd2a4e60765b00b9a617c979744f30fcc4eac5c0db62c780bf2272dca",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:44ccc64e45d760995747a88e2fe20cf6079d595eba14268a5a1d4ab4ad103aa5"
+  },
+  "preserveRuntimeImages": [
+    "iam",
+    "iam-gateway",
+    "iam-db",
+    "identity-db",
+    "consumer"
+  ],
+  "migrationChange": false,
+  "migrationVersionsToPreserve": [
+    "001",
+    "002",
+    "003",
+    "004",
+    "005",
+    "006",
+    "009",
+    "010",
+    "011",
+    "012",
+    "013",
+    "014",
+    "015"
+  ],
+  "rollback": {
+    "sourceSha": "29292fbe80a99804eaf069144f9103b935902293",
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:73361254da9189e747d07561abaaee18d9b08d222f390b8f9af9165fed3199d1",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:5da7761fdcd833d7503ff59a037def5c930a42efd343d137669af3882dab6e69",
+    "databaseRestoreRequired": false
+  },
+  "humanOperator": {
+    "alreadyConfirmedPrivately": true,
+    "alreadyGranted": true,
+    "grantReference": "OWNER-BOOTSTRAP-20261127",
+    "roles": [
+      "identity_operator",
+      "application_reviewer",
+      "application_operator"
+    ],
+    "personIdentifierPublished": false,
+    "directoryAndAuditObserved": true
+  },
+  "staging": {
+    "promoted": false,
+    "observedRuntimeAtPreparation": "29292fbe80a99804eaf069144f9103b935902293",
+    "privateIamCompanionInstalled": false,
+    "remainingIssues": [
+      59,
+      72,
+      74,
+      76
+    ]
+  },
+  "handoff": "docs/runbooks/operator-overview-worker-followup.md"
+}
