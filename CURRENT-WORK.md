@@ -158,6 +158,18 @@ Visible `/admin` showed “Operator console” and all three capability sentence
 
 People opened through the page link with a 1150 by 743 table and 14 visible active rows. Returning to Overview showed the three capability sentences again. Organizations showed a 1150 by 190 table with both AccessLobby Staging Org records. One organization record showed a visible Members table, 1101 by 192, with 2 rows. Applications showed a 1150 by 649 table with 5 rows, including CETECH training. Audit showed a 1150 by 327 table with the three visible `OWNER-BOOTSTRAP-20261127` grants. The checks finished at `11:21:52Z`. No roles were granted again. Issues 59, 72, 74 and 76 stay open for their remaining gates.
 
+## Issue 85 live agendas — 2026-11-28 UTC
+
+Release `713140ad93ba1ade406ec6af4cfffb052a817a9c` stayed running. Public ready returned 200 with that version. API digest `sha256:d8147b06374620b2e91a61e70716223557ed82fcb229e493ae3f9354491411d7` and web digest `sha256:5319c7279b27cc50a69693695d7a8ed1f715fb3c99435b03eab2e08fb6673f0a` were not changed. IAM stayed on backend, iam-edge and iam-egress with no host port. The gateway stayed unpublished to the host. No private-console container existed. The five applications, 14 people and three active owner grants were left as found. No fixture was created, and no mail, WordPress, bootstrap or deployment step was repeated.
+
+| Agenda | Result | Evidence |
+|---|---|---|
+| A. Private Keycloak browser | BLOCKED | All four public hostnames use `certificateType=letsencrypt`. No regular PEM delivery route is available, and ACME JSON was not exported. Discovery and JWKS returned 200. Public `/`, `/admin/`, `/realms/master`, `/health` and `/metrics` returned 404. The companion was not started. |
+| B. App activation lifecycle | BLOCKED | A new fixture needs a public TXT record at `_accesslobby-verify.<callback-hostname>`. The zone is on Cloudflare and no approved DNS write route was available. No application, client, job or consumer was created. |
+| C. Person, session and app suspension | NOT RUN | Activation has to precede app suspension, and the sessions page needs real receipts from two clients. The web app does not request receipts, the reference consumer does not either, and synthetic signing against live IAM is not allowed. No person, session or application was suspended. |
+
+Issues 59, 72, 74, 76 and 85 stay open.
+
 ## PR64 fingerprint compatibility review — 2026-11-24 UTC
 
 Relates to #59 and PR64. Candidate source 7a09d7b normalizes new fingerprints, but its legacy reader recognizes only canonical URLs and the current raw pair. An old slashed site URL with an unslashed home URL is still rejected when the next request spells both with trailing slashes. A local digest reproduction confirms this counterexample; PHP is unavailable locally, so native PHP and browser evidence must come from CI.
