@@ -68,7 +68,9 @@
     "conclusion": "success",
     "checkoutShaVerified": "8f63578deb485a9457522f2b8ff0d4b89bb2c588",
     "allFourTagsMatchSource": true,
-    "hostPullReadbackPending": true,
+    "hostPullReadbackPending": false,
+    "hostReadbackProvenance": "OWNER-FORWARDED OPERATOR OBSERVATION; not independently repeated by integrator",
+    "hostReadbackReport": "docs/qa/operator-round4-staging-2026-11-28/operator-report.json",
     "run": 46143858761,
     "job": 140975507158
   },
@@ -121,16 +123,49 @@
     "newSchemaRuntimeRehearsed": false
   },
   "observedStaging": {
-    "sourceSha": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
-    "latestEvidence": "ad02513dd463a2738297223311b1820702aa766d",
+    "sourceSha": "8f63578deb485a9457522f2b8ff0d4b89bb2c588",
+    "provenance": "OWNER-FORWARDED OPERATOR OBSERVATION",
+    "latestEvidence": "docs/qa/operator-round4-staging-2026-11-28/operator-report.json",
+    "operatorEvidenceCommit": null,
+    "independentlyVerifiedByIntegrator": false,
+    "previousCommittedEvidence": "ad02513dd463a2738297223311b1820702aa766d",
     "visibleReadAcceptance": "65bedeb65b945f456229a7d79aaab6c5b09b6bab",
-    "newReleasePromoted": false,
-    "privateConsolePemFacility": "BLOCKED",
-    "cloudflareFixtureDnsWriteRoute": "BLOCKED",
-    "controlledMutationAcceptance": "NOT_RUN",
+    "visibleReadAcceptanceSourceSha": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+    "runtimeImages": {
+      "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:0b9f19a0dfe2698308f21b80f2414a64aca30a1e65cf9af6f4512091dd556ada",
+      "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:f6d9fce02f4d21a5dfd7528fefe8d4211c829b0870c95e005aa8dc1ffe0db7fb"
+    },
+    "newReleasePromoted": true,
+    "liveAndReadyReportSelectedSource": true,
+    "anonymousAdminAccessStatus": 401,
+    "newBuildWorkerActivated": true,
+    "schemaPrefixes": [
+      "001", "002", "003", "004", "005", "006", "009", "010", "011", "012", "013", "014", "015", "016", "017"
+    ],
+    "reservedSchemaPrefixesAbsent": ["007", "008"],
+    "privateConsolePemFacility": "BLOCKED_PROTECTED_DIRECTORY_REQUIRED",
+    "privateMaterializationProxyAndMasterLogin": "NOT_RUN",
+    "cloudflareFixtureDnsWriteRoute": "MANUAL_PUBLICATION_PENDING_CONFIRMATION",
+    "independentDnsReadback": "UNAVAILABLE_ECONNREFUSED_NOT_NXDOMAIN",
+    "controlledMutationAcceptance": "INACTIVE_REQUEST_HAPPY_PATH_REPORTED_ONLY",
+    "ordinaryFixtureStatusMutation": "NOT_RUN",
+    "newFeatureAcceptance": {
+      "ownRecordedAppSessions": "NOT_RUN",
+      "personalEndingHistory": "NOT_RUN",
+      "safeAdmittedAppLauncher": "NOT_RUN",
+      "ownerEntryGrantExpiryAndDirectory": "NOT_RUN",
+      "filteredOperatorHistoryAndCsv": "NOT_RUN"
+    },
+    "stagingFeatureQualified": false,
+    "productionQualified": false,
     "ownerGrantsPreserved": 3,
-    "peopleObserved": 14,
-    "applicationsObserved": 5
+    "peopleObserved": 15,
+    "peopleObservedScope": "reported active people after the ordinary fixture, previously14; not an independent inventory",
+    "applicationsObserved": 5,
+    "applicationsObservedScope": "existing active apps preserved; additional requested fixture is separate",
+    "totalApplicationsAfterFixture": null,
+    "qualificationConsumerDeployed": false,
+    "iamGatewayAndWordPressChanged": false
   },
   "handoff": "docs/runbooks/operator-round-4.md",
   "remainingIssues": [

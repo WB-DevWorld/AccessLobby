@@ -1,0 +1,149 @@
+{
+  "contract": "accesslobby.round4-staging-operator-report.v1",
+  "reportedOn": "2026-11-28",
+  "provenance": "OWNER-FORWARDED OPERATOR OBSERVATION",
+  "operatorEvidenceCommit": null,
+  "observationTimestampUtc": null,
+  "independentlyVerifiedByIntegrator": false,
+  "integratorRepeatedLiveTests": false,
+  "integratorChangedDeployment": false,
+  "applicationSource": "8f63578deb485a9457522f2b8ff0d4b89bb2c588",
+  "runtimeImages": {
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:0b9f19a0dfe2698308f21b80f2414a64aca30a1e65cf9af6f4512091dd556ada",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:f6d9fce02f4d21a5dfd7528fefe8d4211c829b0870c95e005aa8dc1ffe0db7fb"
+  },
+  "runtimeReadback": {
+    "apiWebRunningAtSelectedPins": true,
+    "apiLiveSource": "8f63578deb485a9457522f2b8ff0d4b89bb2c588",
+    "apiReadySource": "8f63578deb485a9457522f2b8ff0d4b89bb2c588",
+    "anonymousAdminAccessStatus": 401,
+    "newBuildWorkerActivated": true,
+    "newReleasePromoted": true,
+    "hostPullReadbackPending": false,
+    "provenance": "operator reported through owner; no independent host or browser readback by integrator"
+  },
+  "schemaReadback": {
+    "presentPrefixes": ["001", "002", "003", "004", "005", "006", "009", "010", "011", "012", "013", "014", "015", "016", "017"],
+    "reservedAbsent": ["007", "008"]
+  },
+  "recovery": {
+    "backupsRetainedOnProtectedHost": true,
+    "backupMaterialIncludedInRepository": false,
+    "privateBackupPathsOmitted": true,
+    "identityBackup": {
+      "bytes": 72795,
+      "sha256": "207250758328e7885ef8415fa7f3defbde6ec7c9a109bad26f5b76ae3605e2a6"
+    },
+    "iamBackup": {
+      "bytes": 266355,
+      "sha256": "8199adbfa74595895625f2fdcc6a193474693128c84ba28ebb6a8fd5cf0992ca"
+    },
+    "backupHashesRecomputedByIntegrator": false,
+    "isolatedPostgreSqlVersion": "17.11",
+    "isolatedRestoreMatchedPreMigrationInventories": true,
+    "comparedInventoryCountsSeparatelyReported": false,
+    "isolatedInstanceRemoved": true,
+    "restoredOverLiveDatabases": false
+  },
+  "inactiveApplicationLifecycle": {
+    "disposition": "HAPPY_PATH_OPERATOR_REPORTED_ONLY",
+    "requestObserved": true,
+    "editReference": "QUAL-EDIT-20261128",
+    "cancelReference": "QUAL-CANCEL-20261128",
+    "resubmitReference": "QUAL-RESUBMIT-20261128",
+    "clientId": "al-qual-consumer",
+    "finalName": "Qualification consumer revised",
+    "finalStatus": "requested",
+    "callback": "https://al-qual-consumer.realjanelove.com/callback",
+    "staleAndForeignOwnerNegativeCases": "NOT_REPORTED",
+    "domainVerification": "PENDING",
+    "independentReview": "NOT_RUN",
+    "privateWorkerActivation": "NOT_RUN"
+  },
+  "fixtureDns": {
+    "publicationDisposition": "MANUAL_PUBLICATION_PENDING_CONFIRMATION",
+    "txt": {
+      "type": "TXT",
+      "name": "_accesslobby-verify.al-qual-consumer.realjanelove.com",
+      "value": "accesslobby-verify=5j9xrJjc2xV_FzY6lmXejLW74DRXo2Zv-UkFRisdlnE",
+      "purpose": "public hostname ownership challenge; not an authentication credential",
+      "ttlSelection": "Auto",
+      "ttlScope": "provider default selection, not an AccessLobby product rule"
+    },
+    "a": {
+      "type": "A",
+      "name": "al-qual-consumer.realjanelove.com",
+      "desiredAddress": "49.12.212.170",
+      "desiredProxyMode": "DNS only",
+      "ownerReportedBeforeManualAction": "host record missing",
+      "publicationConfirmed": false
+    },
+    "rootBrowserDnsWrite": false,
+    "rootBrowserSession": "SIGNED_OUT",
+    "independentDnsReadback": "UNAVAILABLE_ECONNREFUSED",
+    "negativeDnsAnswerObserved": false,
+    "currentRecordExistence": "UNDETERMINED"
+  },
+  "qualificationConsumer": {
+    "selectedImageDigest": "sha256:940e5ad361da2542e8122e33b13249e5f59a5e2832fe6e9b031498b26bd655f0",
+    "selectedImageDeployed": false,
+    "existingConsumerChanged": false,
+    "realConsumerQualification": "NOT_RUN"
+  },
+  "ordinaryStatusFixture": {
+    "account": "al-fixture-status-20261128",
+    "genuineAuthorizationCodePkceObserved": true,
+    "activePeopleBefore": 14,
+    "activePeopleAfter": 15,
+    "personIdOmitted": true,
+    "statusMutation": "NOT_RUN",
+    "remainingBrowserState": "SIGNED_OUT"
+  },
+  "privateKeycloakAccess": {
+    "disposition": "BLOCKED",
+    "sourceValidation": {
+      "result": "REFUSED",
+      "reason": "protected_directory_required",
+      "sourceFileOwner": "root",
+      "sourceFileMode": "0600",
+      "unsafeWorldWritableAncestorReported": true,
+      "sourceFileChanged": false,
+      "sourceAndAncestorPathsOmitted": true
+    },
+    "certificateMaterialization": "NOT_RUN",
+    "privateProxy": "NOT_RUN",
+    "masterAdminLogin": "NOT_RUN"
+  },
+  "preservedState": {
+    "ownerOperatorGrants": 3,
+    "ownerPersonIdOmitted": true,
+    "existingActiveApplications": 5,
+    "additionalRequestedFixture": "al-qual-consumer",
+    "newTotalApplicationCountReported": false,
+    "accessTokenLifetimeSeconds": 300,
+    "smtpPort": 587,
+    "smtpAuthentication": true,
+    "smtpStartTls": true,
+    "iamContainer": "d9186d9d2352",
+    "gatewayContainer": "1cf176cf3f61",
+    "iamAndGatewayChanged": false,
+    "wordPressChanged": false
+  },
+  "featureQualification": {
+    "ownRecordedAppSessions": "NOT_RUN",
+    "personalEndingHistory": "NOT_RUN",
+    "safeAdmittedAppLauncher": "NOT_RUN",
+    "ownerEntryGrantExpiryAndDirectory": "NOT_RUN",
+    "filteredOperatorHistoryAndCsv": "NOT_RUN",
+    "stagingFeatureQualified": false,
+    "productionQualified": false
+  },
+  "rollback": {
+    "sourceSha": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:d8147b06374620b2e91a61e70716223557ed82fcb229e493ae3f9354491411d7",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:5319c7279b27cc50a69693695d7a8ed1f715fb3c99435b03eab2e08fb6673f0a",
+    "preserveAddedTablesAndHistory": true,
+    "newSchemaRuntimeRehearsed": false
+  },
+  "issuesRemainOpen": [59, 72, 74, 76, 85]
+}
