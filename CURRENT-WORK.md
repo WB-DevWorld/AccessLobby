@@ -150,6 +150,14 @@ Before the rollout, the open qualification tab was `/account`, not the hidden ad
 
 Home was updated with Update now. The controller is activated with no waiting worker. A normal navigation to `/sw.js` showed build `713140ad93ba1ade406ec6af4cfffb052a817a9c`. The following `/admin` view said “Sign in to continue,” so the visible overview, directories, organization record and closed-details check were not made in a fresh owner session. WordPress was not changed. Issues 59, 72, 74 and 76 stay open.
 
+## Visible operator acceptance — 2026-11-28 UTC
+
+The owner signed in again. At `2026-11-28T11:21:16Z` the account page showed that person, not the qualification person. The worker was activated and had no waiting worker. Script and stylesheet failure counts were 0.
+
+Visible `/admin` showed “Operator console” and all three capability sentences. The Operator permissions region was 1152 by 26 pixels. There was no “Checking operator access…” overlay. A normal hard reload at the same size showed the same three sentences. Realm details was closed, its summary was visible, and the private-administration consequence remained on the page.
+
+People opened through the page link with a 1150 by 743 table and 14 visible active rows. Returning to Overview showed the three capability sentences again. Organizations showed a 1150 by 190 table with both AccessLobby Staging Org records. One organization record showed a visible Members table, 1101 by 192, with 2 rows. Applications showed a 1150 by 649 table with 5 rows, including CETECH training. Audit showed a 1150 by 327 table with the three visible `OWNER-BOOTSTRAP-20261127` grants. The checks finished at `11:21:52Z`. No roles were granted again. Issues 59, 72, 74 and 76 stay open for their remaining gates.
+
 ## PR64 fingerprint compatibility review — 2026-11-24 UTC
 
 Relates to #59 and PR64. Candidate source 7a09d7b normalizes new fingerprints, but its legacy reader recognizes only canonical URLs and the current raw pair. An old slashed site URL with an unslashed home URL is still rejected when the next request spells both with trailing slashes. A local digest reproduction confirms this counterexample; PHP is unavailable locally, so native PHP and browser evidence must come from CI.
