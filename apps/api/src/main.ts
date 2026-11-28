@@ -18,6 +18,10 @@ import { ActivationJobStore } from './activation-jobs.js';
 import { ApplicationSuspensionStore } from './application-suspension.js';
 import { SessionInspectionStore } from './session-inspection.js';
 import { OrganizationInspectionStore } from './organization-inspection.js';
+import { AccountSessionsStore } from './account-sessions.js';
+import { ApplicationLaunchStore } from './application-launch.js';
+import { AuditToolsStore, auditCsvFilename } from './audit-tools.js';
+import { ApplicationGrantsStore } from './application-grants.js';
 
 const settings = config();
 const pool = new Pool({ connectionString: settings.databaseUrl, max: 10 });
@@ -40,6 +44,10 @@ const activationJobs = new ActivationJobStore(pool, operators);
 const applicationSuspension = new ApplicationSuspensionStore(pool, operators);
 const sessionInspection = new SessionInspectionStore(pool, operators);
 const organizationInspection = new OrganizationInspectionStore(pool, operators);
+const accountSessions = new AccountSessionsStore(pool);
+const applicationLaunch = new ApplicationLaunchStore(pool, operators);
+const auditTools = new AuditToolsStore(pool, operators);
+const applicationGrants = new ApplicationGrantsStore(pool);
 
 @Controller()
 class ApiController {
@@ -116,7 +124,8 @@ class ApiController {
   }
 
   private async withPerson(req: any, res: any,
-    work: (id: string, requestId: string, actor: AuthenticatedSubject) => Promise<unknown>, firstParty = false) {
+    work: (id: string, requestId: string, actor: AuthenticatedSubject) => Promise<unknown>, firstParty = false,
+    write?: (value: unknown) => unknown) {
     const requestId = typeof req.headers['x-request-id'] === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(req.headers['x-request-id'])
       ? req.headers['x-request-id'] : randomUUID();
     res.setHeader('x-request-id', requestId);
@@ -141,7 +150,7 @@ class ApiController {
       if (!isCurrentPersonAuthentication(person, actor)) return res.status(401).json({ error: 'session_ended', requestId });
       const result = await work(person.id, requestId, actor);
       console.info(JSON.stringify({ event: 'identity.resolved', requestId, client: actor.client }));
-      return res.json(result);
+      return write ? write(result) : res.json(result);
     } catch (error) {
       if (error instanceof OrganizationError) return res.status(error.status).json({ error: error.code, requestId });
       if (error instanceof ApplicationError) return res.status(error.status).json({ error: error.code, requestId });
@@ -150,6 +159,28 @@ class ApiController {
       console.error(JSON.stringify({ event: 'identity.unavailable', requestId }));
       return res.status(503).json({ error: 'identity_unavailable', requestId });
     }
+  }
+
+  @Get('v1/account/sessions')
+  accountSessionList(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, (id, _requestId, actor) => {
+      if (Object.keys(req.query).some(key => key !== 'after')) throw new OperatorError(400, 'invalid_account_session_query');
+      return accountSessions.list(id, actor, req.query.after);
+    }, true);
+  }
+
+  @Post('v1/account/sessions/:handle/end')
+  @HttpCode(200)
+  endAccountSession(@Req() req: any, @Res() res: any, @Param('handle') handle: string, @Body() body: unknown) {
+    return this.withPerson(req, res, (id, _requestId, actor) => accountSessions.end(id, actor, handle, body), true);
+  }
+
+  @Get('v1/account/security-events')
+  accountSecurityHistory(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, (id, _requestId, actor) => {
+      if (Object.keys(req.query).some(key => key !== 'after')) throw new OperatorError(400, 'invalid_account_security_query');
+      return accountSessions.history(id, actor, req.query.after);
+    }, true);
   }
 
   @Get('v1/contexts')
@@ -219,8 +250,32 @@ class ApiController {
   }
 
   @Get('v1/admin/audit')
-  operatorAudit(@Req() req: any, @Res() res: any, @Query('after') after?: string) {
-    return this.withPerson(req, res, id => operators.audit(id, after), true);
+  operatorAudit(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, id => auditTools.list(id, req.query), true);
+  }
+
+  @Get('v1/admin/audit/export')
+  operatorAuditExport(@Req() req: any, @Res() res: any) {
+    return this.withPerson(req, res, id => auditTools.export(id, req.query), true, value => {
+      const result = value as Awaited<ReturnType<AuditToolsStore['export']>>;
+      res.setHeader('content-type', 'text/csv; charset=utf-8');
+      res.setHeader('content-disposition', `attachment; filename="${auditCsvFilename}"`);
+      res.setHeader('x-content-type-options', 'nosniff');
+      res.setHeader('x-accesslobby-export-count', String(result.count));
+      res.setHeader('x-accesslobby-export-truncated', String(result.truncated));
+      return res.status(200).send(result.csv);
+    });
+  }
+
+  @Get('v1/admin/applications/:applicationId/launch')
+  operatorApplicationLaunch(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    return this.withPerson(req, res, id => applicationLaunch.get(id, appId), true);
+  }
+
+  @Post('v1/admin/applications/:applicationId/launch')
+  @HttpCode(200)
+  operatorSetApplicationLaunch(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
+    return this.withPerson(req, res, id => applicationLaunch.set(id, appId, body), true);
   }
 
   @Get('v1/admin/applications')
@@ -301,8 +356,13 @@ class ApiController {
 
   @Get('v1/applications/visible')
   visibleApplications(@Req() req: any, @Res() res: any) {
-    return this.withPerson(req, res, async id => ({ contract: 'accesslobby.applications.v0.1',
-      applications: await applications.visible(id) }), true);
+    return this.withPerson(req, res, async id => {
+      const visible = await applications.visible(id);
+      const links = await applicationLaunch.forApplications(visible.filter(app => app.admitted === true).map(app => app.id));
+      return { contract: 'accesslobby.applications.v0.1', applications: visible.map(app => ({ ...app,
+        ...(app.admitted === true && links.has(app.id) ? { launchUrl: links.get(app.id) } : {}),
+      })) };
+    }, true);
   }
 
   @Get('v1/application-entry')
@@ -336,12 +396,20 @@ class ApiController {
 
   @Post('v1/applications/:applicationId/grants')
   grantApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Body() body: any) {
-    return this.withPerson(req, res, id => applications.grant(id, appId, body?.personId, body?.expiresAt), true);
+    return this.withPerson(req, res, (id, _requestId, actor) => applications.grant(id, appId, body?.personId, body?.expiresAt, actor), true);
+  }
+
+  @Get('v1/applications/:applicationId/grants')
+  applicationGrantList(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string) {
+    return this.withPerson(req, res, (id, _requestId, actor) => {
+      if (Object.keys(req.query).some(key => key !== 'after')) throw new ApplicationError(400, 'invalid_grant_query');
+      return applicationGrants.list(id, appId, req.query.after, actor);
+    }, true);
   }
 
   @Delete('v1/applications/:applicationId/grants/:personId')
   revokeApplication(@Req() req: any, @Res() res: any, @Param('applicationId') appId: string, @Param('personId') personId: string) {
-    return this.withPerson(req, res, id => applications.revoke(id, appId, personId), true);
+    return this.withPerson(req, res, (id, _requestId, actor) => applications.revoke(id, appId, personId, actor), true);
   }
 
   @Post('v1/organizations')

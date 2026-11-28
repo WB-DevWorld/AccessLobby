@@ -1,5 +1,14 @@
 # Execution ledger — MVP-0
 
+## Visible console accepted; five-feature parallel round four implementation — 2026-11-28 UTC
+
+Remote d8ebd66a95d18903f3ff8caae405a4db6233b79c and65bedeb65b945f456229a7d79aaab6c5b09b6bab supersede the earlier hidden/signed-out blocker. Source713140ad93ba1ade406ec6af4cfffb052a817a9c is running at the qualified API/web pins; only API/web were recreated, with no migration or regrant. Normal Update now activated its worker. At11:21:16–11:21:52UTC the confirmed owner visibly saw all3capabilities, hard reload and People→Overview, all4tables, a nested organization and closed realm disclosure. Zero scripts/styles failed. The original Edge reveal cause remains unestablished: the pre-rollout tab was the account page, not the stuck admin page. [Accepted observations](docs/qa/operator-staging-2026-11-27/README.md). Do not repeat accepted deployment/bootstrap/read flows. Actual owner identifier stays private.
+
+The owner directs multiple agendas per round and then expands the same PR to five features. Issue85 separates ordinary recorded-app-session controls, admitted app launch links, operator audit filters/CSV, owner-managed entry-grant expiry/listing and personal recorded-ending history from Cursor's three existing live agendas: private IAM browser access, controlled status/session/suspension tests, and actual private-worker activation/consumer qualification. Four agents worked in parallel with root integrating shared files. One combined candidate/PR/release is intended; source, CI, publication and actual staging acceptance remain separate. [Round-four scope and operations](docs/runbooks/operator-round-4.md). No live IAM/mail/WordPress change was made here. Existing59/72/74/76 remain open for their other gates.
+
+
+The complete five-feature candidate passes full TypeScript/build,100real-PostgreSQL API tests with0skips,116webtests,14retained UI groups and34joined operator groups (23retained+11new). Actual-worker own-session ending/history, independent client/browser controls and harmless fresh retry pass. Safe native launch editing and same-person grant revocation hide restricted links correctly. Filtered native CSV, owner25/1grant paging, real8second expiry→entry denial, indefinite renewal and selected-person revocation all pass, with0new runtime errors/private-cache entries. Current authentication is rechecked under grant locks: a queued old owner bearer cannot list/grant/revoke after its cutoff advances. Impossible UTC dates are rejected; no new business duration cap exists. [Method/report](docs/qa/operator-round4-2026-11-28/README.md). Exact committed-head CI, merge/publication and controlled016/017staging migration/new-feature acceptance remain pending; no image or live setting changed here.
+
 
 ## Admin rendering and concise copy merged, qualified and published — 2026-11-27 UTC
 

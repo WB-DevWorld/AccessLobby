@@ -13,6 +13,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { runOperatorWorkerSmoke } from './operator-console-worker-smoke.mjs';
+import { runOperatorRound4Smoke } from './operator-round4-smoke.mjs';
+import { runApplicationGrantsSmoke } from './application-grants-smoke.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const web = resolve(root, 'apps/web');
@@ -40,7 +42,7 @@ const key = randomBytes(32);
 const actors = Object.fromEntries(['reviewer', 'reader', 'owner', 'suspended', 'fullOperator'].map(name => [name, {
   id: randomUUID(), subject: `private-subject-canary-${name}-${randomUUID()}`, sid: randomUUID(),
 }]));
-let issuer, apiOrigin, origin, app, selfApp, browserApp, reviewerToken, readerToken, ownerToken, operatorToken, workerSummary;
+let issuer, apiOrigin, origin, app, selfApp, browserApp, reviewerToken, readerToken, ownerToken, operatorToken, workerSummary, roundFourSummary, grantsSummary;
 const appName = 'Independent console review fixture';
 
 async function freePort() {
@@ -100,8 +102,8 @@ function noPrivateValues(value) {
   }
   for (const token of [reviewerToken, readerToken, ownerToken, operatorToken]) if (token) assert(!text.includes(token), 'Bearer reached console output');
 }
-async function contextFor(token) {
-  const context = await browser.newContext({ serviceWorkers: 'block' }); contexts.push(context);
+async function contextFor(token, options = {}) {
+  const context = await browser.newContext({ serviceWorkers: 'block', ...options }); contexts.push(context);
   if (token) {
     const encrypted = await new EncryptJWT({ accessToken: token }).setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
       .setIssuedAt().setExpirationTime('15m').encrypt(key);
@@ -295,6 +297,9 @@ try {
     check, noPrivateValues,
   });
 
+  roundFourSummary = await runOperatorRound4Smoke({ browser, pool, issuer, apiOrigin, origin, mint, contextFor, check, noPrivateValues });
+  grantsSummary = await runApplicationGrantsSmoke({ browser, pool, issuer, apiOrigin, origin, mint, contextFor, check, noPrivateValues });
+
   await check('reader cannot submit reviews and operator revocation takes effect with the same bearer', async () => {
     const readerContext = await contextFor(readerToken), readerPage = await readerContext.newPage();
     await readerPage.goto(`${origin}/admin/applications/${selfApp.id}`);
@@ -324,5 +329,7 @@ try {
     scope: 'synthetic OIDC issuer; real isolated PostgreSQL, compiled API and production Next browser',
     liveIam: 'NOT RUN', staging: 'NOT RUN', production: 'NOT RUN',
     result: process.exitCode ? 'FAIL' : 'PASS', checks, ...(workerSummary ? { workerSummary } : {}),
+    ...(roundFourSummary ? { roundFourSummary } : {}),
+    ...(grantsSummary ? { grantsSummary } : {}),
   }, null, 2) + '\n');
 }

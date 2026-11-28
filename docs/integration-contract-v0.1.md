@@ -96,6 +96,31 @@ Session inspection never returns raw SID/provider subject/receipt hash/capabilit
 
 Organization detail is investigation, not ownership verification or recovery. Stored invitation states and expired-pending are distinguished. Unknown event text is generalized; no invitation secret or arbitrary event payload is exposed. Invalid cursors return400, unknown records404, authority denial403, stale mutations409 and unavailable dependencies503, under the existing authentication error contract. [ADR017](adr/017-operator-investigation-and-suspension.md) and [round-three runbook](runbooks/operator-round-3.md) define exact limits.
 
+## Account sessions/history, app launch/grants and audit tools (implementation candidate, 2026-11-28)
+
+These additive routes retain validated first-party bearer, current person/session/cutoff, no-store and same-origin browser actions. Migrations016/017 follow015;007/008 remain reserved. Source/CI acceptance is separate from staging qualification under Issue85.
+
+| Endpoint | Contract and authority |
+|---|---|
+| `GET /v1/account/sessions` | `accesslobby.account-sessions.v0.1`; any active `accesslobby-web` person; own receipt-backed groups only, max25 and optional opaque `after` |
+| `POST /v1/account/sessions/:handle/end` | Same person; exact `{expectedState}`;200 with ended/changed/count; no requested person or platform-role requirement |
+| `GET /v1/account/security-events` | `accesslobby.account-security-events.v0.1`; same active person; own recorded app-session endings within30days, max25 and opaque event cursor |
+| `GET /v1/applications/:id/grants` | `accesslobby.application-grants.v0.1`; current active app owner; active first-party restricted app; max25 and person cursor |
+| `GET /v1/admin/applications/:id/launch` | `accesslobby.application-launch.v0.1`; current console reader; current safe link/version and canManage |
+| `POST /v1/admin/applications/:id/launch` | Current application_operator; `{launchUrl:string|null,expectedVersion,reference}`; active first-party noncore app;200 changed flag |
+| `GET /v1/admin/audit` | Existing admin contract; adds exact action/actorPersonId/targetId, literal reference, inclusive UTC from/to and descending after; max25 |
+| `GET /v1/admin/audit/export` | Current console reader; same filters, max1000 rows/1MiB, quoted formula-safe CSV with count/truncation headers and fixed filename |
+
+Own-session rows contain handle/clientId/applicationName/createdAt/expiresAt/receiptCount/expectedState/currentBrowser only. The label means the receipt uses the same verified browser SSO session, not a recognized physical device. Stale snapshots conflict409; foreign/absent handles404; malformed input400; current authentication/authority401/403. An exact retry uses a minimal ending record and cannot affect new receipts. Ending removes the central receipt group; the peer applies its existing check/expiry/outage contract. It does not revoke admission or end IAM SSO.
+
+Personal ending history contains an independent event UUID, fixed action, client/app name, time and receipt count, without person selection, provider/session/capability data or inferred device/location. The30day display window does not guarantee immediate deletion: opportunistic bounded retention cleanup can lag. It is not a complete account sign-in/security log.
+
+Grant management retains existing owner-only grant/revoke authority. Optional expiry is an exact future UTC calendar instant; blank means indefinite. Impossible normalized dates and already-expired input are rejected. Stored active grants whose deadline passed are presented as expired; the current entry contract independently enforces expiry. Organization roles and launch links do not grant entry. No new business-duration cap is imposed. Role-free ordinary people cannot inspect another owner's grant list.
+
+Launch metadata must be a canonical public queryless HTTPS URL on the registered callback origin, without credentials, fragments or ambiguous paths. Its separately versioned command/audit does not change OIDC approval, visibility, admission or roles. `GET /v1/applications/visible` retains discovery rules and adds `admitted:boolean`; `launchUrl` is optional and supplied only for already-visible admitted apps with current valid metadata. A restricted discoverable ungranted app may still be listed with admittedfalse and no URL. Hiding a link is not resource enforcement; peers retain entry and local permission checks. Existing consumers may ignore the new fields.
+
+Audit rejects unknown/repeated/structured query input. Date filters describe UTC calendar days; references are literal case-insensitive substrings, not SQL wildcards. Exports return seven columns id/occurredAt/action/actorPersonId/targetType/targetId/reference, `text/csv`, fixed attachment filename, nosniff and no-store. `x-accesslobby-export-count` and `x-accesslobby-export-truncated` describe the bounded output. Current person/roles are locked through selection/serialization; no private provider/session/credential fields are selected. The web `/admin/audit/export` starts from the first matching event regardless of visible page and validates upstream output. Exports do not append an event. [ADR018](adr/018-account-sessions-launch-links-and-audit-tools.md), [operator procedure](runbooks/operator-round-4.md).
+
 ## Optional first-party session receipts (MVP-PROVISIONAL, alpha.4)
 
 This additive extension leaves ordinary `/v1/me` unchanged. A reviewed and admitted peer may send `x-accesslobby-session-receipt: 1` with its validated bearer. The optional `peerSession` contains contract `accesslobby.peer-session.v0.1`, an opaque 43-character capability, expiry, check interval30seconds and outage grace90seconds. The API binds its hash to issuer/client/person/sid and caps expiry at the bearer expiry and one hour. No refresh is supplied. An absent receipt on an older API means bounded legacy behavior; a malformed present receipt is an error.

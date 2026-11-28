@@ -39,7 +39,7 @@ export default async function Account() {
     <section className="dashboard-grid account-overview">
       <Suspense fallback={<SectionSkeleton label="Loading organizations and invitations" rows={2} />}><WorkingContext personId={identity.person.id} /></Suspense>
       <Suspense fallback={<SectionSkeleton label="Loading available apps" />}><AvailableApps compact /></Suspense>
-      <SurfaceCard title="Useful next steps"><div className="action-list"><ArrowLink href="/identity">View identity</ArrowLink><ArrowLink href="/recovery">Recovery & help</ArrowLink><ArrowLink href="/help">Get help</ArrowLink></div></SurfaceCard>
+      <SurfaceCard title="Useful next steps"><div className="action-list"><ArrowLink href="/identity">View identity</ArrowLink><ArrowLink href="/security">Review app sessions</ArrowLink><ArrowLink href="/recovery">Recovery & help</ArrowLink><ArrowLink href="/help">Get help</ArrowLink></div></SurfaceCard>
     </section>
     <div id="sign-out" className="account-sign-out"><span>Finished here?</span><Link className="text-link" href="/sign-out">Choose how to sign out →</Link></div>
   </AppShell>;
