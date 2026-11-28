@@ -1,5 +1,13 @@
 # Execution ledger — MVP-0
 
+## Forwarded rollout accepted; protected manager source follow-up — 2026-11-28 UTC
+
+The latest owner-forwarded Cursor report supersedes the older ad02513 deployment baseline: selected source8f63578 and its pinned API/web pair are running, live/ready report that source, schema001–006/009–017 is present with007/008 absent, anonymous admin access is401 and the new worker is activated. An isolated PostgreSQL17.11 restore reportedly matched pre-migration inventories and was removed; live databases were not overwritten. No new operator evidence commit or exact observation timestamp was supplied. [Dated observations and provenance](docs/qa/operator-round4-staging-2026-11-28/README.md) preserve that limit; this integrator did not repeat the host/browser tests. All five new feature acceptance gates remain NOT RUN. Three owner grants, IAM/gateway, SMTP,300second tokens and WordPress are unchanged.
+
+Inactive fixture al-qual-consumer completed request/edit/cancel/resubmit and remains requested. Its exact current TXT challenge and separate A record await confirmed manual publication and public readback; no proof, review, worker or new consumer deployment is accepted. The ordinary status fixture completed genuine Code+PKCE and people increased14→15; suspension/resumption remains NOT RUN. Existing five active applications are preserved; no new total count was supplied.
+
+The certificate source correctly refused an unsafe writable ancestor despite a root0600 leaf. Default host-path checks remain unchanged. A separate explicit manager-source reader now pins the existing local Docker manager's full container ID, process generation, root namespace, bind mount and protected file through kernel descriptors; it reopens and fences current path/mount/leaf identity around cryptographic validation. It creates no mount/container, executes no command in the manager and copies no full store. Only the selected same-host PEM pair can reach the existing exclusive protected output.44 Python cases pass with independent production-source review; the required native Docker/proc fixture and exact-head CI remain pending. [Procedure](docs/runbooks/private-iam-certificate-materialization.md). No host operation or newer application image promotion belongs to this follow-up. Issues59/72/74/76/85 remain open.
+
 
 ## Private certificate-format facility prepared — 2026-11-28 UTC
 

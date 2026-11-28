@@ -22,12 +22,16 @@ renderer = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(renderer)
 Refusal = renderer.Refusal
 
+_manager_spec = importlib.util.spec_from_file_location("accesslobby_private_iam_manager_source", Path(__file__).with_name("manager_source.py"))
+manager_source = importlib.util.module_from_spec(_manager_spec)
+_manager_spec.loader.exec_module(manager_source)
+
 CONTRACT = "accesslobby.private-iam-certificate.v1"
 MAX_SOURCE_BYTES = 4 * 1024 * 1024
 MAX_PEM_BYTES = 256 * 1024
 SNAPSHOT_ATTEMPTS = 3
 FILES = ("fullchain.pem", "privkey.pem")
-REASONS = frozenset({
+REASONS = manager_source.REASONS | frozenset({
     "invalid_arguments", "unsafe_origin", "noncanonical_origin", "protected_absolute_path_required",
     "protected_regular_source_required", "protected_source_owner_required", "protected_source_permissions_required",
     "source_unavailable", "source_too_large", "source_snapshot_unstable", "source_changed",
@@ -332,10 +336,10 @@ class _OwnedOutput:
                 os.close(fd)
 
 
-def materialize(source, canonical_origin, output_directory, ca_file=None):
+def _materialize_with_reader(reader, canonical_origin, output_directory, ca_file=None):
     hostname, _, _ = renderer.origin(canonical_origin)
     output = _OwnedOutput(output_directory)
-    payload = read_source(source)
+    payload = reader()
     certificate, key = select_pair(payload, hostname)
     ca = _ca_file(ca_file)
     try:
@@ -363,7 +367,7 @@ def materialize(source, canonical_origin, output_directory, ca_file=None):
             names.append(match[1])
         if hostname.encode("ascii") not in names or len(set(names)) != len(names):
             raise Refusal("certificate_san_required")
-        if read_source(source) != payload:
+        if reader() != payload:
             raise Refusal("source_changed")
         os.fsync(output.fd)
         return {"contract": CONTRACT, "materialized": True, "sourceReadOnly": True, "sourceUnchanged": True,
@@ -376,6 +380,18 @@ def materialize(source, canonical_origin, output_directory, ca_file=None):
         output.close()
 
 
+def materialize(source, canonical_origin, output_directory, ca_file=None):
+    return _materialize_with_reader(lambda: read_source(source), canonical_origin, output_directory, ca_file)
+
+
+def materialize_manager(container_id, storage_path, canonical_origin, output_directory, ca_file=None):
+    try:
+        with manager_source.ManagerSource(container_id, storage_path) as source:
+            return _materialize_with_reader(source.read, canonical_origin, output_directory, ca_file)
+    except manager_source.Refusal as error:
+        raise Refusal(str(error)) from None
+
+
 class _Parser(argparse.ArgumentParser):
     def error(self, _message):
         # argparse's normal diagnostics echo user arguments. Paths, accidental
@@ -386,12 +402,21 @@ class _Parser(argparse.ArgumentParser):
 def main(argv=None):
     try:
         parser = _Parser(description=__doc__)
-        parser.add_argument("--source", required=True)
+        sources = parser.add_mutually_exclusive_group(required=True)
+        sources.add_argument("--source")
+        sources.add_argument("--manager-container-id")
+        parser.add_argument("--manager-storage-path")
         parser.add_argument("--canonical-origin", required=True)
         parser.add_argument("--output-directory", required=True)
         parser.add_argument("--ca-file")
         args = parser.parse_args(argv)
-        result = materialize(args.source, args.canonical_origin, args.output_directory, args.ca_file)
+        if (args.manager_container_id is None) != (args.manager_storage_path is None):
+            raise Refusal("invalid_arguments")
+        if args.manager_container_id is not None:
+            result = materialize_manager(args.manager_container_id, args.manager_storage_path,
+                                         args.canonical_origin, args.output_directory, args.ca_file)
+        else:
+            result = materialize(args.source, args.canonical_origin, args.output_directory, args.ca_file)
         print(json.dumps(result, sort_keys=True))
         return 0
     except (Exception, KeyboardInterrupt) as error:

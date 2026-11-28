@@ -461,10 +461,19 @@ jobs:
           docker build -f infra/iam-gateway/Dockerfile -t accesslobby-iam-gateway:ci .
       - name: Verify private IAM console with trusted TLS and real admin login
         run: node infra/scripts/private-iam-console-live-smoke.mjs
+      - name: Verify protected certificate-manager source under real Docker
+        run: python3 infra/scripts/private-iam-manager-source-live-smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: accesslobby-private-iam-console
           path: artifacts/private-iam-console/
+          if-no-files-found: warn
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accesslobby-private-iam-manager-source
+          path: artifacts/private-iam-manager-source/
           if-no-files-found: warn
           retention-days: 7
