@@ -1,6 +1,6 @@
 # Round four — five account, app and audit features
 
-Implementation candidate, 28 November 2026. [Issue85](https://github.com/WB-DevWorld/AccessLobby/issues/85) coordinates one integrated release. Source readiness, exact-head CI, source-bound images and actual staging acceptance are separate results.
+Qualified source release8f63578, 28 November 2026. The [immutable API/web pins and rollback](../releases/operator-round4-staging-2026-11-28.json) bind the selected application source; newer documentation images are not selected. [Issue85](https://github.com/WB-DevWorld/AccessLobby/issues/85) coordinates one integrated release. Source readiness, exact-head CI, source-bound images and actual staging acceptance are separate results.
 
 ## Accepted work and parallel ownership
 
@@ -34,7 +34,7 @@ Use separate ordinary fixture people/apps and the existing real operator; never 
 
 ## Release and recovery
 
-Do not deploy a moving tag or unqualified branch. The integrator supplies one merged source and immutable API/web pair after exact-head checks and source-bound publication. Preserve IAM/gateway/databases/consumer image pins, session secret, issuer/audiences, SMTP587/auth/STARTTLS, realm policies, accepted users/grants/apps and WordPress plugin/hybrid/JIT-off/enforced-off/commerce state.
+Do not deploy a moving tag or unqualified branch. The selected source is8f63578deb485a9457522f2b8ff0d4b89bb2c588, with the immutable API/web pair in the release record. Its exact-head/main checks and source-bound publication pass. Preserve IAM/gateway/databases/consumer image pins, session secret, issuer/audiences, SMTP587/auth/STARTTLS, realm policies, accepted users/grants/apps and WordPress plugin/hybrid/JIT-off/enforced-off/commerce state.
 
 Before changing staging, capture current effective and encrypted durable pins privately, make current database backups and restore them to an isolated owned PostgreSQL17.11 instance. Compare schema and relevant inventories; never restore over the live databases. Apply the reviewed new API migration artifact through the existing private supported runner using the actual Compose files and `--no-deps`. Require transaction success and explicit001–006/009–017 readback, with007/008 absent. Recreate only API then web at the qualified pins; do not run the IAM reconciler or broad stack redeploy. Read source/digests/schema/health back from the actual containers and durable panel record.
 
