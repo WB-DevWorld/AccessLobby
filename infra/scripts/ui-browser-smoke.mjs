@@ -35,6 +35,14 @@ const api = createServer(async (req, res) => {
     mutations.push({ path: req.url, method: req.method, body: data ? JSON.parse(data) : null });
     await new Promise(resolve => setTimeout(resolve, 350));
     if (req.url === '/v1/session/end' && req.method === 'POST') return json({ contract: 'accesslobby.browser-session.v0.1', ended: true });
+    if (req.url === `/v1/applications/${appId}/grants` && req.method === 'POST') {
+      res.statusCode = 201;
+      const body = mutations.at(-1).body;
+      return json({ applicationId: appId, personId: body.personId, status: 'active', expiresAt: body.expiresAt ?? null });
+    }
+    if (req.url === `/v1/applications/${appId}/grants/${otherId}` && req.method === 'DELETE') {
+      return json({ applicationId: appId, personId: otherId, status: 'revoked' });
+    }
     return json({ id: organizationId });
   }
   await new Promise(resolve => setTimeout(resolve, req.url === '/v1/me' ? identityDelay : sectionDelay));

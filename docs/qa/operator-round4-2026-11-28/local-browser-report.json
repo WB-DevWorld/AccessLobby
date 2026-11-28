@@ -1,0 +1,255 @@
+{
+  "source": "5b386782ab7d307f440b1ac3ee2d24a263029459",
+  "dirtyWorktree": true,
+  "observedAt": "2026-11-28T12:05:03.127Z",
+  "scope": "synthetic OIDC issuer; real isolated PostgreSQL, compiled API and production Next browser",
+  "liveIam": "NOT RUN",
+  "staging": "NOT RUN",
+  "production": "NOT RUN",
+  "result": "PASS",
+  "checks": [
+    {
+      "name": "real API rejects absent, expired and tampered authentication",
+      "result": "PASS"
+    },
+    {
+      "name": "organization/app ownership and token roles confer no platform authority",
+      "result": "PASS"
+    },
+    {
+      "name": "durable operator roles allow bounded inspection without provider/session disclosure",
+      "result": "PASS"
+    },
+    {
+      "name": "independent review pins configuration and cannot activate a client",
+      "result": "PASS"
+    },
+    {
+      "name": "ended browser session cannot reuse an otherwise valid operator token",
+      "result": "PASS"
+    },
+    {
+      "name": "production console never discloses directory data without a session",
+      "result": "PASS"
+    },
+    {
+      "name": "production console denies an ordinary organization owner",
+      "result": "PASS"
+    },
+    {
+      "name": "operator console renders actual directory and reviewed app on narrow and wide screens",
+      "result": "PASS"
+    },
+    {
+      "name": "native browser review is CSRF protected and recorded without activation",
+      "result": "PASS"
+    },
+    {
+      "name": "actual installed worker controls hard reload and operator overview visibly settles",
+      "result": "PASS"
+    },
+    {
+      "name": "worker-controlled client navigation People to Overview replaces the loading state",
+      "result": "PASS"
+    },
+    {
+      "name": "real worker open-throws retains network JS/CSS and a visibly settled overview",
+      "result": "PASS"
+    },
+    {
+      "name": "real worker match-throws retains network JS/CSS and a visibly settled overview",
+      "result": "PASS"
+    },
+    {
+      "name": "real worker put-throws retains network JS/CSS and a visibly settled overview",
+      "result": "PASS"
+    },
+    {
+      "name": "real worker put-never-settles retains network JS/CSS and a visibly settled overview",
+      "result": "PASS"
+    },
+    {
+      "name": "worker-controlled server administration stays visible while page reveal frames are deferred",
+      "result": "PASS"
+    },
+    {
+      "name": "actual worker retains visible server-rendered overview and all four directories without page runtime",
+      "result": "PASS"
+    },
+    {
+      "name": "ordinary signed-in person receives visible denial under the same worker and page-runtime fault",
+      "result": "PASS"
+    },
+    {
+      "name": "revoked operator receives visible server denial without page-runtime authority",
+      "result": "PASS"
+    },
+    {
+      "name": "expired bearer receives visible sign-in boundary without page-runtime authority",
+      "result": "PASS"
+    },
+    {
+      "name": "active worker cannot preserve operator authority after current database revocation",
+      "result": "PASS"
+    },
+    {
+      "name": "active worker cannot reuse private overview after bearer expiry",
+      "result": "PASS"
+    },
+    {
+      "name": "round4 real API scopes ordinary recorded sessions and rejects foreign, stale and caller-selected targets",
+      "result": "PASS"
+    },
+    {
+      "name": "round4 production security page under the real worker ends only the confirmed record and preserves fresh retries",
+      "result": "PASS"
+    },
+    {
+      "name": "round4 personal history shows only own recorded endings through real API and paginated production browser",
+      "result": "PASS"
+    },
+    {
+      "name": "round4 real launch API requires current application authority and safe same-origin metadata",
+      "result": "PASS"
+    },
+    {
+      "name": "round4 native browser launch editing checks CSRF and rejects a valid-shaped foreign origin without changing metadata",
+      "result": "PASS"
+    },
+    {
+      "name": "round4 production app cards expose reviewed links only when discovery and current admission permit them",
+      "result": "PASS"
+    },
+    {
+      "name": "round4 real filtered history paginates and a native CSV download preserves filters and privacy headers",
+      "result": "PASS"
+    },
+    {
+      "name": "round4 ordinary and revoked operators cannot read filtered history or download CSV with the same bearer",
+      "result": "PASS"
+    },
+    {
+      "name": "own-app grants real API preserves owner privacy, strict UTC validation and bounded stored-grant pages",
+      "result": "PASS"
+    },
+    {
+      "name": "native own-app UTC grant rejects impossible calendar input and actually expires without a stored-state rewrite",
+      "result": "PASS"
+    },
+    {
+      "name": "native grant renewal and revocation affect only the selected person while foreign owner and CSRF actions fail",
+      "result": "PASS"
+    },
+    {
+      "name": "reader cannot submit reviews and operator revocation takes effect with the same bearer",
+      "result": "PASS"
+    }
+  ],
+  "workerSummary": {
+    "scope": "active production service worker; real isolated API/database; synthetic signed OIDC",
+    "controlledHardReload": true,
+    "clientNavigationSettled": true,
+    "revokedRoleDenied": true,
+    "expiredBearerDenied": true,
+    "privateCacheEntries": 0,
+    "approvedStaticCacheEntries": 19,
+    "storageFaults": [
+      {
+        "mode": "open-throws",
+        "result": "PASS",
+        "workerControlled": true,
+        "scriptDelivered": true,
+        "stylesheetDelivered": true,
+        "overviewVisible": true,
+        "loadingVisible": false
+      },
+      {
+        "mode": "match-throws",
+        "result": "PASS",
+        "workerControlled": true,
+        "scriptDelivered": true,
+        "stylesheetDelivered": true,
+        "overviewVisible": true,
+        "loadingVisible": false
+      },
+      {
+        "mode": "put-throws",
+        "result": "PASS",
+        "workerControlled": true,
+        "scriptDelivered": true,
+        "stylesheetDelivered": true,
+        "overviewVisible": true,
+        "loadingVisible": false
+      },
+      {
+        "mode": "put-never-settles",
+        "result": "PASS",
+        "workerControlled": true,
+        "scriptDelivered": true,
+        "stylesheetDelivered": true,
+        "overviewVisible": true,
+        "loadingVisible": false
+      }
+    ],
+    "revealFrameFault": {
+      "injected": true,
+      "liveCauseEstablished": false,
+      "overviewVisible": true,
+      "directoryTablesVisible": 4,
+      "nestedOrganizationVisible": true
+    },
+    "scriptExecutionFault": {
+      "injected": true,
+      "liveCauseEstablished": false,
+      "overviewVisible": true,
+      "directoryTablesVisible": 4,
+      "nestedOrganizationVisible": true,
+      "ordinaryDenied": true,
+      "revokedDenied": true,
+      "expiredDenied": true
+    },
+    "staticFailureClassification": [
+      {
+        "started": "page-script-disabled",
+        "failed": "page-script-disabled",
+        "resource": "script",
+        "kind": "script-disabled-policy",
+        "browserCode": null,
+        "exactCode": false,
+        "reasonFlags": [
+          "csp"
+        ],
+        "reasonMissing": false,
+        "count": 25,
+        "expected": true
+      }
+    ]
+  },
+  "roundFourSummary": {
+    "syntheticIssuer": true,
+    "liveIam": "NOT RUN",
+    "staging": "NOT RUN",
+    "production": "NOT RUN",
+    "recordedSessionEnd": true,
+    "freshRetryPreserved": true,
+    "admissionGatedCards": true,
+    "nativeCsvDownload": true,
+    "activeWorker": true,
+    "privateCacheEntries": 0,
+    "personalHistory": true,
+    "browserRuntimeErrors": 0
+  },
+  "grantsSummary": {
+    "nativeUtcGrant": true,
+    "realClockExpiryDenied": true,
+    "nativeRenewal": true,
+    "nativeRevocation": true,
+    "paginatedOwnerList": true,
+    "foreignOwnerDenied": true,
+    "csrfDenied": true,
+    "runtimeErrors": 0,
+    "liveIam": "NOT RUN",
+    "staging": "NOT RUN",
+    "production": "NOT RUN"
+  }
+}

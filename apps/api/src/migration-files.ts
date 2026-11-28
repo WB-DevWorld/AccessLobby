@@ -13,4 +13,6 @@ export const migrationFiles = [
   '013_activation_jobs.sql',
   '014_application_suspension.sql',
   '015_session_inspection.sql',
+  '016_application_launch.sql',
+  '017_account_sessions.sql',
 ] as const;

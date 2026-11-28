@@ -25,6 +25,7 @@ export function AccountMenu({ mobile = false }: { mobile?: boolean }) {
       if (event.target instanceof Element && event.target.closest('a') && details.current) details.current.open = false;
     }}>
       <Link href="/contexts">Personal & organizations</Link>
+      <Link href="/security">App sessions</Link>
       <Link href="/recovery">Recovery & help</Link>
       <Link href="/apps/manage">Developer tools</Link>
       <Link href="/help">Help</Link>

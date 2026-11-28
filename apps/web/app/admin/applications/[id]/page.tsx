@@ -31,6 +31,8 @@ export default async function AdminApplication({ params, searchParams }: {
   const independent = context.personId !== app.ownerPersonId;
   const canReview = requested && independent && context.access.capabilities.reviewApplications && !currentReview;
   return <AdminFrame active="applications" title={app.name} description="Review this app and its connection settings.">
+    {app.status === 'active' && app.trustClass === 'first_party' && !['accesslobby-web', 'accesslobby-api'].includes(app.clientId) &&
+      <Link className="text-link" href={`/admin/applications/${app.id}/launch`}>Manage launch link</Link>}
     {notice && <p className={`context-alert${noticeKey === 'approved' || noticeKey === 'rejected' ? ' context-success' : ''}`} role={noticeKey === 'approved' || noticeKey === 'rejected' ? 'status' : 'alert'}>{notice}</p>}
     <p><Link className="text-link" href={`/admin/applications/${id}/suspension`}>Application suspension controls</Link></p>
     <section className="context-grid" aria-label="Application configuration">

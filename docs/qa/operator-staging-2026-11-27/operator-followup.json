@@ -145,7 +145,7 @@
   },
   "remaining": {
     "ownerConfirmedHumanPersonId": "CONFIRMED_PRIVATELY",
-    "signedInOperatorAcceptance": "CURRENT_RELEASE_SIGNED_IN_BUT_OVERVIEW_AND_TABLES_HIDDEN",
+    "signedInOperatorAcceptance": "VISIBLE_OWNER_AND_ACTIVE_WORKER_READS_ACCEPTED",
     "privateIamCompanion": "NOT_STARTED",
     "privateIamCertificateFacility": "BLOCKED",
     "certificateMaterialExported": false,
@@ -158,7 +158,8 @@
       74,
       76
     ],
-    "operatorRolesGrantedAndActive": true
+    "operatorRolesGrantedAndActive": true,
+    "visibleOverviewAndDirectoryAcceptance": true
   },
   "humanOperatorFollowup": {
     "sources": [
@@ -188,7 +189,7 @@
     "signedInAccountObserved": true,
     "overviewCapabilitySentencesPresentInDocument": true,
     "overviewVisiblySettled": false,
-    "overviewObservedState": "Checking operator access\u2026",
+    "overviewObservedState": "Checking operator access…",
     "overviewServiceWorkerControlled": true,
     "directoryRecordsVisiblyRendered": {
       "people": 14,
@@ -242,7 +243,7 @@
     "stylesheetRequestFailures": 0,
     "consoleExceptionCapturedAfterInspectionStarted": false,
     "signedInStatePreserved": true,
-    "visibleLoadingText": "Checking operator access\u2026",
+    "visibleLoadingText": "Checking operator access…",
     "loadingBox": {
       "width": 1032,
       "height": 708
@@ -263,5 +264,106 @@
     "revealFrameQueue": "NOT_RECORDED",
     "exactLiveRenderingCause": "NOT_ESTABLISHED",
     "signedInVisualAcceptance": false
+  },
+  "updatedOn": "2026-11-28",
+  "renderingReleaseFollowup": {
+    "observedOn": "2026-11-28",
+    "sourceCommits": [
+      "d8ebd66a95d18903f3ff8caae405a4db6233b79c",
+      "65bedeb65b945f456229a7d79aaab6c5b09b6bab"
+    ],
+    "provenance": "Committed protected-host/browser observations reviewed by integrator; no repeated live test or mutation by integrator",
+    "applicationSource": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+    "runtimeImages": {
+      "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:d8147b06374620b2e91a61e70716223557ed82fcb229e493ae3f9354491411d7",
+      "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:5319c7279b27cc50a69693695d7a8ed1f715fb3c99435b03eab2e08fb6673f0a"
+    },
+    "liveAndReadySourceMatch": true,
+    "effectiveAndDurablePinsMatch": true,
+    "recreatedServices": [
+      "api",
+      "web"
+    ],
+    "migrationRan": false,
+    "operatorRolesRegranted": false,
+    "privateIamCompanionStarted": false,
+    "worker": {
+      "sourceCommit": "d8ebd66a95d18903f3ff8caae405a4db6233b79c",
+      "normalUpdateNowUsed": true,
+      "activatedBuild": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+      "matchesPublishedBuild": true,
+      "activeDuringVisibleAcceptance": true,
+      "waitingDuringVisibleAcceptance": false
+    },
+    "preDeploymentTabObservation": {
+      "page": "ACCOUNT_NOT_STUCK_ADMIN",
+      "revealFrameQueueCount": 0,
+      "shellFrameTimestampRecorded": true,
+      "establishesEarlierAdminFailureCause": false
+    },
+    "visualAcceptance": {
+      "sourceCommit": "65bedeb65b945f456229a7d79aaab6c5b09b6bab",
+      "startedAtUtc": "2026-11-28T11:21:16Z",
+      "finishedAtUtc": "2026-11-28T11:21:52Z",
+      "confirmedOwnerSignedIn": true,
+      "personIdentifierPublished": false,
+      "overviewVisiblySettled": true,
+      "allThreeCapabilitySentencesVisible": true,
+      "capabilitySentenceBoxes": [
+        {
+          "width": 1152,
+          "height": 26
+        },
+        {
+          "width": 1152,
+          "height": 26
+        },
+        {
+          "width": 1152,
+          "height": 26
+        }
+      ],
+      "normalHardReloadPassed": true,
+      "peopleToOverviewNavigationPassed": true,
+      "visibleTables": {
+        "people": {
+          "width": 1150,
+          "height": 743,
+          "records": 14,
+          "activeRecords": 14
+        },
+        "organizations": {
+          "width": 1150,
+          "height": 190,
+          "records": 2
+        },
+        "organizationMembers": {
+          "width": 1101,
+          "height": 192,
+          "records": 2
+        },
+        "applications": {
+          "width": 1150,
+          "height": 649,
+          "records": 5
+        },
+        "auditBootstrapGrants": {
+          "width": 1150,
+          "height": 327,
+          "records": 3
+        }
+      },
+      "realmDetails": {
+        "closed": true,
+        "summaryVisible": true,
+        "consequenceTextVisible": true
+      },
+      "failedScriptRequests": 0,
+      "failedStylesheetRequests": 0,
+      "signedInVisibleReadAcceptance": true
+    },
+    "exactEarlierLiveRenderingCause": "NOT_ESTABLISHED",
+    "fullOperatorStagingQualified": false,
+    "productionQualified": false
   }
 }

@@ -42,7 +42,8 @@
     "deferredFrameMechanismReproduced": true,
     "exactLiveBrowserCauseEstablished": false,
     "stagingQualified": false,
-    "productionQualified": false
+    "productionQualified": false,
+    "stagingRuntimeAndVisibleReadAcceptance": true
   },
   "publication": {
     "run": 46039027634,
@@ -50,7 +51,7 @@
     "conclusion": "success",
     "checkoutShaVerified": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
     "allFourTagsMatchSource": true,
-    "hostPullReadbackPending": true
+    "hostPullReadbackPending": false
   },
   "promoteImages": {
     "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:d8147b06374620b2e91a61e70716223557ed82fcb229e493ae3f9354491411d7",
@@ -73,17 +74,34 @@
     "databaseRestoreRequired": false
   },
   "staging": {
-    "promoted": false,
+    "promoted": true,
     "observedRuntimeAtPreparation": "c4206d9a0aaaf3455d45554bc792a23fd57f87f4",
-    "latestVisibleEvidence": "5f6008d487f0f17a13a0edd17d8c2342e9e4874c",
-    "latestVisibleState": "SIGNED_IN_BUT_HIDDEN_ON_PREVIOUS_RELEASE",
+    "latestVisibleEvidence": "65bedeb65b945f456229a7d79aaab6c5b09b6bab",
+    "latestVisibleState": "VISIBLE_OWNER_AND_ACTIVE_WORKER_READS_ACCEPTED",
     "privateIamCompanionInstalled": false,
     "remainingIssues": [
       59,
       72,
       74,
       76
-    ]
+    ],
+    "observedOn": "2026-11-28",
+    "observedRuntime": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+    "sourceCommits": [
+      "d8ebd66a95d18903f3ff8caae405a4db6233b79c",
+      "65bedeb65b945f456229a7d79aaab6c5b09b6bab"
+    ],
+    "effectiveAndDurablePinsMatch": true,
+    "recreatedServices": [
+      "api",
+      "web"
+    ],
+    "migrationRan": false,
+    "operatorRolesRegranted": false,
+    "workerBuild": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+    "workerBuildMatchesPublished": true,
+    "signedInVisibleReadAcceptance": true,
+    "fullOperatorStagingQualified": false
   },
   "handoff": "docs/runbooks/operator-rendering-and-copy-followup.md"
 }

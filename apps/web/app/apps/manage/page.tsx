@@ -47,6 +47,7 @@ const notices: Record<string, string> = {
   application_not_found: 'This application is unavailable to you.',
   application_grants_unavailable: 'Grants can be managed only for an active, grant-required application.',
   grant_not_found: 'There is no active grant for that person.',
+  invalid_expiry: 'Use a future UTC date such as 2027-01-01T18:30:00Z, or leave expiry blank.',
   identity_unavailable: 'The identity service is unavailable. Please try again.'
 };
 
@@ -105,11 +106,15 @@ export default async function AppsPage({ searchParams }: { searchParams: Promise
                 <button className="button button-secondary" name="intent" value="verify" type="submit">Verify DNS record</button></ActionForm>
             </>}
             {app.status === 'active' && app.admission === 'grant_required' && <>
+              <p><Link className="text-link" href={`/apps/manage/${app.id}/grants`}>Manage entry grants</Link></p>
               <p>Use an AccessLobby ID. The app’s roles stay unchanged.</p>
               <ActionForm className="context-form" action="/apps/action" method="post">
                 <input type="hidden" name="applicationId" value={app.id} />
                 <label htmlFor={`grant-${app.id}`}>Person ID</label>
                 <input id={`grant-${app.id}`} name="personId" required pattern="[0-9a-fA-F-]{36}" autoCapitalize="none" spellCheck={false} placeholder="AccessLobby ID" />
+                <label htmlFor={`grant-expiry-${app.id}`}>Expiry (UTC, optional)</label>
+                <input id={`grant-expiry-${app.id}`} name="expiresAt" type="text" maxLength={24} pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{3})?Z" placeholder="2027-01-01T18:30:00Z" autoCapitalize="none" spellCheck={false} aria-describedby={`grant-expiry-help-${app.id}`} />
+                <small id={`grant-expiry-help-${app.id}`}>Blank means no expiry. Use UTC with Z; the grant button also renews only the selected person.</small>
                 <div className="context-actions">
                   <button className="button button-primary" type="submit" name="intent" value="grant">Grant entry</button>
                   <button className="button button-secondary" type="submit" name="intent" value="revoke" data-confirm="Revoke this person’s entry? Existing app sessions follow that app’s expiry and recheck policy.">Revoke entry</button>

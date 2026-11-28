@@ -76,3 +76,18 @@ Use these statuses separately: implementation candidate; local tests; CI; publis
 Append this to the current Cursor handoff without rewriting its mission:
 
 > Continue the existing Forward Email SMTP/genuine verification, training Join/JIT/collision and FLAIROC customer-122 (`al-qual-person`) linking/SSO/logout work under issue #59. Parallel agents own the AccessLobby operator console. Reserve migrations 009/010, operator-role/review modules, `/v1/admin/*`, `/admin/*` and their tests for that lane; coordinate any shared-file change with the integrator. Preserve your existing branch and sanitized exact-revision evidence. Do not copy mail credentials or customer data into the console handoff. Console approval remains separate from private activation and must not weaken verified-email, dual-proof linking or external-privacy gates.
+
+
+## Round 4 — five new features plus three independent live agendas
+
+Owner direction28November: cover multiple agendas per round and keep routine pages concise. Visible713140ad console acceptance65bedeb is complete; repeating it is not a new feature.
+
+| Source lane | Concrete behavior | Completion boundary |
+|---|---|---|
+| Account sessions | An ordinary person reviews and ends only their own recorded participating-app association | Real receipt denial, other client/browser survival, stale/retry/foreign denial and active-worker UI; no device/global-IAM claim |
+| App launcher | An application operator maintains safe entry links; admitted people can open apps from their list | Same callback origin, current role/version/audit, absent links for denied/hidden/ineligible apps; consumer still checks entry/resources |
+| Audit tools | Operators filter history and download bounded safe CSV | Exact/literal/date/cursor semantics, current-role denial, native download and private/no-store/formula-safe output |
+| Entry grants | Owners inspect grants and set optional exact UTC expiry or revoke entry | Owner-only bounded list, current active owner/target checks, future calendar validation and expiry-aware consumer denial |
+| Personal ending history | A person sees their own recorded session-ending actions | Own last30day window, bounded opaque pagination, current authentication and no provider/session credentials |
+
+Issue85 owns the combined round. Implement and qualify one integration candidate, one PR and one source-bound release; do not introduce a deployment/sign-in cycle per lane. Migrations016/017 are additive;007/008 remain reserved. Each feature retains a separate source/CI/staging status. Cursor independently completes private IAM access, existing controlled mutations and actual private-worker activation against the already-accepted713140ad release. A blocked certificate route affects that agenda alone. Root owns shared contracts/ledger; all agents use separate assigned files. [Round-four procedure](runbooks/operator-round-4.md).

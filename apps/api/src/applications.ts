@@ -2,6 +2,8 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { validId } from './organizations.js';
 import { originProofPresent, proofHost, proofValue, verifiableOrigin } from './origin-proof.js';
+import type { AuthenticatedSubject } from './auth.js';
+import { isCurrentPersonAuthentication } from './identity.js';
 
 export class ApplicationError extends Error {
   constructor(public readonly status: number, public readonly code: string) { super(code); }
@@ -38,6 +40,29 @@ export function exactApplicationUrl(value: unknown, platform: ApplicationPlatfor
 
 interface RequestInput { clientId?: unknown; name?: unknown; redirectUri?: unknown; logoutUri?: unknown; backchannelLogoutUri?: unknown;
   visibility?: unknown; admission?: unknown; platform?: unknown }
+
+/** UTC calendar round-trip prevents Date.parse from normalizing impossible dates. */
+export function applicationGrantExpiry(value: unknown, now = Date.now()): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{3})?Z$/.test(value)) return fail(400, 'invalid_expiry');
+  const instant = Date.parse(value), canonical = value.length === 20 ? value.replace(/Z$/, '.000Z') : value;
+  if (!Number.isFinite(instant) || instant <= now || new Date(instant).toISOString() !== canonical) return fail(400, 'invalid_expiry');
+  return canonical;
+}
+
+/** Auth is supplied only by the verified HTTP boundary, never by a request body. */
+export async function currentGrantOwnerAuthentication(db: PoolClient, owner: string,
+  person: { status: string; session_not_before: string }, auth?: AuthenticatedSubject) {
+  if (person.status !== 'active') return fail(403, 'application_owner_unavailable');
+  if (!auth) return; // Existing trusted internal callers have no browser authentication context.
+  if (auth.client !== 'accesslobby-web' || !auth.sid || !Number.isSafeInteger(auth.expiresAt) ||
+      auth.expiresAt! <= Math.floor(Date.now() / 1000) ||
+      !isCurrentPersonAuthentication({ sessionNotBefore: Number(person.session_not_before) }, auth)) return fail(401, 'session_ended');
+  const link = await db.query('SELECT 1 FROM iam_subject_links WHERE person_id=$1 AND issuer=$2 AND subject=$3', [owner, auth.issuer, auth.subject]);
+  if (!link.rowCount) return fail(401, 'session_ended');
+  const revoked = await db.query('SELECT 1 FROM revoked_oidc_sessions WHERE issuer=$1 AND sid=$2 AND expires_at>clock_timestamp()', [auth.issuer, auth.sid]);
+  if (revoked.rowCount) return fail(401, 'session_ended');
+}
 
 export class ApplicationStore {
   constructor(private readonly pool: Pool, private readonly legacyClients: string[],
@@ -134,7 +159,9 @@ export class ApplicationStore {
 
   async visible(personId: string) {
     const result = await this.pool.query(
-      `SELECT a.id, a.client_id AS "clientId", a.name, a.platform, a.visibility, a.admission
+      `SELECT a.id, a.client_id AS "clientId", a.name, a.platform, a.visibility, a.admission,
+         (a.admission = 'authenticated_open' OR
+           (g.status = 'active' AND (g.expires_at IS NULL OR g.expires_at > now()))) IS TRUE AS admitted
        FROM applications a LEFT JOIN application_grants g ON g.application_id = a.id AND g.person_id = $1
        WHERE a.status = 'active' AND a.trust_class = 'first_party'
          AND (a.visibility = 'discoverable' OR (g.status = 'active' AND (g.expires_at IS NULL OR g.expires_at > now())))
@@ -155,34 +182,46 @@ export class ApplicationStore {
   }
 
   private async ownedGrantApp(db: PoolClient, appId: string, actor: string) {
-    const result = await db.query<{ owner_person_id: string; status: string; admission: string }>(
-      'SELECT owner_person_id, status, admission FROM applications WHERE id = $1 FOR UPDATE', [appId]);
+    const result = await db.query<{ owner_person_id: string; status: string; trust_class: string; admission: string }>(
+      'SELECT owner_person_id, status, trust_class, admission FROM applications WHERE id = $1 FOR UPDATE', [appId]);
     const app = result.rows[0];
     if (!app || app.owner_person_id !== actor) return fail(404, 'application_not_found');
-    if (app.status !== 'active' || app.admission !== 'grant_required') return fail(409, 'application_grants_unavailable');
+    if (app.status !== 'active' || app.trust_class !== 'first_party' || app.admission !== 'grant_required') return fail(409, 'application_grants_unavailable');
   }
 
-  async grant(actor: string, appId: string, personId: string, expiresAt: unknown) {
+  private async grantPeople(db: PoolClient, actor: string, target?: string, auth?: AuthenticatedSubject) {
+    // Match the application-first write order. Sort people so owner/target
+    // status changes cannot race a grant or create an inverse person lock order.
+    const people = await db.query<{ id: string; status: string; session_not_before: string }>(
+      'SELECT id,status,session_not_before FROM persons WHERE id=ANY($1::uuid[]) ORDER BY id FOR SHARE', [[...new Set([actor, ...(target ? [target] : [])])]]);
+    const owner = people.rows.find(person => person.id === actor.toLowerCase());
+    if (!owner) return fail(403, 'application_owner_unavailable');
+    await currentGrantOwnerAuthentication(db, actor, owner, auth);
+    if (target && people.rows.find(person => person.id === target.toLowerCase())?.status !== 'active') return fail(404, 'person_not_found');
+  }
+
+  async grant(actor: string, appId: string, personId: string, expiresAt: unknown, auth?: AuthenticatedSubject) {
     if (!validId(appId) || !validId(personId)) return fail(400, 'invalid_id');
-    if (expiresAt !== undefined && (typeof expiresAt !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z$/.test(expiresAt) ||
-        !Number.isFinite(Date.parse(expiresAt)) || Date.parse(expiresAt) <= Date.now())) return fail(400, 'invalid_expiry');
+    const expiry = applicationGrantExpiry(expiresAt);
     return this.transaction(async db => {
       await this.ownedGrantApp(db, appId, actor);
-      const person = await db.query("SELECT 1 FROM persons WHERE id = $1 AND status = 'active'", [personId]);
-      if (!person.rows[0]) return fail(404, 'person_not_found');
+      await this.grantPeople(db, actor, personId, auth);
+      // Recheck the future boundary after waiting for current authority locks.
+      if (expiry && Date.parse(expiry) <= Date.now()) return fail(400, 'invalid_expiry');
       await db.query(`INSERT INTO application_grants (application_id, person_id, status, granted_by, expires_at)
         VALUES ($1,$2,'active',$3,$4) ON CONFLICT (application_id, person_id)
         DO UPDATE SET status = 'active', granted_by = EXCLUDED.granted_by, granted_at = now(), expires_at = EXCLUDED.expires_at, revoked_at = NULL`,
-      [appId, personId, actor, expiresAt ?? null]);
+      [appId, personId, actor, expiry ?? null]);
       await this.event(db, appId, actor, 'application.granted', personId);
-      return { applicationId: appId, personId, status: 'active', expiresAt: expiresAt ?? null };
+      return { applicationId: appId, personId, status: 'active', expiresAt: expiry ?? null };
     });
   }
 
-  async revoke(actor: string, appId: string, personId: string) {
+  async revoke(actor: string, appId: string, personId: string, auth?: AuthenticatedSubject) {
     if (!validId(appId) || !validId(personId)) return fail(400, 'invalid_id');
     return this.transaction(async db => {
       await this.ownedGrantApp(db, appId, actor);
+      await this.grantPeople(db, actor, undefined, auth);
       const result = await db.query(`UPDATE application_grants SET status = 'revoked', revoked_at = now()
         WHERE application_id = $1 AND person_id = $2 AND status = 'active' RETURNING person_id`, [appId, personId]);
       if (!result.rows[0]) return fail(404, 'grant_not_found');

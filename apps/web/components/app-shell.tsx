@@ -5,11 +5,12 @@ import { AccountMenu } from '@/components/account-menu';
 import { BrandMark, SkipLink } from '@/components/ui';
 import { OperatorConsoleLink } from '@/components/operator-console-link';
 
-type ActiveSection = 'overview' | 'identity' | 'contexts' | 'apps' | 'recovery' | 'admin';
+type ActiveSection = 'overview' | 'identity' | 'contexts' | 'apps' | 'security' | 'recovery' | 'admin';
 const enabledNavigation = [
   { key: 'overview', label: 'Home', href: '/account', icon: 'home' },
   { key: 'apps', label: 'Apps', href: '/apps', icon: 'apps' },
   { key: 'identity', label: 'Identity', href: '/identity', icon: 'person' },
+  { key: 'security', label: 'App sessions', href: '/security', icon: 'security' },
   { key: 'contexts', label: 'Personal & organizations', href: '/contexts', icon: 'organizations' },
   { key: 'recovery', label: 'Recovery & help', href: '/recovery', icon: 'recovery' },
 ] as const;
@@ -18,6 +19,7 @@ function NavigationIcon({ name }: { name: string }) {
   const paths: Record<string, ReactNode> = {
     home: <><path d="m4 11 8-7 8 7" /><path d="M6.5 10.5V20h11v-9.5" /><path d="M10 20v-6h4v6" /></>,
     person: <><circle cx="12" cy="8" r="3.25" /><path d="M5.5 20c.8-4 3-6 6.5-6s5.7 2 6.5 6" /></>,
+    security: <><path d="m12 3 7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3Z" /><path d="m9 12 2 2 4-4" /></>,
     recovery: <><path d="M5.2 8.2A8 8 0 1 1 4.4 15" /><path d="M4 5v4h4" /><path d="M12 8v4l2.5 1.5" /></>,
     organizations: <><path d="M4 21V7l8-4v18M12 10h8v11M2 21h20" /><path d="M7 9h2M7 13h2M7 17h2M15 14h2M15 18h2" /></>,
     apps: <><rect x="4" y="4" width="6" height="6" rx="1.2" /><rect x="14" y="4" width="6" height="6" rx="1.2" /><rect x="4" y="14" width="6" height="6" rx="1.2" /><rect x="14" y="14" width="6" height="6" rx="1.2" /></>,

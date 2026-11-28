@@ -1,0 +1,9 @@
+.grant-results { min-width: 0; max-width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: .7rem; }
+.grant-results:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.grant-results table { width: 100%; min-width: 55rem; border-collapse: collapse; text-align: left; font-size: .85rem; }
+.grant-results th, .grant-results td { padding: .8rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.grant-results tbody tr:last-child > * { border-bottom: 0; }
+.grant-results thead { background: var(--surface-soft); }
+.grant-results th[scope="row"] { min-width: 20rem; font-weight: 500; }
+.grant-results th[scope="row"] code { overflow-wrap: anywhere; }
+.grant-results td:last-child form { margin-top: .5rem; }
