@@ -1,0 +1,143 @@
+{
+  "contract": "accesslobby.round4-release.v1",
+  "preparedOn": "2026-11-28",
+  "sourceSha": "8f63578deb485a9457522f2b8ff0d4b89bb2c588",
+  "sourceTree": "f3509bd71bf0fd73284d4d1072c393539da5d0d1",
+  "pullRequest": 86,
+  "qualifiedHead": "323237447323784b7e546f3d00581a87491c7098",
+  "mergeTreeMatchesQualifiedHead": true,
+  "features": [
+    "own recorded app sessions",
+    "personal ending history",
+    "safe admitted app launcher",
+    "owner entry grant expiry and directory",
+    "filtered operator history and safe CSV"
+  ],
+  "qualification": {
+    "headChecksPassed": 15,
+    "headCi": {
+      "run": 46143014489,
+      "verifyJob": 140972916130,
+      "iamJob": 140972916404,
+      "privateConsoleJob": 140972916416,
+      "conclusion": "success"
+    },
+    "headWordPress": {
+      "run": 46143014510,
+      "jobsPassed": 10,
+      "conclusion": "success"
+    },
+    "headTheme": {
+      "run": 46143014535,
+      "conclusion": "success"
+    },
+    "apiTests": 100,
+    "webTests": 116,
+    "operatorBrowserGroups": 34,
+    "uiBrowserGroups": 14,
+    "apiSkips": 0,
+    "headOperatorArtifact": {
+      "id": 15262533034,
+      "digest": "sha256:505f083792e2fc8b9172534eafe39f9945d13eb0b61177c25745152ce401bce8"
+    },
+    "mainCi": {
+      "run": 46143522786,
+      "verifyJob": 140974477604,
+      "iamJob": 140974477539,
+      "privateConsoleJob": 140974477373,
+      "conclusion": "success"
+    },
+    "mainWordPress": {
+      "run": 46143522844,
+      "conclusion": "success",
+      "jobsPassed": 10
+    },
+    "mainTheme": {
+      "run": 46143522854,
+      "conclusion": "success"
+    },
+    "newFeaturesStagingQualified": false,
+    "productionQualified": false,
+    "mainChecksPassedAtReadback": 16,
+    "mainOperatorArtifact": {
+      "id": 15262008441,
+      "digest": "sha256:c607171fbf68ec0b180ab45de0618207e79b5c3430202d089f69df7a137cf812"
+    }
+  },
+  "publication": {
+    "conclusion": "success",
+    "checkoutShaVerified": "8f63578deb485a9457522f2b8ff0d4b89bb2c588",
+    "allFourTagsMatchSource": true,
+    "hostPullReadbackPending": true,
+    "run": 46143858761,
+    "job": 140975507158
+  },
+  "promoteImages": {
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:0b9f19a0dfe2698308f21b80f2414a64aca30a1e65cf9af6f4512091dd556ada",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:f6d9fce02f4d21a5dfd7528fefe8d4211c829b0870c95e005aa8dc1ffe0db7fb"
+  },
+  "preserveRuntimeImages": [
+    "iam",
+    "iam-gateway",
+    "iam-db",
+    "identity-db",
+    "consumer"
+  ],
+  "operatorRegrantRequired": false,
+  "sessionSecretChange": false,
+  "migration": {
+    "add": [
+      "016_application_launch",
+      "017_account_sessions"
+    ],
+    "expectedPrefixes": [
+      "001",
+      "002",
+      "003",
+      "004",
+      "005",
+      "006",
+      "009",
+      "010",
+      "011",
+      "012",
+      "013",
+      "014",
+      "015",
+      "016",
+      "017"
+    ],
+    "reservedAbsent": [
+      "007",
+      "008"
+    ],
+    "schemaDownMigrationRequired": false
+  },
+  "rollback": {
+    "sourceSha": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+    "api": "ghcr.io/wb-devworld/accesslobby-api@sha256:d8147b06374620b2e91a61e70716223557ed82fcb229e493ae3f9354491411d7",
+    "web": "ghcr.io/wb-devworld/accesslobby-web@sha256:5319c7279b27cc50a69693695d7a8ed1f715fb3c99435b03eab2e08fb6673f0a",
+    "preserveAddedTablesAndHistory": true,
+    "newSchemaRuntimeRehearsed": false
+  },
+  "observedStaging": {
+    "sourceSha": "713140ad93ba1ade406ec6af4cfffb052a817a9c",
+    "latestEvidence": "ad02513dd463a2738297223311b1820702aa766d",
+    "visibleReadAcceptance": "65bedeb65b945f456229a7d79aaab6c5b09b6bab",
+    "newReleasePromoted": false,
+    "privateConsolePemFacility": "BLOCKED",
+    "cloudflareFixtureDnsWriteRoute": "BLOCKED",
+    "controlledMutationAcceptance": "NOT_RUN",
+    "ownerGrantsPreserved": 3,
+    "peopleObserved": 14,
+    "applicationsObserved": 5
+  },
+  "handoff": "docs/runbooks/operator-round-4.md",
+  "remainingIssues": [
+    59,
+    72,
+    74,
+    76,
+    85
+  ]
+}
